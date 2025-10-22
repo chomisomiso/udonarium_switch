@@ -30,8 +30,8 @@
     </div>
     <div>
       <form>
-        <textarea class="chat-input" placeholder="Enterで送信  Shift+Enterで改行" [(ngModel)]="text"
-          [ngModelOptions]="{standalone: true}" (input)="onInput()" (keydown.enter)="sendChat($event)"
+        <textarea class="chat-input" placeholder="Enterで送信  Shift+Enterで改行  Ctrl+↑↓でチャット履歴" [(ngModel)]="text"
+          [ngModelOptions]="{standalone: true}" (input)="onInput()" (keydown.enter)="sendChat($event)" (keydown.control.arrowup)="moveHistory($event, -1)" (keydown.control.arrowdown)="moveHistory($event, 1)"
           #textArea></textarea>
         <button type="submit" (click)="sendChat(null)">SEND</button>
       </form>

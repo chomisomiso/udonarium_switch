@@ -18,6 +18,7 @@ import { GameCharacterSheetComponent } from 'component/game-character-sheet/game
 import { MovableOption } from 'directive/movable.directive';
 import { RotableOption } from 'directive/rotable.directive';
 import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
+import { ImageService } from 'service/image.service';
 import { PanelOption, PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 import { SelectionState, TabletopSelectionService } from 'service/tabletop-selection.service';
@@ -50,7 +51,7 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
 
   get name(): string { return this.gameCharacter.name; }
   get size(): number { return MathUtil.clampMin(this.gameCharacter.size); }
-  get imageFile(): ImageFile { return this.gameCharacter.imageFile; }
+  get imageFile(): ImageFile { return this.imageService.getDefaultCharacterOr(this.gameCharacter.imageFile); }
   get rotate(): number { return this.gameCharacter.rotate; }
   set rotate(rotate: number) { this.gameCharacter.rotate = rotate; }
   get roll(): number { return this.gameCharacter.roll; }
@@ -67,6 +68,7 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
   rollOption: RotableOption = {};
 
   constructor(
+    private imageService: ImageService,
     private contextMenuService: ContextMenuService,
     private panelService: PanelService,
     private changeDetector: ChangeDetectorRef,

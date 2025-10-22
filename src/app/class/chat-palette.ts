@@ -15,7 +15,7 @@ export interface PaletteVariable {
 
 @SyncObject('chat-palette')
 export class ChatPalette extends ObjectNode {
-  @SyncVar() dicebot: string = '';
+  @SyncVar() dicebot: string = 'SwordWorld2.5';
   //TODO: キャラシ項目のコピー
 
   get paletteLines(): PaletteLine[] {

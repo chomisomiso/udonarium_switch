@@ -1,10 +1,12 @@
-# ユドナリウム
+# ユドナリウム スイッチ
+
+ユドナリウム スイッチ (Udonarium_SWitch)は、[ユドナリウム][udonarium-repo]に、主にソードワールド2.5向け独自機能を加えた派生版を志しています。
+
+## 以下本家から抜粋 [リンク][udonarium-repo]
 
 [ユドナリウム（Udonarium）][udonarium-url]はWebブラウザで動作するボードゲームオンラインセッション支援ツールです。
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/TK11235/udonarium/blob/master/LICENSE)
-
-[![Udonarium](docs/images/ss.jpg "スクリーンショット")][udonarium-url]
 
 ## クイックスタート
 
@@ -156,6 +158,7 @@ PRのコードが完全ではない場合でも作業中PRとして送ること�
 
 [MIT License](https://github.com/TK11235/udonarium/blob/master/LICENSE)
 
-[udonarium-url]: https://udonarium.app/
+[udonarium-url]: https://github.com/TK11235/udonarium
+[udonarium-repo]: https://github.com/TK11235/udonarium
 [udonarium-backend-repo]: https://github.com/TK11235/udonarium-backend
 [SkyWay-url]: https://skyway.ntt.com/

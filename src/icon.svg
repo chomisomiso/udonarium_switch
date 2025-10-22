@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="240px"
+   height="240px"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <style>
+      .logo-main {
+         fill: #3C78D8;
+         transition: filter 0.3s ease;
+      }
+      .logo-toggle-bg {
+         fill: #4CAF50;
+         transition: filter 0.3s ease;
+      }
+      .logo-toggle-circle {
+         fill: #3C78D8;
+         transition: filter 0.3s ease;
+      }
+   </style>
+  <path
+     d=" m 60,25 a 110 110 0 1 0 120 0 v 90 a 60 60 0 0 1 -120 0 v -90 z"
+     stroke-width="0"
+     fill="#3C78D8"
+     class="logo-main"/>
+  <path
+     d=" m 143,89 v 30 a 23 23 0 0 1 -46 0 v -30 a 28 28 0 0 0 46 0 h 40 z"
+     stroke-width="0"
+     fill="#4CAF50"
+     class="logo-toggle-bg"/>
+  <path
+     d=" m 95,30 a 25 25 0 0 1 50 0 v 40 a 25 25 0 0 1 -50 0  v -40 z"
+     stroke-width="0"
+     fill="#3C78D8"
+     class="logo-toggle-circle"/>
+</svg>

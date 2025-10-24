@@ -10,6 +10,7 @@ export interface ChatMessageContext {
   originFrom?: string;
   from?: string;
   to?: string;
+  speaker?: string;
   name?: string;
   text?: string;
   timestamp?: number;
@@ -23,6 +24,7 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
   @SyncVar() originFrom: string;
   @SyncVar() from: string;
   @SyncVar() to: string;
+  @SyncVar() speaker: string;
   @SyncVar() name: string;
   @SyncVar() tag: string;
   @SyncVar() dicebot: string;
@@ -55,6 +57,7 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
   }
   get image(): ImageFile { return ImageStorage.instance.get(this.imageIdentifier); }
   get index(): number { return this.minorIndex + this.timestamp; }
+  get speakBy(): string { return this.speaker; }
   get isDirect(): boolean { return 0 < this.sendTo.length ? true : false; }
   get isSendFromSelf(): boolean { return this.from === Network.peer.userId || this.originFrom === Network.peer.userId; }
   get isRelatedToMe(): boolean { return (-1 < this.sendTo.indexOf(Network.peer.userId)) || this.isSendFromSelf ? true : false; }

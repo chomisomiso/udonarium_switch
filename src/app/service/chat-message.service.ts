@@ -78,6 +78,7 @@ export class ChatMessageService {
     let chatMessage: ChatMessageContext = {
       from: Network.peer.userId,
       to: this.findId(sendTo),
+      speaker: sendFrom,
       name: this.makeMessageName(sendFrom, sendTo),
       imageIdentifier: this.findImageIdentifier(sendFrom),
       timestamp: this.calcTimeStamp(chatTab),

@@ -17,6 +17,7 @@ import { DataSummarySetting } from '@udonarium/data-summary-setting';
 import { DiceBot } from '@udonarium/dice-bot';
 import { Jukebox } from '@udonarium/Jukebox';
 import { PeerCursor } from '@udonarium/peer-cursor';
+import { ResourceOperator } from '@udonarium/resource-operator';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TableSelecter } from '@udonarium/table-selecter';
 
@@ -99,6 +100,9 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     let fileContext = ImageFile.createEmpty('none_icon').toContext();
     fileContext.url = './assets/images/ic_account_circle_black_24dp_2x.png';
     let noneIconImage = ImageStorage.instance.add(fileContext);
+
+    let resourceOperator: ResourceOperator = new ResourceOperator('ResourceOperator');
+    resourceOperator.initialize();
 
     AudioPlayer.resumeAudioContext();
     PresetSound.dicePick = AudioStorage.instance.add('./assets/sounds/soundeffect-lab/shoulder-touch1.mp3').identifier;

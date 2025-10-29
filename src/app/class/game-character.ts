@@ -87,4 +87,63 @@ export class GameCharacter extends TabletopObject {
     palette.initialize();
     this.appendChild(palette);
   }
+
+  getCurrentDataValue(dataName: string): number {
+    const data = this.detailDataElement.getFirstElementByName(dataName);
+    if (!data) return null;
+    switch (data.type) {
+      case 'numberResource':
+        return parseInt(data.currentValue as string);
+      case 'normal':
+        return parseInt(data.value as string);
+      case 'note':
+        return NaN;
+    }
+    return NaN;
+  }
+
+  getMaxDataValue(dataName: string): number {
+    const data = this.detailDataElement.getFirstElementByName(dataName);
+    if (!data) return null;
+    switch (data.type) {
+      case 'numberResource':
+        return parseInt(data.value as string);
+      case 'normal':
+        return NaN;
+      case 'note':
+        return NaN;
+    }
+    return NaN;
+  }
+
+  setCurrentDataValue(dataName: string, setValue: number): boolean {
+    const data = this.detailDataElement.getFirstElementByName(dataName);
+    if (!data) return null;
+    switch (data.type) {
+      case 'numberResource':
+        data.currentValue = setValue;
+        return true;
+      case 'normal':
+        data.value = setValue;
+        return true;
+      case 'note':
+        return false;
+    }
+    return false;
+  }
+
+  setMaxDataValue(dataName: string, setValue: number): boolean {
+    const data = this.detailDataElement.getFirstElementByName(dataName);
+    if (!data) return null;
+    switch (data.type) {
+      case 'numberResource':
+        data.value = setValue;
+        return true;
+      case 'normal':
+        return false;
+      case 'note':
+        return false;
+    }
+    return false;
+  }
 }

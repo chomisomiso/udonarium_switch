@@ -10,6 +10,7 @@ export interface ChatMessageContext {
   originFrom?: string;
   from?: string;
   to?: string;
+  speaker?: string;
   name?: string;
   text?: string;
   timestamp?: number;
@@ -23,6 +24,7 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
   @SyncVar() originFrom: string;
   @SyncVar() from: string;
   @SyncVar() to: string;
+  @SyncVar() speaker: string;
   @SyncVar() name: string;
   @SyncVar() tag: string;
   @SyncVar() dicebot: string;

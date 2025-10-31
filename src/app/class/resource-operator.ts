@@ -18,6 +18,7 @@ interface ResourceCommand {
   isCalculate: boolean;
   enableOptionL: boolean;
   enableOptionZ: boolean;
+  enableOptionMaX: boolean;
 }
 
 @SyncObject('resource-operator')
@@ -95,9 +96,10 @@ export class ResourceOperator extends GameObject {
         let command  = res[3];
         let optionL = /LZ?$/i.test(command);
         let optionZ = /ZL?$/i.test(command);
+        let optionMax = /\^$/.test(resource);
 
         if (optionL || optionZ) command = command.replace(/(L?Z|Z?L)$/i, '');
-
+        if (optionMax) resource = resource.replace(/\^$/, '');
         // 数式・ダイス式のみなら (±a +b -c) 別フォーマットを含むなら ±(a +b -c)
         let isCalc: boolean = !/[^d\d\(\)\+\-\*\/]/.test(command);
         if (isCalc) command = (operator=='-' ? '-' : '') + command + '+(1d1-1)';
@@ -109,6 +111,7 @@ export class ResourceOperator extends GameObject {
           isCalculate: isCalc,
           enableOptionL: optionL,
           enableOptionZ: optionZ,
+          enableOptionMaX: optionMax,
         });
       }
     }
@@ -125,6 +128,8 @@ export class ResourceOperator extends GameObject {
       let ope = command.operator;
       let optL = command.enableOptionL;
       let optZ = command.enableOptionZ;
+      let optMax = command.enableOptionMaX;
+
       let resourceElement: DataElement = character.detailDataElement.getFirstElementByName(res);
       if (!resourceElement) { console.log('該当リソースを持っていません： ' + character.name + ' - ' + command.resource); continue; }
       
@@ -139,11 +144,16 @@ export class ResourceOperator extends GameObject {
       if (isNaN(val)) return '';
       
       let isDisit = /^-?\d+$/.test(calc);
-      let oldVal = character.getCurrentDataValue(res);
+      let currentVal = character.getCurrentDataValue(res);
       let maxVal = character.getMaxDataValue(res);
+      let oldVal: number;
       let newVal: number;
+      let isOverflow = false;
+      let isDone = false;
 
-      if (isNaN(maxVal)) optL = false;
+      if (isNaN(maxVal)) optL = optMax = false;
+      if(optMax) oldVal = maxVal;
+      else oldVal = currentVal;
 
       switch (ope) {
         case '+':
@@ -168,20 +178,33 @@ export class ResourceOperator extends GameObject {
         default:
           break;
       }
-      if (optL) {
+      if (optMax) {
+        if (newVal < 0) newVal = 0;
+        if (newVal < currentVal && optL) {
+          isOverflow = true;
+          optL = false;
+        }
+      }
+      else if (optL) {
         if (newVal < 0) newVal = 0;
         else if (newVal > maxVal) newVal = maxVal;
         else optL = false;
       }
       
-      character.setCurrentDataValue(command.resource, newVal);
-      
+      if (optMax) isDone = character.setMaxDataValue(res, newVal);
+      else isDone = character.setCurrentDataValue(res, newVal);
+      if (!isDone) continue;
+      if (isOverflow) isDone = character.setCurrentDataValue(res, newVal);
+      if(!isDone) continue;
+
       // make output message
+      result += `>${optMax?'最大':''}${res}: `;
       if (ope == '=') {
-        result += `>${res}: ${oldVal} > ${newVal}${isDisit?'':'{'+calc+'}'} ${optL?'[値域制限]':''}${optZ?'[0制限]':''}\n`;
+        result += `${oldVal} > ${newVal}${isDisit?'':'{'+calc+'}'} `;
       } else {
-        result += `>${res}: ${oldVal}${val==0?ope:val>0?'+':''}${val}${isDisit?'':'{'+calc+'}'} > ${newVal} ${optL?'[値域制限]':''}${optZ?'[0制限]':''}\n`;
+        result += `${oldVal}${val==0?ope:val>0?'+':''}${val}${isDisit?'':'{'+calc+'}'} > ${newVal} `;
       }
+      result += `${optL?'[値域制限]':''}${optZ?'[0制限]':''}${isOverflow?'['+res+':'+currentVal+' > 最大値]':''}\n`;
     }
     return result;
   }

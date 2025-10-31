@@ -12,10 +12,12 @@ import { GameCharacter } from './game-character';
 import { DataElement } from './data-element';
 
 interface ResourceCommand {
-  resource   : string;
-  operator   : string;
-  command    : string;
+  resource: string;
+  operator: string;
+  command: string;
   isCalculate: boolean;
+  enableOptionL: boolean;
+  enableOptionZ: boolean;
 }
 
 @SyncObject('resource-operator')
@@ -91,11 +93,23 @@ export class ResourceOperator extends GameObject {
         let resource = res[1];
         let operator = res[2];
         let command  = res[3];
-        let isCalc: boolean = !/[^d\d\(\)\+\-\*\/]/.test(command);
+        let optionL = /LZ?$/i.test(command);
+        let optionZ = /ZL?$/i.test(command);
 
+        if (optionL || optionZ) command = command.replace(/(L?Z|Z?L)$/i, '');
+
+        // 数式・ダイス式のみなら (±a +b -c) 別フォーマットを含むなら ±(a +b -c)
+        let isCalc: boolean = !/[^d\d\(\)\+\-\*\/]/.test(command);
         if (isCalc) command = (operator=='-' ? '-' : '') + command + '+(1d1-1)';
 
-        commands.push({resource: resource, operator: operator, command: command, isCalculate: isCalc});
+        commands.push({
+          resource: resource,
+          operator: operator,
+          command: command,
+          isCalculate: isCalc,
+          enableOptionL: optionL,
+          enableOptionZ: optionZ,
+        });
       }
     }
     return commands;
@@ -118,30 +132,51 @@ export class ResourceOperator extends GameObject {
 
       let res = command.resource;
       let ope = command.operator;
+      let optL = command.enableOptionL;
+      let optZ = command.enableOptionZ;
       let isDisit = /^-?\d+$/.test(calc);
       let oldVal = character.getCurrentDataValue(res);
+      let maxVal = character.getMaxDataValue(res);
       let newVal: number;
+
+      if (isNaN(maxVal)) optL = false;
 
       switch (ope) {
         case '+':
+          if (optZ) {
+            if (val < 0) val = 0;
+            else optZ = false;
+          }
           newVal = oldVal + val;
           break;
         case '-':
-          newVal = oldVal + (command.isCalculate ? val : -val);
+          if (!command.isCalculate) val *= -1;
+          if (optZ) {
+            if (val > 0) val = 0;
+            else optZ = false;
+          }
+          newVal = oldVal + val;
           break;
         case '=':
+          optZ = false;
           newVal = val;
           break;
         default:
           break;
       }
+      if (optL) {
+        if (newVal < 0) newVal = 0;
+        else if (newVal > maxVal) newVal = maxVal;
+        else optL = false;
+      }
+      
       character.setCurrentDataValue(command.resource, newVal);
       
       // make output message
       if (ope == '=') {
-        result += `>${res}: ${oldVal} > ${newVal}${isDisit?'':'{'+calc+'}'}\n`;
+        result += `>${res}: ${oldVal} > ${newVal}${isDisit?'':'{'+calc+'}'} ${optL?'[値域制限]':''}${optZ?'[0制限]':''}\n`;
       } else {
-        result += `>${res}: ${oldVal}${val>=0?'+':''}${val}${isDisit?'':'{'+calc+'}'} > ${newVal}\n`;
+        result += `>${res}: ${oldVal}${val==0?ope:val>0?'+':''}${val}${isDisit?'':'{'+calc+'}'} > ${newVal} ${optL?'[値域制限]':''}${optZ?'[0制限]':''}\n`;
       }
     }
     return result;

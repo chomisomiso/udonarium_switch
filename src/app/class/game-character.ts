@@ -94,7 +94,7 @@ export class GameCharacter extends TabletopObject {
     switch (data.type) {
       case 'numberResource':
         return parseInt(data.currentValue as string);
-      case 'normal':
+      case undefined:
         return parseInt(data.value as string);
       case 'note':
         return NaN;
@@ -108,7 +108,7 @@ export class GameCharacter extends TabletopObject {
     switch (data.type) {
       case 'numberResource':
         return parseInt(data.value as string);
-      case 'normal':
+      case undefined:
         return NaN;
       case 'note':
         return NaN;
@@ -123,7 +123,7 @@ export class GameCharacter extends TabletopObject {
       case 'numberResource':
         data.currentValue = setValue;
         return true;
-      case 'normal':
+      case undefined:
         data.value = setValue;
         return true;
       case 'note':
@@ -139,7 +139,7 @@ export class GameCharacter extends TabletopObject {
       case 'numberResource':
         data.value = setValue;
         return true;
-      case 'normal':
+      case undefined:
         return false;
       case 'note':
         return false;

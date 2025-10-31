@@ -88,6 +88,20 @@ export class GameCharacter extends TabletopObject {
     this.appendChild(palette);
   }
 
+  getDataString(dataName: string): string {
+    const data = this.detailDataElement.getFirstElementByName(dataName);
+    if (!data) return null;
+    switch (data.type) {
+      case 'numberResource':
+        return data.currentValue as string;
+      case undefined:
+        return data.value as string;
+      case 'note':
+        return data.currentValue as string;
+    }
+    return null;
+  }
+
   getCurrentDataValue(dataName: string): number {
     const data = this.detailDataElement.getFirstElementByName(dataName);
     if (!data) return null;
@@ -114,6 +128,22 @@ export class GameCharacter extends TabletopObject {
         return NaN;
     }
     return NaN;
+  }
+
+  setDataString(dataName: string, setString: string): boolean {
+    const data = this.detailDataElement.getFirstElementByName(dataName);
+    if (!data) return null;
+    switch (data.type) {
+      case 'numberResource':
+        return false;
+      case undefined:
+        data.value = setString;
+        return true;
+      case 'note':
+        data.currentValue = setString;
+        return true;
+    }
+    return false;
   }
 
   setCurrentDataValue(dataName: string, setValue: number): boolean {

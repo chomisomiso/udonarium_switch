@@ -85,11 +85,11 @@ export class ResourceOperator extends GameObject {
     let checkTexts: string[] = StringUtil.toHalfWidth(text).trim().split(/\s+/);
     
     for (let t of checkTexts) {
-      let regArray = t.match((/:[^\+\-\=:]+[\+\-\=][^:]+/ig));
+      let regArray = t.match((/:[^\+\-\=\>:]+[\+\-\=\>][^:]+/ig));
       if (!regArray) continue;
 
       for (let c of regArray) {
-        let res = c.match(/^:([^\+\-\=:]+)([\+\-\=])([^:]+)/);
+        let res = c.match(/^:([^\+\-\=\>:]+)([\+\-\=\>])([^:]+)/);
         let resource = res[1];
         let operator = res[2];
         let command  = res[3];
@@ -121,19 +121,23 @@ export class ResourceOperator extends GameObject {
     let character = ObjectStore.instance.get<GameCharacter>(characterId);
     if (!(character instanceof GameCharacter)) { console.log('キャラクターが存在しません'); return result; }
     for (let command of commands) {
-      let resourceElement: DataElement = character.detailDataElement.getFirstElementByName(command.resource);
-      if (!resourceElement) { console.log('該当リソースを持っていません： ' + character.name + ' - ' + command.resource); continue; }
-      if (resourceElement.isNote) { console.log('数値リソースではありません： ' + character.name + ' - ' + command.resource); continue; }
-
-      // resource edit
-      let val, calc;
-      [val, calc] = await this.parseRollResult(command.command, gameType);
-      if (isNaN(val)) return '';
-
       let res = command.resource;
       let ope = command.operator;
       let optL = command.enableOptionL;
       let optZ = command.enableOptionZ;
+      let resourceElement: DataElement = character.detailDataElement.getFirstElementByName(res);
+      if (!resourceElement) { console.log('該当リソースを持っていません： ' + character.name + ' - ' + command.resource); continue; }
+      
+      if (ope == '>') {
+        if (character.setDataString(res, command.command)) result += `>${res}: >${command.command}\n`;
+        continue;
+      }
+      
+      // resource edit
+      let val, calc;
+      [val, calc] = await this.parseRollResult(command.command, gameType);
+      if (isNaN(val)) return '';
+      
       let isDisit = /^-?\d+$/.test(calc);
       let oldVal = character.getCurrentDataValue(res);
       let maxVal = character.getMaxDataValue(res);

@@ -10,6 +10,8 @@ import { EventSystem } from './core/system';
 import { StringUtil } from './core/system/util/string-util';
 import { GameCharacter } from './game-character';
 import { DataElement } from './data-element';
+import { GameCharacterTargetingService } from 'service/game-character-targeting.service';
+import { inject } from '@angular/core';
 
 interface ResourceCommand {
   resource: string;
@@ -44,6 +46,8 @@ export class ResourceOperator extends GameObject {
     EventSystem.unregister(this);
   }
 
+  private targetingService = inject(GameCharacterTargetingService);
+
   private sendResultMessage(result: string, originalMessage: ChatMessage) {
     let id: string = originalMessage.tag.split(':')[0];
     let isSecret: boolean = originalMessage.isSecret;
@@ -73,27 +77,33 @@ export class ResourceOperator extends GameObject {
   }
   
   async process(chatMessage: ChatMessage) {
-    let commands = this.extractCommand(chatMessage.text);
-    let message  = await this.executeCommands(commands, chatMessage.tag, chatMessage.speaker);
+    let [selfCommands, targetCommands] = this.extractCommand(chatMessage.text);
+    let message = await this.executeCommands(selfCommands, chatMessage.tag, ObjectStore.instance.get<GameCharacter>(chatMessage.speaker));
+    if (targetCommands.length > 0)
+      for (let target of this.targetingService.getTargets()) {
+        message += `[${target.name}]\n` + await this.executeCommands(targetCommands, chatMessage.tag, target);
+      }
     this.sendResultMessage(message, chatMessage);
 
     return;
   }
 
-  private extractCommand(text: string): ResourceCommand[] {
-    let commands: ResourceCommand[] = new Array<ResourceCommand>;
+  private extractCommand(text: string): [selfResourceCommands: ResourceCommand[], targetResourceCommands: ResourceCommand[]] {
+    let selfResourceCommands: ResourceCommand[] = new Array<ResourceCommand>;
+    let targetResourceCommands: ResourceCommand[] = new Array<ResourceCommand>;
 
     let checkTexts: string[] = StringUtil.toHalfWidth(text).trim().split(/\s+/);
     
     for (let t of checkTexts) {
-      let regArray = t.match((/:[^\+\-\=\>:]+[\+\-\=\>][^:]+/ig));
+      let regArray = t.match((/t?:[^\+\-\=\>:]+[\+\-\=\>][^:]+/ig));
       if (!regArray) continue;
 
       for (let c of regArray) {
-        let res = c.match(/^:([^\+\-\=\>:]+)([\+\-\=\>])([^:]+)/);
-        let resource = res[1];
-        let operator = res[2];
-        let command  = res[3];
+        let res = c.match(/^(t?):([^\+\-\=\>:]+)([\+\-\=\>])([^:]+)/);
+        let isTargeting = res[1] == 't';
+        let resource = res[2];
+        let operator = res[3];
+        let command  = res[4];
         let optionL = /LZ?$/i.test(command);
         let optionZ = /ZL?$/i.test(command);
         let optionMax = /\^$/.test(resource);
@@ -104,24 +114,35 @@ export class ResourceOperator extends GameObject {
         let isCalc: boolean = !/[^d\d\(\)\+\-\*\/]/.test(command);
         if (isCalc) command = (operator=='-' ? '-' : '') + command + '+(1d1-1)';
 
-        commands.push({
-          resource: resource,
-          operator: operator,
-          command: command,
-          isCalculate: isCalc,
-          enableOptionL: optionL,
-          enableOptionZ: optionZ,
-          enableOptionMaX: optionMax,
-        });
+        if (isTargeting) {
+          targetResourceCommands.push({
+            resource: resource,
+            operator: operator,
+            command: command,
+            isCalculate: isCalc,
+            enableOptionL: optionL,
+            enableOptionZ: optionZ,
+            enableOptionMaX: optionMax,
+          });
+        } else {
+          selfResourceCommands.push({
+            resource: resource,
+            operator: operator,
+            command: command,
+            isCalculate: isCalc,
+            enableOptionL: optionL,
+            enableOptionZ: optionZ,
+            enableOptionMaX: optionMax,
+          });
+        }
       }
     }
-    return commands;
+    return [selfResourceCommands, targetResourceCommands];
   }
 
-  async executeCommands(commands: ResourceCommand[], gameType: string, characterId: string): Promise<string>{
+  async executeCommands(commands: ResourceCommand[], gameType: string, character: GameCharacter): Promise<string>{
     let result: string = '';
 
-    let character = ObjectStore.instance.get<GameCharacter>(characterId);
     if (!(character instanceof GameCharacter)) { console.log('キャラクターが存在しません'); return result; }
     for (let command of commands) {
       let res = command.resource;

@@ -1,6 +1,6 @@
 <div class="component is-3d is-grab is-pointer-events-none" [style.width.px]="size * gridSize"
   [style.height.px]="size * gridSize" appMovable [movable.option]="movableOption" (movable.ondragstart)="onMove()"
-  (movable.ondragend)="onMoved()">
+  (movable.ondragend)="onMoved()" appTargetable [targetable.option]="targetableOption">
   <div class="component-content is-3d" [@bounceInOut]="'in'">
     <div class="component-content is-3d is-pointer-events-auto" appRotable [rotable.option]="rotableOption"
       (rotable.ondragstart)="onMove()" (rotable.ondragend)="onMoved()">
@@ -12,6 +12,9 @@
       </div>
       <div class="pedestal-inner"></div>
       <div *ngIf="isSelected" class="selected-highlight" [ngClass]="{'is-magnetic': isMagnetic}"></div>
+      <div *ngIf="isTargeted" class="outer-targeted-animation">
+        <div *ngIf="isTargeted" class="inner-targeted-animation"></div>
+      </div>
       <div class="pedestal-outer"></div>
       <div class="upright-transform is-fit-width is-3d">
         <div class="rotate-frame is-3d" [style.width.px]="size * gridSize" [style.height.px]="size * gridSize"
@@ -30,7 +33,7 @@
               <i class="material-icons">autorenew</i>
             </div>
             <div class="rotate-grab rotate-grab-icon of-bottom"
-              [ngStyle]="{'transform': 'translateX(-50%) translateX(' + size * gridSize / 2 +'px'}">
+              [ngStyle]="{'transform': 'translateX(-50%) translateX(' + size * gridSize / 2 +'px)'}">
               <i class="material-icons">autorenew</i>
             </div>
           </div>

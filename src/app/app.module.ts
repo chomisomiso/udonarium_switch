@@ -42,6 +42,7 @@ import { MovableDirective } from 'directive/movable.directive';
 import { ResizableDirective } from 'directive/resizable.directive';
 import { RotableDirective } from 'directive/rotable.directive';
 import { TooltipDirective } from 'directive/tooltip.directive';
+import { TargetableDirective } from 'directive/targetable.directive';
 import { SafePipe } from 'pipe/safe.pipe';
 
 import { AppConfigService } from 'service/app-config.service';
@@ -52,6 +53,7 @@ import { ModalService } from 'service/modal.service';
 import { PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 import { TabletopService } from 'service/tabletop.service';
+import { GameCharacterTargetingService } from 'service/game-character-targeting.service';
 
 import { AppComponent } from './app.component';
 
@@ -99,6 +101,7 @@ import { AppComponent } from './app.component';
     DraggableDirective,
     ResizableDirective,
     ChatInputComponent,
+    TargetableDirective,
   ],
   imports: [
     BrowserModule,
@@ -115,6 +118,7 @@ import { AppComponent } from './app.component';
     PanelService,
     PointerDeviceService,
     TabletopService,
+    GameCharacterTargetingService,
   ],
   bootstrap: [AppComponent]
 })

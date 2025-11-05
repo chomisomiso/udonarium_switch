@@ -29,6 +29,7 @@ import { GridLineRender } from './grid-line-render';
 import { TableMouseGesture } from './table-mouse-gesture';
 import { TablePickGesture } from './table-pick-gesture';
 import { TableTouchGesture } from './table-touch-gesture';
+import { GameCharacterTargetingService } from 'service/game-character-targeting.service';
 
 @Component({
   selector: 'game-table',
@@ -86,6 +87,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     private tabletopActionService: TabletopActionService,
     private selectionService: TabletopSelectionService,
     private modalService: ModalService,
+    private targetingService: GameCharacterTargetingService,
   ) { }
 
   ngOnInit() {
@@ -149,6 +151,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
       this.pickArea.nativeElement,
       this.pointerDeviceService,
       this.selectionService,
+      this.targetingService,
     );
 
     this.pickGesture.onstart = this.onTablePickStart.bind(this);

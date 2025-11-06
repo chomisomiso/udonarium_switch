@@ -81,6 +81,7 @@ export class TablePickGesture {
 
     this.clearKeyDownTimer();
     this.clearTappedTimer();
+    this.clearClickTimer();
   }
 
   destroy() {
@@ -88,6 +89,7 @@ export class TablePickGesture {
     this.input.destroy();
     this.clearKeyDownTimer();
     this.clearTappedTimer();
+    this.clearClickTimer();
   }
 
   private onInputStart(e: MouseEvent | TouchEvent) {
@@ -162,7 +164,6 @@ export class TablePickGesture {
   private onInputTap(e: MouseEvent | TouchEvent) {
     this.setTappedTimer();
     this.tappedPointer = this.input.pointer;
-    if (this.isMagneticMode) this.targetObject(e);
   }
 
   private onKeydown(e: KeyboardEvent) {

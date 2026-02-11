@@ -18,6 +18,7 @@ import { TextNote } from '@udonarium/text-note';
 import { GameTableSettingComponent } from 'component/game-table-setting/game-table-setting.component';
 import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
 import { CoordinateService } from 'service/coordinate.service';
+import { GameCharacterTargetingService } from 'service/game-character-targeting.service';
 import { ImageService } from 'service/image.service';
 import { ModalService } from 'service/modal.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
@@ -86,6 +87,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     private tabletopActionService: TabletopActionService,
     private selectionService: TabletopSelectionService,
     private modalService: ModalService,
+    private targetingService: GameCharacterTargetingService,
   ) { }
 
   ngOnInit() {
@@ -149,6 +151,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
       this.pickArea.nativeElement,
       this.pointerDeviceService,
       this.selectionService,
+      this.targetingService,
     );
 
     this.pickGesture.onstart = this.onTablePickStart.bind(this);

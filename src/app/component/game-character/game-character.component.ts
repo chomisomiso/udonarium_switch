@@ -22,6 +22,8 @@ import { ImageService } from 'service/image.service';
 import { PanelOption, PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 import { SelectionState, TabletopSelectionService } from 'service/tabletop-selection.service';
+import { GameCharacterTargetingService } from 'service/game-character-targeting.service';
+import { TargetableOption } from 'directive/targetable.directive';
 
 @Component({
   selector: 'game-character',
@@ -60,12 +62,14 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
   get selectionState(): SelectionState { return this.selectionService.state(this.gameCharacter); }
   get isSelected(): boolean { return this.selectionState !== SelectionState.NONE; }
   get isMagnetic(): boolean { return this.selectionState === SelectionState.MAGNETIC; }
+  get isTargeted(): boolean { return this.targetingService.getState(this.gameCharacter); }
 
   gridSize: number = 50;
 
   movableOption: MovableOption = {};
   rotableOption: RotableOption = {};
   rollOption: RotableOption = {};
+  targetableOption: TargetableOption = {};
 
   constructor(
     private imageService: ImageService,
@@ -73,7 +77,8 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
     private panelService: PanelService,
     private changeDetector: ChangeDetectorRef,
     private selectionService: TabletopSelectionService,
-    private pointerDeviceService: PointerDeviceService
+    private pointerDeviceService: PointerDeviceService,
+    private targetingService: GameCharacterTargetingService
   ) { }
 
   ngOnChanges(): void {
@@ -93,6 +98,9 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
       })
       .on(`UPDATE_SELECTION/identifier/${this.gameCharacter?.identifier}`, event => {
         this.changeDetector.markForCheck();
+      })
+      .on(`UPDATE_TARGET/identifier/${this.gameCharacter?.identifier}`, event => {
+        this.changeDetector.markForCheck();
       });
     this.movableOption = {
       tabletopObject: this.gameCharacter,
@@ -105,6 +113,9 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
     this.rollOption = {
       tabletopObject: this.gameCharacter,
       targetPropertyName: 'roll',
+    };
+    this.targetableOption = {
+      gameCharacter: this.gameCharacter,
     };
   }
 

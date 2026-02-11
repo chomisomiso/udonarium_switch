@@ -24,16 +24,38 @@ interface ResultList {
 export class ResourceCommandHandler extends ChatCommandHandler {
   
   async processMessage(chatMessage: ChatMessage, tabIdentifier: string) {
-    let commands = this.extractCommand(chatMessage.text);
+    let text = '';
+    let id = '';
 
-    let result  = await this.executeCommands(commands, chatMessage.tag, chatMessage.characterId);
-    if (!result) return;
+    let [selfCommands, targetCommands] = this.extractCommand(chatMessage.text);
+
+    let result  = await this.executeCommands(selfCommands, chatMessage.tag, chatMessage.characterId);
+    if (result) {
+      text += result.text;
+      id = result.id.split(':')[0];
+    }
+
+    if (targetCommands.length > 0) {
+      let targetIdentifiers = chatMessage.targetIdentifiersArray;
+      for (let targetIdentifier of targetIdentifiers) {
+        let target = ObjectStore.instance.get<GameCharacter>(targetIdentifier);
+        if (!(target instanceof GameCharacter)) continue;
+        
+        result = await this.executeCommands(targetCommands, chatMessage.tag, target.identifier);
+        if (result) {
+          text += `[${target.name}]\n` + result.text;
+          if (id === '') id = result.id.split(':')[0];
+        }
+      }
+    }
+
+    if (text === '') return;
 
     let context: ResultMessageContext = {
       from: 'System-ResourceEdit',
       tag: `system resourceEdit`,
-      result: result.text,
-      name: `${result.id.split(':')[0]} : ${chatMessage.name}`,
+      result: text,
+      name: `${id} : ${chatMessage.name}`,
     };
 
     this.sendResultMessage(context, chatMessage, tabIdentifier);
@@ -42,22 +64,24 @@ export class ResourceCommandHandler extends ChatCommandHandler {
   /***
    * チャットメッセージからリソース操作コマンドを抽出する
    * @param text チャットメッセージのテキスト
-   * @returns 抽出されたコマンド配列
+   * @returns 抽出されたコマンド配列[自己対象コマンド群, 対他対象コマンド群]
    */
-  private extractCommand(text: string): ResourceCommand[] {
-    let commands: ResourceCommand[] = new Array<ResourceCommand>;
+  private extractCommand(text: string): [selfResourceCommands: ResourceCommand[], targetResourceCommands: ResourceCommand[]] {
+    let selfResourceCommands: ResourceCommand[] = new Array<ResourceCommand>;
+    let targetResourceCommands: ResourceCommand[] = new Array<ResourceCommand>;
 
     let checkTexts: string[] = StringUtil.toHalfWidth(text).trim().split(/\s+/);
     
     for (let t of checkTexts) {
-      let regArray = t.match((/:[^\+\-\=\>:]+[\+\-\=\>][^:]+/ig));
+      let regArray = t.match((/t?:[^\+\-\=\>:]+[\+\-\=\>][^:]+/ig));
       if (!regArray) continue;
 
       for (let c of regArray) {
-        let res = c.match(/^:([^\+\-\=\>:]+)([\+\-\=\>])([^:]+)/);
-        let resource = res[1];
-        let operator = res[2];
-        let command  = res[3];
+        let res = c.match(/^(t?):([^\+\-\=\>:]+)([\+\-\=\>])([^:]+)/);
+        let isTargeting = res[1] === 't';
+        let resource = res[2];
+        let operator = res[3];
+        let command  = res[4];
         let optionL = /LZ?$/i.test(command);
         let optionZ = /ZL?$/i.test(command);
         let optionMax = /\^$/.test(resource);
@@ -68,18 +92,30 @@ export class ResourceCommandHandler extends ChatCommandHandler {
         let isCalc: boolean = !/[^d\d\(\)\+\-\*\/]/.test(command);
         if (isCalc) command = (operator=='-' ? '-' : '') + command + '+(1d1-1)';
 
-        commands.push({
-          resource: resource,
-          operator: operator,
-          command: command,
-          isCalculate: isCalc,
-          enableOptionL: optionL,
-          enableOptionZ: optionZ,
-          enableOptionMax: optionMax,
-        });
+        if (isTargeting) {
+          targetResourceCommands.push({
+            resource: resource,
+            operator: operator,
+            command: command,
+            isCalculate: isCalc,
+            enableOptionL: optionL,
+            enableOptionZ: optionZ,
+            enableOptionMax: optionMax,
+          });
+        } else {
+          selfResourceCommands.push({
+            resource: resource,
+            operator: operator,
+            command: command,
+            isCalculate: isCalc,
+            enableOptionL: optionL,
+            enableOptionZ: optionZ,
+            enableOptionMax: optionMax,
+          });
+        }
       }
     }
-    return commands;
+    return [selfResourceCommands, targetResourceCommands];
   }
 
   /***

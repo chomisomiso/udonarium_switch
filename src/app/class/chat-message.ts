@@ -17,6 +17,7 @@ export interface ChatMessageContext {
   tag?: string;
   dicebot?: string;
   imageIdentifier?: string;
+  targetIds?: string;
 }
 
 @SyncObject('chat')
@@ -25,6 +26,7 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
   @SyncVar() from: string;
   @SyncVar() to: string;
   @SyncVar() characterId: string;
+  @SyncVar() targetIds: string;
   @SyncVar() name: string;
   @SyncVar() tag: string;
   @SyncVar() dicebot: string;
@@ -60,6 +62,15 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
   get isEdited(): boolean { return this._isEdited; }
   set isEdited(value: boolean) { if (value) this._isEdited = true; }
 
+  private _targetIdentifiers: string;
+  private _targetIdentifiersArray: string[] = [];
+  get targetIdentifiersArray(): string[] {
+    if (this._targetIdentifiers !== this.targetIds) {
+      this._targetIdentifiers = this.targetIds;
+      this._targetIdentifiersArray = this.targetIds != null && 0 < this.targetIds.trim().length ? this.targetIds.trim().split(/\s+/) : [];
+    }
+    return this._targetIdentifiersArray;
+  }
   get image(): ImageFile { return ImageStorage.instance.get(this.imageIdentifier); }
   get index(): number { return this.minorIndex + this.timestamp; }
   get isDirect(): boolean { return 0 < this.sendTo.length ? true : false; }

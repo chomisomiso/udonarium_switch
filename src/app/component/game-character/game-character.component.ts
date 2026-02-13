@@ -11,6 +11,7 @@ import {
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
 import { EventSystem, Network } from '@udonarium/core/system';
 import { MathUtil } from '@udonarium/core/system/util/math-util';
+import { DataElement } from '@udonarium/data-element';
 import { GameCharacter } from '@udonarium/game-character';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { ChatPaletteComponent } from 'component/chat-palette/chat-palette.component';
@@ -63,6 +64,11 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
   get isSelected(): boolean { return this.selectionState !== SelectionState.NONE; }
   get isMagnetic(): boolean { return this.selectionState === SelectionState.MAGNETIC; }
   get isTargeted(): boolean { return this.targetingService.getState(this.gameCharacter); }
+
+  get buffs(): DataElement[] { return this.gameCharacter.getBuffs(); }
+  get hasExpiredBuffs(): boolean { return this.buffs.some(b => b.currentValue !== '' && Number(b.currentValue) <= 0); }
+  buffExpanded: boolean = false;
+  toggleBuffExpanded(): void { this.buffExpanded = !this.buffExpanded; }
 
   gridSize: number = 50;
 

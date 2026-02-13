@@ -22,9 +22,20 @@
           <div class="rotate-inner is-3d">
             <ng-container *ngIf="0 < name.length">
               <div *ngFor="let rotateY of ['0', '180deg']"
-                class="name-tag is-nowrap is-black-background"
-                [ngStyle]="{'transform': 'translateX(-50%) translateX(' + size * gridSize / 2 +'px) rotateY(' + rotateY + ')'}">
+                class="name-tag is-black-background"
+                [ngStyle]="{'transform': 'translateX(-50%) translateX(' + size * gridSize / 2 +'px) rotateY(' + rotateY + ')'}"
+                (click)="buffs.length > 0 ? toggleBuffExpanded() : null; $event.stopPropagation()">
                 <div class="has-length-limit">{{name}}</div>
+                <div class="buff-indicator" *ngIf="buffs.length > 0">
+                  <div *ngIf="!buffExpanded" class="buff-collapsed">▶ バフ×{{buffs.length}}<span *ngIf="hasExpiredBuffs" class="buff-expired"> ！</span></div>
+                  <div *ngIf="buffExpanded" class="buff-detail">
+                    <div class="buff-collapse-hint">▼</div>
+                    <div *ngFor="let buff of buffs" class="buff-item"
+                      [title]="buff.value ? buff.value : ''">
+                      {{buff.name}} <span class="buff-round" [class.buff-expired]="buff.currentValue !== '' && +buff.currentValue <= 0">{{buff.currentValue !== '' ? buff.currentValue + 'R' : '∞'}}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </ng-container>
             <img class="image chrome-smooth-image-trick" *ngIf="0 < imageFile.url.length" [src]="imageFile.url | safe: 'resourceUrl'">

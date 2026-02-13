@@ -176,4 +176,102 @@ export class GameCharacter extends TabletopObject {
     }
     return false;
   }
+
+  // --- バフ操作 ---
+
+  getBuffs(): DataElement[] {
+    return this.detailDataElement.getElementsByType('buff');
+  }
+
+  addBuff(name: string, expire: number | null, effect: string): DataElement {
+    let parent = this.detailDataElement.getFirstElementByName(`バフ`);
+    if (!parent) {
+      parent = DataElement.create('バフ', '', {}, 'バフ' + this.identifier);
+      this.detailDataElement.appendChild(parent);
+    }
+    let buff = DataElement.create(name, effect, { type: 'buff', currentValue: expire != null ? String(expire) : '' });
+    parent.appendChild(buff);
+
+    let resArray = effect.match(/[^\+\-\=\>:]+[\+\-\=\>]\d+/ig);
+    if (resArray) {
+      for (let s of resArray) {
+        let res = s.match(/([^,\+\-\=\>:]+)([\+\-\=\>])(\d+)/);
+        if (!res) continue;
+        let val = Number(this.getCurrentDataValue(res[1]));
+        switch (res[2]) {
+          case '+':
+            val += Number(res[3]);
+            break;
+          case '-':
+            val -= Number(res[3]);
+            break;
+          default:
+            val = Number(res[3]);
+            break;
+        }
+        this.setCurrentDataValue(res[1], val);
+      }
+    }
+    return buff;
+  }
+
+  removeBuff(name: string): boolean {
+    let parent = this.detailDataElement.getFirstElementByName(`バフ`);
+    if (!parent) return false;
+    let buff = parent.getFirstElementByName(name);
+    if (!buff || !buff.isBuff) return false;
+    parent.removeChild(buff);
+    
+    let resArray = buff.value.toString().match(/[^\+\-\=\>:]+[\+\-\=\>]\d+/ig);
+    console.log(buff.value, resArray)
+    if (resArray) {
+      for (let s of resArray) {
+        let res = s.match(/([^,\+\-\=\>:]+)([\+\-\=\>])(\d+)/);
+        if (!res) continue;
+        let val = Number(this.getCurrentDataValue(res[1]));
+        switch (res[2]) {
+          case '+':
+            val -= Number(res[3]);
+            break;
+          case '-':
+            val += Number(res[3]);
+            break;
+          default:
+            break;
+        }
+        this.setCurrentDataValue(res[1], val);
+      }
+    }
+
+    if (parent.children.length === 0) {
+      this.detailDataElement.removeChild(parent);
+    }
+    return true;
+  }
+
+  removeExpiredBuffs(): DataElement[] {
+    let parent = this.detailDataElement.getFirstElementByName(`バフ`);
+    if (!parent) return [];
+    let removed: DataElement[] = [];
+    for (let buff of this.getBuffs()) {
+      if (buff.currentValue !== '' && Number(buff.currentValue) <= 0) {
+          this.removeBuff(buff.name);
+          removed.push(buff);
+      }
+    }
+    if (parent.children.length === 0) {
+      this.detailDataElement.removeChild(parent);
+    }
+    return removed;
+  }
+
+  changeAllBuffRounds(delta: number): void {
+    let parent = this.detailDataElement.getFirstElementByName(`バフ`);
+    if (!parent) return;
+    for (let buff of this.getBuffs()) {
+      if (buff.currentValue !== '') {
+        buff.currentValue = Number(buff.currentValue) + delta;
+      }
+    }
+  }
 }

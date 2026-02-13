@@ -11,6 +11,7 @@ export class DataElement extends ObjectNode {
 
   get isNumberResource(): boolean { return this.type != null && this.type === 'numberResource'; }
   get isNote(): boolean { return this.type != null && this.type === 'note'; }
+  get isBuff(): boolean { return this.type != null && this.type === 'buff'; }
 
   public static create(name: string, value: number | string = '', attributes: Attributes = {}, identifier: string = ''): DataElement {
     let dataElement: DataElement;

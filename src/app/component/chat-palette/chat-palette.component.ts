@@ -3,11 +3,11 @@ import { ChatPalette } from '@udonarium/chat-palette';
 import { ChatTab } from '@udonarium/chat-tab';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem } from '@udonarium/core/system';
-import { DiceBot } from '@udonarium/dice-bot';
 import { GameCharacter } from '@udonarium/game-character';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { ChatInputComponent } from 'component/chat-input/chat-input.component';
 import { ChatMessageService } from 'service/chat-message.service';
+import { DiceBot } from '@udonarium/dice-bot';
 import { PanelService } from 'service/panel.service';
 
 @Component({
@@ -43,7 +43,7 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
 
   private doubleClickTimer: NodeJS.Timeout = null;
 
-  get diceBotInfos() { return DiceBot.diceBotInfos }
+  get diceBotInfos() { return DiceBot.infos }
 
   get chatTab(): ChatTab { return ObjectStore.instance.get<ChatTab>(this.chatTabidentifier); }
   get myPeer(): PeerCursor { return PeerCursor.myCursor; }

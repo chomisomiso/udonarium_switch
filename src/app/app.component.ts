@@ -17,6 +17,7 @@ import { DataSummarySetting } from '@udonarium/data-summary-setting';
 import { DiceBot } from '@udonarium/dice-bot';
 import { Jukebox } from '@udonarium/Jukebox';
 import { PeerCursor } from '@udonarium/peer-cursor';
+import { DiceRollHandler } from '@udonarium/dice-roll-handler';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TableSelecter } from '@udonarium/table-selecter';
 
@@ -83,9 +84,12 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     ChatTabList.instance.initialize();
     DataSummarySetting.instance.initialize();
 
-    let diceBot: DiceBot = new DiceBot('DiceBot');
+    let diceBot: DiceRollHandler = new DiceRollHandler('DiceBot');
     diceBot.initialize();
-    DiceBot.getHelpMessage('').then(() => this.lazyNgZoneUpdate(true));
+    ObjectStore.instance.add(diceBot);
+    DiceBot.initialize().then(() => {
+      DiceBot.getHelpMessage('').then(() => this.lazyNgZoneUpdate(true));
+    });
 
     let jukebox: Jukebox = new Jukebox('Jukebox');
     jukebox.initialize();

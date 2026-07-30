@@ -5,12 +5,12 @@ import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem, Network } from '@udonarium/core/system';
 import { PeerContext } from '@udonarium/core/system/network/peer-context';
 import { ResettableTimeout } from '@udonarium/core/system/util/resettable-timeout';
-import { DiceBot } from '@udonarium/dice-bot';
 import { GameCharacter } from '@udonarium/game-character';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { TextViewComponent } from 'component/text-view/text-view.component';
 import { BatchService } from 'service/batch.service';
 import { ChatMessageService } from 'service/chat-message.service';
+import { DiceBot } from '@udonarium/dice-bot';
 import { PanelOption, PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 
@@ -78,7 +78,7 @@ export class ChatInputComponent implements OnInit, OnDestroy {
   writingPeers: Map<string, ResettableTimeout> = new Map();
   writingPeerNames: string[] = [];
 
-  get diceBotInfos() { return DiceBot.diceBotInfos }
+  get diceBotInfos() { return DiceBot.infos }
   get myPeer(): PeerCursor { return PeerCursor.myCursor; }
   get otherPeers(): PeerCursor[] { return ObjectStore.instance.getObjects(PeerCursor); }
 
@@ -234,7 +234,7 @@ export class ChatInputComponent implements OnInit, OnDestroy {
       this.gameHelp = help;
 
       let gameName: string = 'ダイスボット';
-      for (let diceBotInfo of DiceBot.diceBotInfos) {
+      for (let diceBotInfo of DiceBot.infos) {
         if (diceBotInfo.id === this.gameType) {
           gameName = 'ダイスボット<' + diceBotInfo.name + '＞'
         }

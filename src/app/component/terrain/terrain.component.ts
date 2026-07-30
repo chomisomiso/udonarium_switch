@@ -14,7 +14,7 @@ import { ImageFile } from '@udonarium/core/file-storage/image-file';
 import { EventSystem } from '@udonarium/core/system';
 import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
-import { Terrain, TerrainViewState } from '@udonarium/terrain';
+import { SlopeDirection, Terrain, TerrainViewState } from '@udonarium/terrain';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
 import { InputHandler } from 'directive/input-handler';
 import { MovableOption } from 'directive/movable.directive';
@@ -61,6 +61,70 @@ export class TerrainComponent implements OnChanges, OnDestroy, AfterViewInit {
   get isSelected(): boolean { return this.selectionState !== SelectionState.NONE; }
   get isMagnetic(): boolean { return this.selectionState === SelectionState.MAGNETIC; }
 
+  get isSurfaceShading(): boolean { return this.terrain.isSurfaceShading; }
+  set isSurfaceShading(isSurfaceShading: boolean) { this.terrain.isSurfaceShading = isSurfaceShading; }
+
+  get isSlope(): boolean { return this.terrain.isSlope; }
+  set isSlope(isSlope: boolean) {
+    this.terrain.isSlope = isSlope;
+    if (!isSlope) this.terrain.slopeDirection = SlopeDirection.NONE;
+  }
+
+  get slopeDirection(): number {
+    if (!this.terrain.isSlope) return SlopeDirection.NONE;
+    if (this.terrain.isSlope && this.terrain.slopeDirection === SlopeDirection.NONE) return SlopeDirection.BOTTOM;
+    return this.terrain.slopeDirection;
+  }
+  set slopeDirection(slopeDirection: number) {
+    this.terrain.isSlope = (slopeDirection != SlopeDirection.NONE);
+    this.terrain.slopeDirection = slopeDirection;
+  }
+
+  get floorModCss(): string {
+    let ret = '';
+    let tmp = 0;
+    switch (this.slopeDirection) {
+      case SlopeDirection.TOP:
+        tmp = Math.atan(this.height / this.depth);
+        ret = ' rotateX(' + tmp + 'rad) scaleY(' + (1 / Math.cos(tmp)) + ')';
+        break;
+      case SlopeDirection.BOTTOM:
+        tmp = Math.atan(this.height / this.depth);
+        ret = ' rotateX(' + -tmp + 'rad) scaleY(' + (1 / Math.cos(tmp)) + ')';
+        break;
+      case SlopeDirection.LEFT:
+        tmp = Math.atan(this.height / this.width);
+        ret = ' rotateY(' + -tmp + 'rad) scaleX(' + (1 / Math.cos(tmp)) + ')';
+        break;
+      case SlopeDirection.RIGHT:
+        tmp = Math.atan(this.height / this.width);
+        ret = ' rotateY(' + tmp + 'rad) scaleX(' + (1 / Math.cos(tmp)) + ')';
+        break;
+    }
+    return ret;
+  }
+
+  get floorBrightness(): number {
+    let ret = 1.0;
+    if (!this.isSurfaceShading) return ret;
+    switch (this.slopeDirection) {
+      case SlopeDirection.TOP:
+        ret = 0.4;
+        break;
+      case SlopeDirection.BOTTOM:
+        ret = 1.0;
+        break;
+      case SlopeDirection.LEFT:
+        ret = 0.6;
+        break;
+      case SlopeDirection.RIGHT:
+        ret = 0.9;
+        break;
+    }
+    return ret;
+  }
+
+  slopeDirectionState = SlopeDirection;
   gridSize: number = 50;
 
   movableOption: MovableOption = {};
@@ -227,6 +291,47 @@ export class TerrainComponent implements OnChanges, OnDestroy, AfterViewInit {
       } : {
         name: '壁を表示', action: () => {
           this.mode = TerrainViewState.ALL;
+        }
+      }));
+    actions.push(ContextMenuSeparator);
+    actions.push({
+      name: '傾斜', action: null, subActions: [
+        {
+          name: `${this.slopeDirection == SlopeDirection.NONE ? '◉' : '○'} なし`, action: () => {
+            this.slopeDirection = SlopeDirection.NONE;
+          }
+        },
+        ContextMenuSeparator,
+        {
+          name: `${this.slopeDirection == SlopeDirection.TOP ? '◉' : '○'} 上（北）`, action: () => {
+            this.slopeDirection = SlopeDirection.TOP;
+          }
+        },
+        {
+          name: `${this.slopeDirection == SlopeDirection.BOTTOM ? '◉' : '○'} 下（南）`, action: () => {
+            this.slopeDirection = SlopeDirection.BOTTOM;
+          }
+        },
+        {
+          name: `${this.slopeDirection == SlopeDirection.LEFT ? '◉' : '○'} 左（西）`, action: () => {
+            this.slopeDirection = SlopeDirection.LEFT;
+          }
+        },
+        {
+          name: `${this.slopeDirection == SlopeDirection.RIGHT ? '◉' : '○'} 右（東）`, action: () => {
+            this.slopeDirection = SlopeDirection.RIGHT;
+          }
+        }
+      ]
+    });
+    actions.push((this.isSurfaceShading
+      ? {
+        name: '☑ 面の陰影', action: () => {
+          this.isSurfaceShading = false;
+        }
+      } : {
+        name: '☐ 面の陰影', action: () => {
+          this.isSurfaceShading = true;
         }
       }));
     if (!this.isLocked) {

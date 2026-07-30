@@ -27,9 +27,11 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
   @SyncVar() tag: string;
   @SyncVar() dicebot: string;
   @SyncVar() imageIdentifier: string;
+  @SyncVar() private _isEdited: boolean = false;
 
   get tabIdentifier(): string { return this.parent.identifier; }
   get text(): string { return <string>this.value }
+  set text(value: string) { this.value = value; }
   get timestamp(): number {
     let timestamp = this.getAttribute('timestamp');
     let num = timestamp ? +timestamp : 0;
@@ -53,6 +55,9 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
     }
     return this._tags;
   }
+  get isEdited(): boolean { return this._isEdited; }
+  set isEdited(value: boolean) { if (value) this._isEdited = true; }
+
   get image(): ImageFile { return ImageStorage.instance.get(this.imageIdentifier); }
   get index(): number { return this.minorIndex + this.timestamp; }
   get isDirect(): boolean { return 0 < this.sendTo.length ? true : false; }
@@ -62,4 +67,5 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
   get isSystem(): boolean { return -1 < this.tags.indexOf('system') ? true : false; }
   get isDicebot(): boolean { return this.isSystem && this.from === 'System-BCDice' ? true : false; }
   get isSecret(): boolean { return -1 < this.tags.indexOf('secret') ? true : false; }
+  get isEditable(): boolean { return this.isSendFromSelf && !this.isSystem; }
 }

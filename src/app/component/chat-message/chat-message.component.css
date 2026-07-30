@@ -63,6 +63,12 @@
   white-space: pre-wrap;
 }
 
+/* ルビは innerHTML で挿入されるため _ngcontent 属性が付かず、::ng-deep が必要。
+   親の white-space: pre-wrap がルビの行分割を乱すので打ち消す。 */
+.msg-text ::ng-deep ruby {
+  white-space: normal;
+}
+
 .dicebot-message .msg-name {
   font-size: 8px;
 }
@@ -73,4 +79,29 @@
 
 .direct-message.dicebot-message .msg-text {
   /*color:#CCF;*/
+}
+
+.msg-edit-button {
+  display: inline-block;
+  margin-left: 1em;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 0.3em;
+  padding: 0em 0.5em;
+  height: 100%;
+  background: rgba(242, 165, 116, 0.5);
+}
+.msg-edit-button:hover {
+  background: rgba(242, 165, 116, 0.8);
+  cursor: pointer;
+}
+
+.chat-editor {
+  resize: none;
+  width: 100%;
+  height: auto;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
 }

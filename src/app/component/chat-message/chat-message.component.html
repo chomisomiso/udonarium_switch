@@ -9,17 +9,34 @@
         <span class="msg-name">{{chatMessage.name}}</span>
         <span class='tip msg-from'>{{chatMessage.from}}</span>
         <span class='tip msg-timestamp'>{{chatMessage.timestamp | date:'y/M/d H:mm'}}</span>
+        <span class="tip msg-edited" *ngIf="chatMessage.isEdited">編集済</span>
+        <button class="msg-edit-button" *ngIf="chatMessage.isEditable" (click)="startEdit()">編集</button>
       </div>
       <div class="text msg-text">
-        <ng-container *ngIf="!chatMessage.isSecret || chatMessage.isSendFromSelf; then visible; else secret"></ng-container>
+        <ng-container [ngSwitch]="isEditing ? 'editing' : (!chatMessage.isSecret || chatMessage.isSendFromSelf ? 'visible' : 'secret')">
+          <ng-container *ngSwitchCase="'visible'">
+            <ng-container *ngTemplateOutlet="visible"></ng-container>
+          </ng-container>
+          <ng-container *ngSwitchCase="'secret'">
+            <ng-container *ngTemplateOutlet="secret"></ng-container>
+          </ng-container>
+          <ng-container *ngSwitchCase="'editing'">
+            <ng-container *ngTemplateOutlet="editing"></ng-container>
+          </ng-container>
+        </ng-container>
       </div>
     </div>
   </div>
 </div>
 <ng-template #visible>
-  <span>{{chatMessage.text}}</span>
+  <span [innerHTML]="rubiedText"></span>
   <button *ngIf="chatMessage.isSecret" (click)="discloseMessage()">結果を公開</button>
 </ng-template>
 <ng-template #secret>
   <span>（シークレットダイス）</span>
+</ng-template>
+<ng-template #editing>
+  <textarea class="chat-editor" [(ngModel)]="editingText"></textarea>
+  <button (click)="saveEdit()">保存</button>
+  <button (click)="cancelEdit()">キャンセル</button>
 </ng-template>

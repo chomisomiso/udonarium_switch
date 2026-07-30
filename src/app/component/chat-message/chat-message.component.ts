@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core
 
 import { ChatMessage } from '@udonarium/chat-message';
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
+import { StringUtil } from '@udonarium/core/system/util/string-util';
 import { ChatMessageService } from 'service/chat-message.service';
 
 @Component({
@@ -33,6 +34,15 @@ export class ChatMessageComponent implements OnInit {
   imageFile: ImageFile = ImageFile.Empty;
   animeState: string = 'inactive';
 
+  private _isEditing: boolean = false;
+  get isEditing(): boolean { return this._isEditing; }
+  editingText: string = '';
+
+  /** ルビ記法を <ruby> に変換した表示用HTML。safeパイプは通さず、Angularのサニタイザに検証させる。 */
+  get rubiedText(): string {
+    return StringUtil.rubyToHtml(StringUtil.escapeHtml(this.chatMessage.text));
+  }
+
   constructor(
     private chatMessageService: ChatMessageService
   ) { }
@@ -46,5 +56,24 @@ export class ChatMessageComponent implements OnInit {
 
   discloseMessage() {
     this.chatMessage.tag = this.chatMessage.tag.replace('secret', '');
+  }
+
+  startEdit() {
+    this._isEditing = true;
+    this.editingText = this.chatMessage.text;
+  }
+
+  saveEdit() {
+    this._isEditing = false;
+    if (this.chatMessage.text !== this.editingText) {
+      this.chatMessage.isEdited = true;
+      this.chatMessage.text = this.editingText;
+    }
+    this.editingText = '';
+  }
+
+  cancelEdit() {
+    this._isEditing = false;
+    this.editingText = '';
   }
 }

@@ -18,6 +18,7 @@ import { DiceBot } from '@udonarium/dice-bot';
 import { Jukebox } from '@udonarium/Jukebox';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { DiceRollHandler } from '@udonarium/dice-roll-handler';
+import { ResourceCommandHandler } from '@udonarium/resource-command-handler';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TableSelecter } from '@udonarium/table-selecter';
 
@@ -90,6 +91,10 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     DiceBot.initialize().then(() => {
       DiceBot.getHelpMessage('').then(() => this.lazyNgZoneUpdate(true));
     });
+
+    let resourceEditor: ResourceCommandHandler = new ResourceCommandHandler('ResourceEditor');
+    resourceEditor.initialize();
+    ObjectStore.instance.add(resourceEditor);
 
     let jukebox: Jukebox = new Jukebox('Jukebox');
     jukebox.initialize();

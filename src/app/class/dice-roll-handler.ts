@@ -6,7 +6,7 @@ import { ChatCommandHandler, ResultMessageContext } from './chat-command-handler
 export class DiceRollHandler extends ChatCommandHandler {
 
   // processMessage implementation
-  async processMessage(chatMessage: ChatMessage): Promise<void> {
+  async processMessage(chatMessage: ChatMessage, tabIdentifier: string): Promise<void> {
     let text: string = StringUtil.toHalfWidth(chatMessage.text).trim();
     let gameType: string = chatMessage.tag;
 
@@ -23,7 +23,7 @@ export class DiceRollHandler extends ChatCommandHandler {
       let rollResult = await DiceBot.diceRollAsync(rollText, gameType);
       if (!rollResult.result) return;
       let context = this.makeResultMessageContext(rollResult, chatMessage.name)
-      this.sendResultMessage(context, chatMessage);
+      this.sendResultMessage(context, chatMessage, tabIdentifier);
     } catch (e) {
       console.error(e);
     }

@@ -20,7 +20,7 @@ export abstract class ChatCommandHandler extends GameObject {
         let chatMessage = ObjectStore.instance.get<ChatMessage>(event.data.messageIdentifier);
         if (!chatMessage || !chatMessage.isSendFromSelf || chatMessage.isSystem) return;
 
-        await this.processMessage(chatMessage);
+        await this.processMessage(chatMessage, event.data.tabIdentifier);
         return;
       });
   }
@@ -31,9 +31,9 @@ export abstract class ChatCommandHandler extends GameObject {
     EventSystem.unregister(this);
   }
 
-  abstract processMessage(chatMessage: ChatMessage): Promise<void>;
+  abstract processMessage(chatMessage: ChatMessage, tabIdentifier: string): Promise<void>;
 
-  protected sendResultMessage(context: ResultMessageContext, originalMessage: ChatMessage) {
+  protected sendResultMessage(context: ResultMessageContext, originalMessage: ChatMessage, tabIdentifier: string) {
     let from: string = context.from;
     let result: string = context.result;
     let tag: string = context.tag;
@@ -43,9 +43,10 @@ export abstract class ChatCommandHandler extends GameObject {
 
     let diceBotMessage: ChatMessageContext = {
       identifier: '',
-      tabIdentifier: originalMessage.tabIdentifier,
+      tabIdentifier: tabIdentifier,
       originFrom: originalMessage.from,
       from: from,
+      characterId: '',
       timestamp: originalMessage.timestamp + 1,
       imageIdentifier: '',
       tag: tag,
@@ -59,7 +60,7 @@ export abstract class ChatCommandHandler extends GameObject {
         diceBotMessage.to += ' ' + originalMessage.from;
       }
     }
-    let chatTab = ObjectStore.instance.get<ChatTab>(originalMessage.tabIdentifier);
+    let chatTab = ObjectStore.instance.get<ChatTab>(tabIdentifier);
     if (chatTab) chatTab.addMessage(diceBotMessage);
   }
 }

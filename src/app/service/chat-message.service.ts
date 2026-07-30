@@ -20,7 +20,7 @@ export class ChatMessageService {
     'https://worldtimeapi.org/api/ip',
   ];
 
-  gameType: string = '';
+  gameType: string = 'SwordWorld2.5';
 
   constructor() { }
 

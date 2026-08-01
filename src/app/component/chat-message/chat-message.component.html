@@ -10,7 +10,9 @@
         <span class='tip msg-from'>{{chatMessage.from}}</span>
         <span class='tip msg-timestamp'>{{chatMessage.timestamp | date:'y/M/d H:mm'}}</span>
         <span class="tip msg-edited" *ngIf="chatMessage.isEdited">編集済</span>
-        <button class="msg-edit-button" *ngIf="chatMessage.isEditable" (click)="startEdit()">編集</button>
+        <button class="msg-edit-button" *ngIf="chatMessage.isEditable && !isEditing" (click)="startEdit()">編集</button>
+        <button class="msg-edit-button" *ngIf="chatMessage.isEditable && isEditing" (click)="saveEdit()">保存</button>
+        <button class="msg-edit-button" *ngIf="chatMessage.isEditable && isEditing" (click)="cancelEdit()">キャンセル</button>
       </div>
       <div class="text msg-text">
         <ng-container [ngSwitch]="isEditing ? 'editing' : (!chatMessage.isSecret || chatMessage.isSendFromSelf ? 'visible' : 'secret')">
@@ -37,6 +39,4 @@
 </ng-template>
 <ng-template #editing>
   <textarea class="chat-editor" [(ngModel)]="editingText"></textarea>
-  <button (click)="saveEdit()">保存</button>
-  <button (click)="cancelEdit()">キャンセル</button>
 </ng-template>

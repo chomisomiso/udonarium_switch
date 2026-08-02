@@ -16,6 +16,7 @@ import { GameCharacter } from '@udonarium/game-character';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { ChatPaletteComponent } from 'component/chat-palette/chat-palette.component';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
+import { TabletopObjectSettingComponent } from 'component/tabletop-object-setting/tabletop-object-setting.component';
 import { MovableOption } from 'directive/movable.directive';
 import { RotableOption } from 'directive/rotable.directive';
 import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
@@ -217,6 +218,7 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
 
     actions.push({ name: '詳細を表示', action: () => { this.showDetail(this.gameCharacter); } });
     actions.push({ name: 'チャットパレットを表示', action: () => { this.showChatPalette(this.gameCharacter) } });
+    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, this.gameCharacter, this.pointerDeviceService.pointers[0]) });
     actions.push(ContextMenuSeparator);
     actions.push({
       name: '共有イベントリに移動', action: () => {

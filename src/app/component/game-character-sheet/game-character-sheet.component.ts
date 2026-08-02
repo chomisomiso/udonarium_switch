@@ -6,6 +6,7 @@ import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TabletopObject } from '@udonarium/tabletop-object';
 
 import { FileSelecterComponent } from 'component/file-selecter/file-selecter.component';
+import { TabletopObjectSettingComponent } from 'component/tabletop-object-setting/tabletop-object-setting.component';
 import { ModalService } from 'service/modal.service';
 import { PanelService } from 'service/panel.service';
 import { SaveDataService } from 'service/save-data.service';
@@ -104,6 +105,14 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy {
       this.isSaveing = false;
       this.progresPercent = 0;
     }, 500);
+  }
+
+  /**
+   * 設定ウィンドウがこのシートの左上から少しずれた位置に開くよう、中心座標を渡す
+   */
+  openSettingPanel() {
+    let coordinate = { x: this.panelService.left + 260, y: this.panelService.top + 160, z: 0 };
+    TabletopObjectSettingComponent.open(this.panelService, this.tabletopObject, coordinate);
   }
 
   setLocation(locationName: string) {

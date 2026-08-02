@@ -58,6 +58,9 @@ export class OverviewPanelComponent implements OnChanges, AfterViewInit, OnDestr
 
   get pointerEventsStyle(): any { return { 'is-pointer-events-auto': !this.isPointerDragging, 'pointer-events-none': this.isPointerDragging }; }
 
+  get overViewWidth(): number { return this.tabletopObject?.overViewWidth; }
+  get overViewMaxHeight(): number { return this.tabletopObject?.overViewMaxHeight; }
+
   isOpenImageView: boolean = false;
 
   constructor(

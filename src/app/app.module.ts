@@ -33,6 +33,7 @@ import { PasswordCheckComponent } from 'component/password-check/password-check.
 import { PeerCursorComponent } from 'component/peer-cursor/peer-cursor.component';
 import { PeerMenuComponent } from 'component/peer-menu/peer-menu.component';
 import { RoomSettingComponent } from 'component/room-setting/room-setting.component';
+import { TabletopObjectSettingComponent } from 'component/tabletop-object-setting/tabletop-object-setting.component';
 import { TerrainComponent } from 'component/terrain/terrain.component';
 import { TextNoteComponent } from 'component/text-note/text-note.component';
 import { TextViewComponent } from 'component/text-view/text-view.component';
@@ -86,6 +87,7 @@ import { AppComponent } from './app.component';
     PasswordCheckComponent,
     PeerMenuComponent,
     RoomSettingComponent,
+    TabletopObjectSettingComponent,
     UIPanelComponent,
     SafePipe,
     ChatPaletteComponent,

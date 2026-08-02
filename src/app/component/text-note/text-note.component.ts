@@ -16,6 +16,7 @@ import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TextNote } from '@udonarium/text-note';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
+import { TabletopObjectSettingComponent } from 'component/tabletop-object-setting/tabletop-object-setting.component';
 import { MovableOption } from 'directive/movable.directive';
 import { RotableOption } from 'directive/rotable.directive';
 import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
@@ -179,6 +180,7 @@ export class TextNoteComponent implements OnChanges, OnDestroy {
     let actions: ContextMenuAction[] = [];
 
     actions.push({ name: 'メモを編集', action: () => { this.showDetail(this.textNote); } });
+    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, this.textNote, this.pointerDeviceService.pointers[0]) });
     actions.push({
       name: 'コピーを作る', action: () => {
         let cloneObject = this.textNote.clone();

@@ -1,0 +1,34 @@
+:host {
+  display: block;
+  color: #444;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 2px;
+}
+
+.setting-row + .setting-row {
+  border-top: solid 1px rgba(153, 153, 153, 0.5);
+}
+
+.setting-label {
+  flex: 0 0 9em;
+}
+
+.setting-row input[type="range"] {
+  flex: 1 1 6em;
+  min-width: 6em;
+}
+
+.setting-row input[type="number"] {
+  flex: 0 0 5em;
+  color: #555;
+}
+
+.setting-row label {
+  cursor: pointer;
+}

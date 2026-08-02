@@ -26,6 +26,7 @@
     <div *ngIf="isSaveing" class="progress">{{progresPercent}}%</div>
   </div>
 </button>
+<button (click)="openSettingPanel()">設定</button>
 <ng-container *ngIf="tabletopObject.aliasName === 'character'">
   <select #select *ngIf="tabletopObject" (change)="setLocation(select.value)" [ngModel]="tabletopObject.location.name">
     <option value="table">テーブル</option>

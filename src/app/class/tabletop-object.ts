@@ -22,6 +22,40 @@ export class TabletopObject extends ObjectNode {
 
   @SyncVar() posZ: number = 0;
 
+  static readonly minOverViewWidth: number = 250;
+  static readonly maxOverViewWidth: number = 1000;
+  static readonly minOverViewMaxHeight: number = 150;
+  static readonly maxOverViewMaxHeight: number = 1000;
+
+  /** ポップアップ（オーバービュー）のサイズ。0 のときは種別ごとの既定サイズを使う */
+  @SyncVar() overViewWidthSetting: number = 0;
+  @SyncVar() overViewMaxHeightSetting: number = 0;
+
+  /** 種別ごとのポップアップ既定サイズ。サブクラスで上書きする */
+  get defaultOverViewWidth(): number { return 270; }
+  get defaultOverViewMaxHeight(): number { return 250; }
+
+  /** 実際に適用されるポップアップサイズ */
+  get overViewWidth(): number {
+    if (!(0 < this.overViewWidthSetting)) return this.defaultOverViewWidth;
+    return TabletopObject.clampOverViewWidth(this.overViewWidthSetting);
+  }
+  set overViewWidth(width: number) { this.overViewWidthSetting = TabletopObject.clampOverViewWidth(+width); }
+
+  get overViewMaxHeight(): number {
+    if (!(0 < this.overViewMaxHeightSetting)) return this.defaultOverViewMaxHeight;
+    return TabletopObject.clampOverViewMaxHeight(this.overViewMaxHeightSetting);
+  }
+  set overViewMaxHeight(maxHeight: number) { this.overViewMaxHeightSetting = TabletopObject.clampOverViewMaxHeight(+maxHeight); }
+
+  private static clampOverViewWidth(width: number): number {
+    return MathUtil.clampMin(MathUtil.clampMax(width, this.maxOverViewWidth), this.minOverViewWidth);
+  }
+
+  private static clampOverViewMaxHeight(maxHeight: number): number {
+    return MathUtil.clampMin(MathUtil.clampMax(maxHeight, this.maxOverViewMaxHeight), this.minOverViewMaxHeight);
+  }
+
   get isVisibleOnTable(): boolean { return this.location.name === 'table'; }
 
   private _imageFile: ImageFile = ImageFile.Empty;

@@ -1,0 +1,14 @@
+<ng-container *ngIf="tabletopObject">
+  <div class="setting-row">
+    <div class="setting-label">ポップアップ横幅</div>
+    <input type="range" [min]="minWidth" [max]="maxWidth" [(ngModel)]="tabletopObject.overViewWidth" name="overViewWidthRange" />
+    <input type="number" [min]="minWidth" [max]="maxWidth" [ngModel]="tabletopObject.overViewWidth" name="overViewWidth"
+      (change)="tabletopObject.overViewWidth = $any($event.target).value" />
+  </div>
+  <div class="setting-row">
+    <div class="setting-label">ポップアップ縦幅最大</div>
+    <input type="range" [min]="minMaxHeight" [max]="maxMaxHeight" [(ngModel)]="tabletopObject.overViewMaxHeight" name="overViewMaxHeightRange" />
+    <input type="number" [min]="minMaxHeight" [max]="maxMaxHeight" [ngModel]="tabletopObject.overViewMaxHeight" name="overViewMaxHeight"
+      (change)="tabletopObject.overViewMaxHeight = $any($event.target).value" />
+  </div>
+</ng-container>

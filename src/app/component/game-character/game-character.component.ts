@@ -225,7 +225,6 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
 
     actions.push({ name: '詳細を表示', action: () => { this.showDetail(this.gameCharacter); } });
     actions.push({ name: 'チャットパレットを表示', action: () => { this.showChatPalette(this.gameCharacter) } });
-    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, this.gameCharacter, this.pointerDeviceService.pointers[0]) });
     actions.push(ContextMenuSeparator);
     actions.push({
       name: '共有イベントリに移動', action: () => {
@@ -272,6 +271,8 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
         SoundEffect.play(PresetSound.piecePut);
       }
     });
+    actions.push(ContextMenuSeparator);
+    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, this.gameCharacter, this.pointerDeviceService.pointers[0]) });
     return actions;
   }
 

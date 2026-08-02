@@ -251,7 +251,6 @@ export class TextNoteComponent implements OnChanges, OnDestroy {
     ));
     actions.push(ContextMenuSeparator);
     actions.push({ name: 'メモを編集', action: () => { this.showDetail(this.textNote); } });
-    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, this.textNote, this.pointerDeviceService.pointers[0]) });
     actions.push({
       name: 'コピーを作る', action: () => {
         let cloneObject = this.textNote.clone();
@@ -268,6 +267,8 @@ export class TextNoteComponent implements OnChanges, OnDestroy {
         SoundEffect.play(PresetSound.sweep);
       }
     });
+    actions.push(ContextMenuSeparator);
+    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, this.textNote, this.pointerDeviceService.pointers[0]) });
 
     return actions;
   }

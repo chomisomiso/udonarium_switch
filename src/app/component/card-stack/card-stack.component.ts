@@ -436,7 +436,6 @@ export class CardStackComponent implements OnChanges, AfterViewInit, OnDestroy {
     });
     actions.push(ContextMenuSeparator);
     actions.push({ name: '詳細を表示', action: () => { this.showDetail(this.cardStack); } });
-    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, this.cardStack, this.pointerDeviceService.pointers[0]) });
     actions.push({
       name: 'コピーを作る', action: () => {
         let cloneObject = this.cardStack.clone();
@@ -454,6 +453,8 @@ export class CardStackComponent implements OnChanges, AfterViewInit, OnDestroy {
         SoundEffect.play(PresetSound.sweep);
       }
     });
+    actions.push(ContextMenuSeparator);
+    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, this.cardStack, this.pointerDeviceService.pointers[0]) });
     return actions;
   }
 

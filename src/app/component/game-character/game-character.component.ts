@@ -19,7 +19,7 @@ import { GameCharacterSheetComponent } from 'component/game-character-sheet/game
 import { TabletopObjectSettingComponent } from 'component/tabletop-object-setting/tabletop-object-setting.component';
 import { MovableOption } from 'directive/movable.directive';
 import { RotableOption } from 'directive/rotable.directive';
-import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
+import { ContextMenuAction, ContextMenuSeparator, ContextMenuService, ContextMenuType } from 'service/context-menu.service';
 import { ImageService } from 'service/image.service';
 import { PanelOption, PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
@@ -60,6 +60,13 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
   set rotate(rotate: number) { this.gameCharacter.rotate = rotate; }
   get roll(): number { return this.gameCharacter.roll; }
   set roll(roll: number) { this.gameCharacter.roll = roll; }
+  get isKomaImageHeightSpecified(): boolean { return this.gameCharacter.isKomaImageHeightSpecified; }
+  set isKomaImageHeightSpecified(isKomaImageHeightSpecified: boolean) { this.gameCharacter.isKomaImageHeightSpecified = isKomaImageHeightSpecified; }
+  get komaImageHeight(): number { return this.gameCharacter.komaImageHeight; }
+  set komaImageHeight(komaImageHeight: number) { this.gameCharacter.komaImageHeight = komaImageHeight; }
+
+  /** コマ幅の中央に水平方向を揃える transform */
+  get centeringTransform(): string { return `translateX(-50%) translateX(${this.size * this.gridSize / 2}px)`; }
 
   get selectionState(): SelectionState { return this.selectionService.state(this.gameCharacter); }
   get isSelected(): boolean { return this.selectionState !== SelectionState.NONE; }
@@ -238,6 +245,23 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
         SoundEffect.play(PresetSound.sweep);
       }
     });
+    actions.push(ContextMenuSeparator);
+    actions.push(this.isKomaImageHeightSpecified
+      ? { name: '☑ 画像の高さを指定', action: () => { this.isKomaImageHeightSpecified = false; } }
+      : { name: '☐ 画像の高さを指定', action: () => { this.isKomaImageHeightSpecified = true; } });
+    if (this.isKomaImageHeightSpecified) {
+      actions.push({
+        name: '高さ',
+        type: ContextMenuType.SLIDER,
+        slider: {
+          min: GameCharacter.minKomaImageHeight,
+          max: GameCharacter.maxKomaImageHeight,
+          step: 5,
+          value: this.komaImageHeight,
+          onInput: value => this.komaImageHeight = value
+        }
+      });
+    }
     actions.push(ContextMenuSeparator);
     actions.push({
       name: 'コピーを作る', action: () => {

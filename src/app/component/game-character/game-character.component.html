@@ -23,7 +23,7 @@
             <ng-container *ngIf="0 < name.length">
               <div *ngFor="let rotateY of ['0', '180deg']"
                 class="name-tag is-black-background"
-                [ngStyle]="{'transform': 'translateX(-50%) translateX(' + size * gridSize / 2 +'px) rotateY(' + rotateY + ')'}"
+                [style.transform]="centeringTransform + ' rotateY(' + rotateY + ')'"
                 (click)="buffs.length > 0 ? toggleBuffExpanded() : null; $event.stopPropagation()">
                 <div class="has-length-limit"><i *ngIf="gameCharacter.isNonTalking"
                     class="material-icons voice-over-off-icon" title="発言をしない">voice_over_off</i>{{name}}</div>
@@ -39,13 +39,15 @@
                 </div>
               </div>
             </ng-container>
-            <img class="image chrome-smooth-image-trick" *ngIf="0 < imageFile.url.length" [src]="imageFile.url | safe: 'resourceUrl'">
-            <div class="rotate-grab rotate-grab-icon of-top"
-              [ngStyle]="{'transform': 'translateX(-50%) translateX(' + size * gridSize / 2 +'px)'}">
+            <img class="image chrome-smooth-image-trick" *ngIf="0 < imageFile.url.length"
+              [class.is-specified-height]="isKomaImageHeightSpecified"
+              [style.height.px]="isKomaImageHeightSpecified ? komaImageHeight : null"
+              [style.transform]="isKomaImageHeightSpecified ? centeringTransform : null"
+              [src]="imageFile.url | safe: 'resourceUrl'">
+            <div class="rotate-grab rotate-grab-icon of-top" [style.transform]="centeringTransform">
               <i class="material-icons">autorenew</i>
             </div>
-            <div class="rotate-grab rotate-grab-icon of-bottom"
-              [ngStyle]="{'transform': 'translateX(-50%) translateX(' + size * gridSize / 2 +'px)'}">
+            <div class="rotate-grab rotate-grab-icon of-bottom" [style.transform]="centeringTransform">
               <i class="material-icons">autorenew</i>
             </div>
           </div>

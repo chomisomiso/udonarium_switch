@@ -170,6 +170,15 @@
   vertical-align: bottom;
 }
 
+/*
+ * 高さ（px）を基準にスケールするモード.
+ * インラインの transform: translateX(-50%) translateX(コマ幅/2) で水平中央に揃える.
+ * 画像がコマ幅を超えるとき margin: auto は効かないため transform を使用する.
+ */
+.image.is-specified-height {
+  width: auto;
+}
+
 .name-tag {
   box-sizing: border-box;
   font-size: 15px;

@@ -2,7 +2,7 @@
   <div *ngIf="0 < title.length" class="title">{{title}}</div>
   <ul>
     <ng-container *ngFor="let action of actions">
-      <ng-container *ngTemplateOutlet="action?.type === 'separator' ? separator : actionMenu; context: { action: action }"></ng-container>
+      <ng-container *ngTemplateOutlet="templateOf(action); context: { action: action }"></ng-container>
     </ng-container>
   </ul>
 </div>
@@ -13,6 +13,15 @@
       <i class="material-icons" style="font-size: 1em; vertical-align: bottom;">arrow_forward_ios</i>
     </div>
     <context-menu *ngIf="subMenu && parentMenu === action" [title]="action.name" [actions]="subMenu" [isSubmenu]="true"></context-menu>
+  </li>
+</ng-template>
+<ng-template #sliderMenu let-action="action">
+  <li class="slider-item">
+    <div class="menu-title">{{action.name}}</div>
+    <input type="range" class="slider"
+      [min]="action.slider.min" [max]="action.slider.max" [step]="action.slider.step == null ? 1 : action.slider.step"
+      [value]="action.slider.value" (input)="onSliderInput(action, $event)">
+    <div class="slider-value">{{action.slider.value}}</div>
   </li>
 </ng-template>
 <ng-template #separator let-action="action">

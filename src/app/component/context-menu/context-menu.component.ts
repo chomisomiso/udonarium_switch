@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, ElementRef, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ContextMenuAction, ContextMenuService } from 'service/context-menu.service';
+import { AfterViewInit, Component, ElementRef, HostListener, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { ContextMenuAction, ContextMenuService, ContextMenuType } from 'service/context-menu.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 
 @Component({
@@ -9,6 +9,9 @@ import { PointerDeviceService } from 'service/pointer-device.service';
 })
 export class ContextMenuComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('root', { static: true }) rootElementRef: ElementRef<HTMLElement>;
+  @ViewChild('actionMenu', { static: true }) actionMenuTemplate: TemplateRef<any>;
+  @ViewChild('sliderMenu', { static: true }) sliderMenuTemplate: TemplateRef<any>;
+  @ViewChild('separator', { static: true }) separatorTemplate: TemplateRef<any>;
 
   @Input() title: string = '';
   @Input() actions: ContextMenuAction[] = [];
@@ -121,6 +124,23 @@ export class ContextMenuComponent implements OnInit, OnDestroy, AfterViewInit {
 
     submenu.style.left = submenu.offsetLeft + diffLeft + 'px';
     submenu.style.top = submenu.offsetTop + diffTop + 'px';
+  }
+
+  templateOf(action: ContextMenuAction): TemplateRef<any> {
+    switch (action?.type) {
+      case ContextMenuType.SEPARATOR:
+        return this.separatorTemplate;
+      case ContextMenuType.SLIDER:
+        return this.sliderMenuTemplate;
+      default:
+        return this.actionMenuTemplate;
+    }
+  }
+
+  onSliderInput(action: ContextMenuAction, event: Event) {
+    let value = +(event.target as HTMLInputElement).value;
+    action.slider.value = value;
+    action.slider.onInput(value);
   }
 
   doAction(action: ContextMenuAction) {

@@ -1,5 +1,6 @@
 import { ChatPalette } from './chat-palette';
 import { SyncObject, SyncVar } from './core/synchronize-object/decorator';
+import { MathUtil } from './core/system/util/math-util';
 import { DataElement } from './data-element';
 import { TabletopObject } from './tabletop-object';
 
@@ -8,10 +9,24 @@ export class GameCharacter extends TabletopObject {
   @SyncVar() rotate: number = 0;
   @SyncVar() roll: number = 0;
 
+  static readonly minKomaImageHeight: number = 50;
+  static readonly maxKomaImageHeight: number = 750;
+
+  /** コマ画像を高さ基準でスケールするモードと、その高さ（px） */
+  @SyncVar() isKomaImageHeightSpecified: boolean = false;
+  @SyncVar() komaImageHeightSetting: number = 100;
+
   /** テーブルに置いたままテーブルインベントリの一覧から除外する */
   @SyncVar() isHiddenInInventory: boolean = false;
   /** チャットの発言者リストに表示しない */
   @SyncVar() isNonTalking: boolean = false;
+
+  get komaImageHeight(): number { return GameCharacter.clampKomaImageHeight(this.komaImageHeightSetting); }
+  set komaImageHeight(height: number) { this.komaImageHeightSetting = GameCharacter.clampKomaImageHeight(+height); }
+
+  private static clampKomaImageHeight(height: number): number {
+    return MathUtil.clampMin(MathUtil.clampMax(height, this.maxKomaImageHeight), this.minKomaImageHeight);
+  }
 
   get name(): string { return this.getCommonValue('name', ''); }
   get size(): number { return this.getCommonValue('size', 1); }

@@ -48,6 +48,20 @@
 .menu-title {
   display: inline-block;
 }
+.slider-item {
+  cursor: default;
+}
+.slider {
+  width: 10em;
+  vertical-align: middle;
+  margin: 0 4px;
+}
+.slider-value {
+  display: inline-block;
+  min-width: 3em;
+  text-align: right;
+  vertical-align: middle;
+}
 hr.separator {
   margin: 0.1em -12px;
   height: 1px;

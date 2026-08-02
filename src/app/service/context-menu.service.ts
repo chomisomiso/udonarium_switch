@@ -8,6 +8,7 @@ interface ContextMenuPoint {
 export enum ContextMenuType {
   ACTION = 'action',
   SEPARATOR = 'separator',
+  SLIDER = 'slider',
 }
 
 export const ContextMenuSeparator: ContextMenuAction = {
@@ -16,12 +17,21 @@ export const ContextMenuSeparator: ContextMenuAction = {
   type: ContextMenuType.SEPARATOR
 }
 
+export interface ContextMenuSliderOption {
+  min: number,
+  max: number,
+  step?: number,
+  value: number,
+  onInput: (value: number) => void
+}
+
 export interface ContextMenuAction {
   name: string,
   action?: Function,
   enabled?: boolean,
   type?: ContextMenuType,
-  subActions?: ContextMenuAction[]
+  subActions?: ContextMenuAction[],
+  slider?: ContextMenuSliderOption
 }
 
 @Injectable()

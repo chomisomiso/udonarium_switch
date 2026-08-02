@@ -78,6 +78,7 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy {
         SoundEffect.play(PresetSound.cardPut);
         break;
       case 'text-note':
+        (cloneObject as any).isLock = false;
         (cloneObject as any).toTopmost();
         SoundEffect.play(PresetSound.cardPut);
         break;

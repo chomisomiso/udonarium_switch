@@ -2,6 +2,7 @@ import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 
 import { EventSystem } from '@udonarium/core/system';
 import { TabletopObject } from '@udonarium/tabletop-object';
+import { TextNote } from '@udonarium/text-note';
 
 import { PanelOption, PanelService } from 'service/panel.service';
 import { PointerCoordinate } from 'service/pointer-device.service';
@@ -37,6 +38,8 @@ export class TabletopObjectSettingComponent implements OnInit, OnDestroy {
   }
 
   @Input() tabletopObject: TabletopObject = null;
+
+  get textNote(): TextNote { return this.tabletopObject as TextNote; }
 
   get minWidth(): number { return TabletopObject.minOverViewWidth; }
   get maxWidth(): number { return TabletopObject.maxOverViewWidth; }

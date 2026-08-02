@@ -1,4 +1,10 @@
 <ng-container *ngIf="tabletopObject">
+  <div class="setting-row" *ngIf="tabletopObject.aliasName === 'text-note'">
+    <label>
+      <input type="checkbox" [(ngModel)]="textNote.limitHeight" name="limitHeight" />
+      height設定値に高さを制限
+    </label>
+  </div>
   <div class="setting-row">
     <div class="setting-label">ポップアップ横幅</div>
     <input type="range" [min]="minWidth" [max]="maxWidth" [(ngModel)]="tabletopObject.overViewWidth" name="overViewWidthRange" />

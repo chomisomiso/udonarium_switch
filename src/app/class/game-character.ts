@@ -8,6 +8,11 @@ export class GameCharacter extends TabletopObject {
   @SyncVar() rotate: number = 0;
   @SyncVar() roll: number = 0;
 
+  /** テーブルに置いたままテーブルインベントリの一覧から除外する */
+  @SyncVar() isHiddenInInventory: boolean = false;
+  /** チャットの発言者リストに表示しない */
+  @SyncVar() isNonTalking: boolean = false;
+
   get name(): string { return this.getCommonValue('name', ''); }
   get size(): number { return this.getCommonValue('size', 1); }
 

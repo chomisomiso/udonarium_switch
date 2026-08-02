@@ -10,7 +10,7 @@
           <div class="material-icons of-back">autorenew</div>
         </div>
       </div>
-      <div class="pedestal-inner"></div>
+      <div class="pedestal-inner" [class.is-hidden-in-inventory]="gameCharacter.isHiddenInInventory"></div>
       <div *ngIf="isSelected" class="selected-highlight" [ngClass]="{'is-magnetic': isMagnetic}"></div>
       <div *ngIf="isTargeted" class="outer-targeted-animation">
         <div class="inner-targeted-animation"></div>
@@ -25,7 +25,8 @@
                 class="name-tag is-black-background"
                 [ngStyle]="{'transform': 'translateX(-50%) translateX(' + size * gridSize / 2 +'px) rotateY(' + rotateY + ')'}"
                 (click)="buffs.length > 0 ? toggleBuffExpanded() : null; $event.stopPropagation()">
-                <div class="has-length-limit">{{name}}</div>
+                <div class="has-length-limit"><i *ngIf="gameCharacter.isNonTalking"
+                    class="material-icons voice-over-off-icon" title="発言をしない">voice_over_off</i>{{name}}</div>
                 <div class="buff-indicator" *ngIf="buffs.length > 0">
                   <div *ngIf="!buffExpanded" class="buff-collapsed">▶ バフ×{{buffs.length}}<span *ngIf="hasExpiredBuffs" class="buff-expired"> ！</span></div>
                   <div *ngIf="buffExpanded" class="buff-detail">

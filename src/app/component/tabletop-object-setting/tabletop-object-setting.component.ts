@@ -1,6 +1,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 
 import { EventSystem } from '@udonarium/core/system';
+import { GameCharacter } from '@udonarium/game-character';
 import { TabletopObject } from '@udonarium/tabletop-object';
 import { TextNote } from '@udonarium/text-note';
 
@@ -40,6 +41,7 @@ export class TabletopObjectSettingComponent implements OnInit, OnDestroy {
   @Input() tabletopObject: TabletopObject = null;
 
   get textNote(): TextNote { return this.tabletopObject as TextNote; }
+  get gameCharacter(): GameCharacter { return this.tabletopObject as GameCharacter; }
 
   get minWidth(): number { return TabletopObject.minOverViewWidth; }
   get maxWidth(): number { return TabletopObject.maxOverViewWidth; }

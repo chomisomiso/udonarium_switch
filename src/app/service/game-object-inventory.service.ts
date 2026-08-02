@@ -31,6 +31,7 @@ export class GameObjectInventoryService {
   graveyardInventory: ObjectInventory = new ObjectInventory(object => { return object.location.name === 'graveyard'; });
 
   private locationMap: Map<ObjectIdentifier, LocationName> = new Map();
+  private hiddenInInventoryMap: Map<ObjectIdentifier, boolean> = new Map();
   private tagNameMap: Map<ObjectIdentifier, ElementName> = new Map();
 
   static _newLineDataElement = createMockElement('/');
@@ -54,6 +55,12 @@ export class GameObjectInventoryService {
           if (object.location.name !== prevLocation) {
             this.locationMap.set(object.identifier, object.location.name);
             this.refresh();
+          }
+          // 一覧非表示コマの再描画を促す
+          let prevHidden = this.hiddenInInventoryMap.get(object.identifier);
+          if (object.isHiddenInInventory !== prevHidden) {
+            this.hiddenInInventoryMap.set(object.identifier, object.isHiddenInInventory);
+            this.callInventoryUpdate();
           }
         } else if (object instanceof DataElement) {
           if (!this.containsInGameCharacter(object)) return;
@@ -79,6 +86,7 @@ export class GameObjectInventoryService {
       })
       .on('DELETE_GAME_OBJECT', event => {
         this.locationMap.delete(event.data.identifier);
+        this.hiddenInInventoryMap.delete(event.data.identifier);
         this.tagNameMap.delete(event.data.identifier);
         this.refresh();
       })

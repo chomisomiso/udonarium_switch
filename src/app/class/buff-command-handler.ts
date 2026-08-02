@@ -42,7 +42,7 @@ export class BuffCommandHandler extends ChatCommandHandler {
 
     if (allCommand) {
       let allCharacters = ObjectStore.instance.getObjects(GameCharacter)
-        .filter((obj: GameCharacter) => obj.location.name === 'table');
+        .filter((obj: GameCharacter) => obj.location.name === 'table' && !obj.isHiddenInInventory);
       for (let character of allCharacters) {
         text += `[${character.name}]\n` + this.executeCommands(allCommand, character.identifier);
       }

@@ -273,6 +273,7 @@ export class ChatInputComponent implements OnInit, OnDestroy {
   }
 
   private allowsChat(gameCharacter: GameCharacter): boolean {
+    if (gameCharacter.isNonTalking) return false;
     switch (gameCharacter.location.name) {
       case 'table':
       case this.myPeer.peerId:

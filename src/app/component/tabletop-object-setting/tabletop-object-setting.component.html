@@ -5,6 +5,18 @@
       height設定値に高さを制限
     </label>
   </div>
+  <div class="setting-row" *ngIf="tabletopObject.aliasName === 'character'">
+    <label>
+      <input type="checkbox" [(ngModel)]="gameCharacter.isHiddenInInventory" name="isHiddenInInventory" />
+      テーブルインベントリに表示しない
+    </label>
+  </div>
+  <div class="setting-row" *ngIf="tabletopObject.aliasName === 'character'">
+    <label>
+      <input type="checkbox" [(ngModel)]="gameCharacter.isNonTalking" name="isNonTalking" />
+      発言をしない（発言者リストに非表示）
+    </label>
+  </div>
   <div class="setting-row">
     <div class="setting-label">ポップアップ横幅</div>
     <input type="range" [min]="minWidth" [max]="maxWidth" [(ngModel)]="tabletopObject.overViewWidth" name="overViewWidthRange" />

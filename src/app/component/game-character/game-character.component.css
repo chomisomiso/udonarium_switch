@@ -205,6 +205,19 @@
   backface-visibility: hidden;
 }
 
+.pedestal-inner.is-hidden-in-inventory {
+  border-color: #A0E0FF;
+}
+
+/*
+ * 「発言をしない」キャラの名前タグ先頭に付けるアイコン. Google Fonts の .material-icons（既定 24px）を上書きするため詳細度を上げている.
+ */
+.name-tag .voice-over-off-icon {
+  font-size: 15px;
+  vertical-align: -3px;
+  margin-right: 2px;
+}
+
 .has-length-limit {
   overflow: hidden;
   white-space: nowrap;
@@ -277,11 +290,11 @@
   opacity: 1;
 }
 
-.material-icons {
+.rotate-grab .material-icons {
   display: none;
 }
 
-.component:hover .material-icons, .component:active .material-icons {
+.component:hover .rotate-grab .material-icons, .component:active .rotate-grab .material-icons {
   display: inline;
 }
 

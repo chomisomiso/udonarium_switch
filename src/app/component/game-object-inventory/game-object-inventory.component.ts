@@ -106,7 +106,9 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
   }
 
   getGameObjects(inventoryType: string): TabletopObject[] {
-    return this.getInventory(inventoryType).tabletopObjects;
+    let objects = this.getInventory(inventoryType).tabletopObjects;
+    if (inventoryType !== 'table') return objects;
+    return objects.filter(object => !(object instanceof GameCharacter && object.isHiddenInInventory));
   }
 
   getInventoryTags(gameObject: GameCharacter): DataElement[] {

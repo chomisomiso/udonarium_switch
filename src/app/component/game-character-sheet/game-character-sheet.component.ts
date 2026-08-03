@@ -21,6 +21,9 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy {
   @Input() tabletopObject: TabletopObject = null;
   isEdit: boolean = false;
 
+  /** キャラクターだけは複数画像を持てるため、画像まわりの UI を出し分ける */
+  get isCharacter(): boolean { return this.tabletopObject?.aliasName === 'character'; }
+
   networkService = Network;
 
   isSaveing: boolean = false;

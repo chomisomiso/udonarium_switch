@@ -73,9 +73,13 @@ export class TabletopObject extends ObjectNode {
   get commonDataElement(): DataElement { return this.getElement('common'); }
   get detailDataElement(): DataElement { return this.getElement('detail'); }
 
+  /** imageFile が参照する画像 DataElement。複数の画像を持つサブクラスで上書きする */
+  protected get currentImageElement(): DataElement | null {
+    return this.imageDataElement ? this.imageDataElement.getFirstElementByName('imageIdentifier') : null;
+  }
+
   get imageFile(): ImageFile {
-    if (!this.imageDataElement) return this._imageFile;
-    let imageIdElement: DataElement = this.imageDataElement.getFirstElementByName('imageIdentifier');
+    let imageIdElement: DataElement = this.currentImageElement;
     if (imageIdElement && this._imageFile.identifier !== imageIdElement.value) {
       let file: ImageFile = ImageStorage.instance.get(<string>imageIdElement.value);
       this._imageFile = file ? file : ImageFile.Empty;

@@ -14,6 +14,7 @@ import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { DataElement } from '@udonarium/data-element';
 import { GameCharacter } from '@udonarium/game-character';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
+import { CharacterImageListComponent } from 'component/character-image-list/character-image-list.component';
 import { ChatPaletteComponent } from 'component/chat-palette/chat-palette.component';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
 import { TabletopObjectSettingComponent } from 'component/tabletop-object-setting/tabletop-object-setting.component';
@@ -244,6 +245,14 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
         SoundEffect.play(PresetSound.sweep);
       }
     });
+    if (1 < this.gameCharacter.imageCount) {
+      actions.push(ContextMenuSeparator);
+      // action を持たせないことで、親項目のクリックではメニューが閉じないようにする
+      actions.push({
+        name: '画像',
+        subActions: CharacterImageListComponent.makeContextMenuActions(this.gameCharacter, this.imageService)
+      });
+    }
     actions.push(ContextMenuSeparator);
     actions.push(this.isKomaImageHeightSpecified
       ? { name: '☑ 画像の高さを指定', action: () => { this.isKomaImageHeightSpecified = false; } }

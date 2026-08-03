@@ -7,10 +7,13 @@ import { PeerContext } from '@udonarium/core/system/network/peer-context';
 import { ResettableTimeout } from '@udonarium/core/system/util/resettable-timeout';
 import { GameCharacter } from '@udonarium/game-character';
 import { PeerCursor } from '@udonarium/peer-cursor';
+import { CharacterImageListComponent } from 'component/character-image-list/character-image-list.component';
 import { TextViewComponent } from 'component/text-view/text-view.component';
 import { BatchService } from 'service/batch.service';
 import { ChatMessageService } from 'service/chat-message.service';
+import { ContextMenuService } from 'service/context-menu.service';
 import { DiceBot } from '@udonarium/dice-bot';
+import { ImageService } from 'service/image.service';
 import { PanelOption, PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 
@@ -61,6 +64,21 @@ export class ChatInputComponent implements OnInit, OnDestroy {
     return image ? image : ImageFile.Empty;
   }
 
+  /** 発言者に複数のコマ画像が登録されているときだけ、アイコンから切り替えられる */
+  get sendFromCharacter(): GameCharacter {
+    let object = ObjectStore.instance.get(this.sendFrom);
+    return object instanceof GameCharacter && 1 < object.imageCount ? object : null;
+  }
+
+  selectImage() {
+    let gameCharacter = this.sendFromCharacter;
+    if (!gameCharacter) return;
+    this.contextMenuService.open(
+      this.pointerDeviceService.pointers[0],
+      CharacterImageListComponent.makeContextMenuActions(gameCharacter, this.imageService),
+      gameCharacter.name);
+  }
+
   private shouldUpdateCharacterList: boolean = true;
   private _gameCharacters: GameCharacter[] = [];
   get gameCharacters(): GameCharacter[] {
@@ -86,6 +104,8 @@ export class ChatInputComponent implements OnInit, OnDestroy {
     private ngZone: NgZone,
     public chatMessageService: ChatMessageService,
     private batchService: BatchService,
+    private contextMenuService: ContextMenuService,
+    private imageService: ImageService,
     private panelService: PanelService,
     private pointerDeviceService: PointerDeviceService
   ) { }

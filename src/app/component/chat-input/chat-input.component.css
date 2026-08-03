@@ -26,6 +26,14 @@
   text-align: center;
 }
 
+/* 複数のコマ画像を持つキャラを選んでいるときだけ title が付く（= 切り替えできる） */
+.imagebox[title] {
+  cursor: pointer;
+}
+.imagebox[title]:hover {
+  outline: 2px solid #A0E0FF;
+}
+
 .image{
   width: 100%;
   height: 100%;

@@ -1,5 +1,7 @@
 <div class="table" [ngClass]="{ 'direct-message': isDirect }">
-  <div class="table-cell imagebox">
+  <!-- title の有無で切り替え可能かを表す。CSS 側もこの属性を見ている -->
+  <div class="table-cell imagebox" [attr.title]="sendFromCharacter ? 'クリックでコマ画像を切り替え' : null"
+    (click)="selectImage()">
     <img *ngIf="0 < imageFile.url.length" class="image" [src]="imageFile.url | safe: 'resourceUrl'" />
   </div>
   <div class="table-cell">

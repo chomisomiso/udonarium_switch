@@ -48,6 +48,23 @@
 .menu-title {
   display: inline-block;
 }
+/* サムネイル付きの項目。サムネと項目名を縦中央で揃える */
+ul > li.has-thumbnail {
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+.menu-thumbnail {
+  width: 32px;
+  height: 32px;
+  margin-right: 6px;
+  object-fit: cover;
+  object-position: 50% 0%;
+  vertical-align: middle;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+.has-thumbnail .menu-title {
+  vertical-align: middle;
+}
 .slider-item {
   cursor: default;
 }

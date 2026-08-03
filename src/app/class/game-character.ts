@@ -15,6 +15,8 @@ export class GameCharacter extends TabletopObject {
   /** コマ画像を高さ基準でスケールするモードと、その高さ（px） */
   @SyncVar() isKomaImageHeightSpecified: boolean = false;
   @SyncVar() komaImageHeightSetting: number = 100;
+  /** 複数登録したコマ画像のうち、現在表示しているものの番号（0 起点） */
+  @SyncVar() imageIndexSetting: number = 0;
 
   /** テーブルに置いたままテーブルインベントリの一覧から除外する */
   @SyncVar() isHiddenInInventory: boolean = false;
@@ -26,6 +28,65 @@ export class GameCharacter extends TabletopObject {
 
   private static clampKomaImageHeight(height: number): number {
     return MathUtil.clamp(height, this.minKomaImageHeight, this.maxKomaImageHeight);
+  }
+
+  /** 登録されているコマ画像。image 要素の子がそのまま画像のリストになる */
+  get imageElements(): DataElement[] { return this.imageDataElement ? <DataElement[]>this.imageDataElement.children : []; }
+  get imageCount(): number { return this.imageElements.length; }
+  /** 実際に表示している画像の番号。他のピアが画像を削除して枚数が減ることがあるため、クランプは読み出し時に行う。 */
+  get imageIndex(): number { return MathUtil.clamp(this.imageIndexSetting, 0, this.imageCount - 1); }
+  set imageIndex(index: number) { this.imageIndexSetting = MathUtil.clamp(+index, 0, this.imageCount - 1); }
+
+  protected get currentImageElement(): DataElement { return this.imageElements[this.imageIndex] ?? null; }
+
+  /** 画像の表示名。ユーザーが任意で付けるもので、未設定なら空文字 */
+  static getImageName(element: DataElement): string {
+    return element ? element.getAttribute('imageName') : '';
+  }
+  static setImageName(element: DataElement, name: string) {
+    if (!element) return;
+    if (name) {
+      element.setAttribute('imageName', name);
+    } else {
+      element.removeAttribute('imageName');
+    }
+  }
+
+  addImageElement(): DataElement | null {
+    if (!this.imageDataElement) return null;
+    return this.imageDataElement.appendChild(DataElement.create('imageIdentifier', '', { type: 'image' }));
+  }
+
+  /** 画像を削除する。最後の 1 枚は削除しない */
+  removeImageElement(index: number): boolean {
+    if (this.imageCount <= 1) return false;
+    let element = this.imageElements[index];
+    if (!element) return false;
+
+    let current = this.imageIndex;
+    element.destroy();
+    // 選択中より前を削除したときは表示画像が変わらないように番号を詰める。
+    // 末尾を消して範囲外になった場合もここで正規化しないと、画像を足し直したときに選択が飛ぶ
+    let next = MathUtil.clamp(index < current ? current - 1 : current, 0, this.imageCount - 1);
+    if (this.imageIndexSetting !== next) this.imageIndexSetting = next;
+    return true;
+  }
+
+  /** 画像を隣と入れ替える。offset は符号だけを見る */
+  moveImageElement(index: number, offset: number) {
+    let elements = this.imageElements;
+    let to = index + Math.sign(offset);
+    if (!elements[index] || !elements[to]) return;
+
+    if (to < index) {
+      this.imageDataElement.insertBefore(elements[index], elements[to]);
+    } else {
+      this.imageDataElement.insertBefore(elements[to], elements[index]);
+    }
+    // 入れ替えに合わせて選択中の番号も追従させる
+    let current = this.imageIndex;
+    if (current === index) this.imageIndex = to;
+    else if (current === to) this.imageIndex = index;
   }
 
   get name(): string { return this.getCommonValue('name', ''); }

@@ -31,7 +31,9 @@ export interface ContextMenuAction {
   enabled?: boolean,
   type?: ContextMenuType,
   subActions?: ContextMenuAction[],
-  slider?: ContextMenuSliderOption
+  slider?: ContextMenuSliderOption,
+  /** 指定すると項目名の左にサムネイルを表示する */
+  thumbnailUrl?: string
 }
 
 @Injectable()

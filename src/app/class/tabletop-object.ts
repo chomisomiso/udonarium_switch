@@ -49,11 +49,11 @@ export class TabletopObject extends ObjectNode {
   set overViewMaxHeight(maxHeight: number) { this.overViewMaxHeightSetting = TabletopObject.clampOverViewMaxHeight(+maxHeight); }
 
   private static clampOverViewWidth(width: number): number {
-    return MathUtil.clampMin(MathUtil.clampMax(width, this.maxOverViewWidth), this.minOverViewWidth);
+    return MathUtil.clamp(width, this.minOverViewWidth, this.maxOverViewWidth);
   }
 
   private static clampOverViewMaxHeight(maxHeight: number): number {
-    return MathUtil.clampMin(MathUtil.clampMax(maxHeight, this.maxOverViewMaxHeight), this.minOverViewMaxHeight);
+    return MathUtil.clamp(maxHeight, this.minOverViewMaxHeight, this.maxOverViewMaxHeight);
   }
 
   get isVisibleOnTable(): boolean { return this.location.name === 'table'; }

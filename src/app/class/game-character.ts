@@ -25,7 +25,7 @@ export class GameCharacter extends TabletopObject {
   set komaImageHeight(height: number) { this.komaImageHeightSetting = GameCharacter.clampKomaImageHeight(+height); }
 
   private static clampKomaImageHeight(height: number): number {
-    return MathUtil.clampMin(MathUtil.clampMax(height, this.maxKomaImageHeight), this.minKomaImageHeight);
+    return MathUtil.clamp(height, this.minKomaImageHeight, this.maxKomaImageHeight);
   }
 
   get name(): string { return this.getCommonValue('name', ''); }

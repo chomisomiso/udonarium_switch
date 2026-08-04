@@ -1,0 +1,208 @@
+
+:host {
+  height: 100%; /* 確定した高さを持たせ、基準にする */
+  box-sizing: border-box;
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.flex-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: stretch; /* listに高さを与える */
+}
+
+.flex-item {
+  margin: 5px;
+  flex: 1 0 auto;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.table-list {
+  position: relative;
+  flex-grow: 0;
+  width: 13em;
+  box-sizing: border-box;
+  border: solid 1px #444;
+  border-radius: 4px;
+  background-color: #f8eee0;
+  overflow: hidden;
+}
+
+.table-list-body {
+  position: absolute; /* listの高さ計算から外す */
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-list-scroll {
+  flex: 1 1 auto;
+  border-top: #f0dabd solid 6px;
+  min-height: 0; /* ないと自動最小サイズで縮まずスクロールしない */
+  overflow-y: auto;
+}
+
+.table-list-footer {
+  flex: 0 0 auto;
+  padding: 2px;
+  background-color: #f0dabd;
+  text-align: right;
+}
+
+.table-list-footer button{
+  border: 1px solid transparent;
+  padding: 3px;
+  background-color: transparent;
+}
+
+.table-list-footer button:hover{
+  background-color: #555;
+  color: #eee
+}
+
+button .material-icons {
+  font-size: 1.5em;
+  vertical-align: middle;
+}
+
+.table-list-item {
+  padding: 1px 6px;
+  border-bottom: 1px dotted #555;
+  cursor: pointer;
+  user-select: none;
+  overflow-wrap: anywhere;
+  font-size: 0.8em;
+}
+
+.table-list-item.is-selected {
+  margin-left: 0;
+  border-top: #555 solid 2px;
+  border-left: #555 solid 6px;
+}
+
+.table-list-item:hover {
+  background-color: #888;
+  color: #eee;
+}
+
+.table-list-command {
+  color: #555;
+  font-size: 0.6em;
+}
+
+.table-list-item:hover .table-list-command {
+  color: #ccc;
+}
+
+.table-list-command.is-unset {
+  color: #AAA;
+  font-style: italic;
+}
+
+.setting-pane {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 1;
+  min-width: 20em;
+}
+
+.setting-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.setting-row span {
+  flex: 0 0 5em;
+  font-size: 0.8em;
+}
+
+.setting-row input {
+  flex: auto;
+  min-width: 6em;
+}
+
+.setting-row select {
+  flex: auto;
+  min-width: 6em;
+  text-overflow: ellipsis;
+}
+
+.setting-button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.setting-button select {
+  flex: 0 1 auto;
+  min-width: 5em;
+  text-overflow: ellipsis;
+}
+
+.setting-button-separator {
+  flex: 1 1 auto;
+  align-self: stretch;
+  border-left: solid 1px #555;
+  margin: 0 6px;
+}
+
+.progress-anchor {
+  position: relative;
+}
+
+/* 余白を吸収して伸びる。min-height は auto のままにして dice-table の下限を通す */
+.table-pane {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  margin: 5px 0;
+}
+
+.dice-table {
+  flex: 1 1 auto;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Verdana, Meiryo, sans-serif;
+  line-height: 1.4;
+  min-height: calc(1.4em * 7 + 8px); /* 7行分 + パディング・ボーダー */
+  resize: none;
+  overflow-y: auto;
+}
+
+.note,
+.usage {
+  font-size: 12px;
+}
+
+.note-icon {
+  font-size: 1.3em;
+  vertical-align: middle;
+  margin: 0 2px;
+}
+
+.usage {
+  flex: 0 0 auto;
+  margin: 5px;
+}
+
+.is-hidden {
+  visibility: hidden;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  font-size: 0.9em;
+}

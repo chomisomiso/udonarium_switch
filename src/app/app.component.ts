@@ -18,6 +18,7 @@ import { DiceBot } from '@udonarium/dice-bot';
 import { Jukebox } from '@udonarium/Jukebox';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { DiceRollHandler } from '@udonarium/dice-roll-handler';
+import { DiceTableHandler } from '@udonarium/dice-table-handler';
 import { ResourceCommandHandler } from '@udonarium/resource-command-handler';
 import { BuffCommandHandler } from '@udonarium/buff-command-handler';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
@@ -25,6 +26,7 @@ import { TableSelecter } from '@udonarium/table-selecter';
 
 import { ChatWindowComponent } from 'component/chat-window/chat-window.component';
 import { ContextMenuComponent } from 'component/context-menu/context-menu.component';
+import { DiceTableSettingComponent } from 'component/dice-table-setting/dice-table-setting.component';
 import { FileStorageComponent } from 'component/file-storage/file-storage.component';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
 import { GameObjectInventoryComponent } from 'component/game-object-inventory/game-object-inventory.component';
@@ -100,6 +102,10 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     let buffHandler: BuffCommandHandler = new BuffCommandHandler('BuffHandler');
     buffHandler.initialize();
     ObjectStore.instance.add(buffHandler);
+
+    let diceTableHandler: DiceTableHandler = new DiceTableHandler('DiceTableHandler');
+    diceTableHandler.initialize();
+    ObjectStore.instance.add(diceTableHandler);
 
     let jukebox: Jukebox = new Jukebox('Jukebox');
     jukebox.initialize();
@@ -227,6 +233,10 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       case 'GameTableSettingComponent':
         component = GameTableSettingComponent;
         option = { width: 630, height: 400, left: 100 };
+        break;
+      case 'DiceTableSettingComponent':
+        component = DiceTableSettingComponent;
+        option = { width: 600, height: 450, left: 100 };
         break;
       case 'FileStorageComponent':
         component = FileStorageComponent;

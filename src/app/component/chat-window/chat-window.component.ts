@@ -5,6 +5,7 @@ import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem } from '@udonarium/core/system';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { ChatTabSettingComponent } from 'component/chat-tab-setting/chat-tab-setting.component';
+import { DiceTableSettingComponent } from 'component/dice-table-setting/dice-table-setting.component';
 import { ChatMessageService } from 'service/chat-message.service';
 import { PanelOption, PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
@@ -112,6 +113,12 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewInit {
     let option: PanelOption = { left: coordinate.x - 250, top: coordinate.y - 175, width: 500, height: 350 };
     let component = this.panelService.open<ChatTabSettingComponent>(ChatTabSettingComponent, option);
     component.selectedTab = this.chatTab;
+  }
+
+  showDiceTableSetting() {
+    let coordinate = this.pointerDeviceService.pointers[0];
+    let option: PanelOption = { left: coordinate.x - 300, top: coordinate.y - 200, width: 600, height: 450 };
+    this.panelService.open<DiceTableSettingComponent>(DiceTableSettingComponent, option);
   }
 
   sendChat(value: { text: string, gameType: string, sendFrom: string, sendTo: string }) {

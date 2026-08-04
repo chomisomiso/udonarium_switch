@@ -5,6 +5,7 @@ import { ImageContext, ImageFile } from '@udonarium/core/file-storage/image-file
 import { ImageStorage } from '@udonarium/core/file-storage/image-storage';
 import { EventSystem } from '@udonarium/core/system';
 import { DiceSymbol, DiceType } from '@udonarium/dice-symbol';
+import { DiceTable } from '@udonarium/dice-table';
 import { GameCharacter } from '@udonarium/game-character';
 import { GameTable } from '@udonarium/game-table';
 import { GameTableMask } from '@udonarium/game-table-mask';
@@ -190,6 +191,8 @@ export class TabletopActionService {
     testCharacter.location.y = 13 * 50;
     testCharacter.initialize();
     testCharacter.createTestGameDataElement('キャラクターC', 1, testFile.identifier);
+
+    DiceTable.createSample();
   }
 
   makeDefaultContextMenuActions(position: PointerCoordinate): ContextMenuAction[] {

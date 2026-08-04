@@ -16,6 +16,7 @@ import { ChatTabComponent } from 'component/chat-tab/chat-tab.component';
 import { ChatWindowComponent } from 'component/chat-window/chat-window.component';
 import { ContextMenuComponent } from 'component/context-menu/context-menu.component';
 import { DiceSymbolComponent } from 'component/dice-symbol/dice-symbol.component';
+import { DiceTableSettingComponent } from 'component/dice-table-setting/dice-table-setting.component';
 import { FileSelecterComponent } from 'component/file-selecter/file-selecter.component';
 import { FileStorageComponent } from 'component/file-storage/file-storage.component';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
@@ -101,6 +102,7 @@ import { AppComponent } from './app.component';
     RotableDirective,
     NetworkIndicatorComponent,
     DiceSymbolComponent,
+    DiceTableSettingComponent,
     TooltipDirective,
     DraggableDirective,
     ResizableDirective,

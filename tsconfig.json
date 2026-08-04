@@ -34,6 +34,9 @@
       ],
       "service/*": [
         "src/app/service/*"
+      ],
+      "testing/*": [
+        "src/testing/*"
       ]
     }
   },

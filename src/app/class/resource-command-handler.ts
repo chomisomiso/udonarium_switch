@@ -1,20 +1,10 @@
 import { ChatMessage } from './chat-message';
 import { ChatCommandHandler, ResultMessageContext } from './chat-command-handler';
 import { ObjectStore } from './core/synchronize-object/object-store';
-import { StringUtil } from './core/system/util/string-util';
 import { DataElement } from './data-element';
 import { GameCharacter } from './game-character';
+import { ResourceCommand } from './resource-command';
 import { DiceBot } from '@udonarium/dice-bot';
-
-interface ResourceCommand {
-  resource: string;
-  operator: string;
-  command: string;
-  isCalculate: boolean;
-  enableOptionL: boolean;
-  enableOptionZ: boolean;
-  enableOptionMax: boolean;
-}
 
 interface ResultList {
   text: string;
@@ -27,7 +17,7 @@ export class ResourceCommandHandler extends ChatCommandHandler {
     let text = '';
     let id = '';
 
-    let [selfCommands, targetCommands] = this.extractCommand(chatMessage.text);
+    let [selfCommands, targetCommands] = ResourceCommand.parse(chatMessage.text);
 
     let result  = await this.executeCommands(selfCommands, chatMessage.tag, chatMessage.characterId);
     if (result) {
@@ -62,60 +52,13 @@ export class ResourceCommandHandler extends ChatCommandHandler {
   }
 
   /***
-   * チャットメッセージからリソース操作コマンドを抽出する
-   * @param text チャットメッセージのテキスト
-   * @returns 抽出されたコマンド配列[自己対象コマンド群, 対他対象コマンド群]
+   * コマンド本体を BCDice へ渡せる式に整える。
+   * 数式・ダイス式は必ず式として評価させるため、符号を前置してダミーダイスを足す。
+   * parseRollResult はこの `+(1d1-1)` の有無で結果の読み方を切り替える。
    */
-  private extractCommand(text: string): [selfResourceCommands: ResourceCommand[], targetResourceCommands: ResourceCommand[]] {
-    let selfResourceCommands: ResourceCommand[] = new Array<ResourceCommand>;
-    let targetResourceCommands: ResourceCommand[] = new Array<ResourceCommand>;
-
-    let checkTexts: string[] = StringUtil.toHalfWidth(text).trim().split(/\s+/);
-    
-    for (let t of checkTexts) {
-      let regArray = t.match((/t?:[^\+\-\=\>:]+[\+\-\=\>][^:]+/ig));
-      if (!regArray) continue;
-
-      for (let c of regArray) {
-        let res = c.match(/^(t?):([^\+\-\=\>:]+)([\+\-\=\>])([^:]+)/);
-        let isTargeting = res[1] === 't';
-        let resource = res[2];
-        let operator = res[3];
-        let command  = res[4];
-        let optionL = /LZ?$/i.test(command);
-        let optionZ = /ZL?$/i.test(command);
-        let optionMax = /\^$/.test(resource);
-
-        if (optionL || optionZ) command = command.replace(/(L?Z|Z?L)$/i, '');
-        if (optionMax) resource = resource.replace(/\^$/, '');
-        // 【暫定】数式・ダイス式のみなら (±a +b -c) 別フォーマットを含むなら ±(a +b -c)
-        let isCalc: boolean = !/[^d\d\(\)\+\-\*\/]/.test(command);
-        if (isCalc) command = (operator=='-' ? '-' : '') + command + '+(1d1-1)';
-
-        if (isTargeting) {
-          targetResourceCommands.push({
-            resource: resource,
-            operator: operator,
-            command: command,
-            isCalculate: isCalc,
-            enableOptionL: optionL,
-            enableOptionZ: optionZ,
-            enableOptionMax: optionMax,
-          });
-        } else {
-          selfResourceCommands.push({
-            resource: resource,
-            operator: operator,
-            command: command,
-            isCalculate: isCalc,
-            enableOptionL: optionL,
-            enableOptionZ: optionZ,
-            enableOptionMax: optionMax,
-          });
-        }
-      }
-    }
-    return [selfResourceCommands, targetResourceCommands];
+  private toDiceExpression(command: ResourceCommand): string {
+    if (!command.isCalculate) return command.command;
+    return (command.operator === '-' ? '-' : '') + command.command + '+(1d1-1)';
   }
 
   /***
@@ -148,7 +91,7 @@ export class ResourceCommandHandler extends ChatCommandHandler {
       }
       
       let val, formula;
-      [val, formula, id] = await this.parseRollResult(command.command, gameType);
+      [val, formula, id] = await this.parseRollResult(this.toDiceExpression(command), gameType);
       if (isNaN(val)) return null;
       
       let isDigit = /^-?\d+$/.test(formula);

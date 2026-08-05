@@ -26,10 +26,17 @@ import { TabletopActionService } from 'service/tabletop-action.service';
 import { TabletopSelectionService } from 'service/tabletop-selection.service';
 import { TabletopService } from 'service/tabletop.service';
 
+import { CameraState, ScreenPoint, TableCamera, TableSize, TabletopPoint } from '@udonarium/transform/table-camera';
+
 import { GridLineRender } from './grid-line-render';
-import { TableMouseGesture } from './table-mouse-gesture';
+import { TableMouseGesture, TableMouseGestureEvent } from './table-mouse-gesture';
 import { TablePickGesture } from './table-pick-gesture';
 import { TableTouchGesture } from './table-touch-gesture';
+
+/** グリッド設定からテーブル画像の実寸(px)を求める */
+function toTableSize(width: number, height: number, gridSize: number): TableSize {
+  return { width: width * gridSize, height: height * gridSize };
+}
 
 @Component({
   selector: 'game-table',
@@ -63,6 +70,31 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   private viewRotateX: number = 50;
   private viewRotateY: number = 0;
   private viewRotateZ: number = 10;
+
+  /** 右ドラッグ回転の支点。押下時に確定させ、ドラッグ中は解き直さない */
+  private rotatePivot: TabletopPoint | null = null;
+
+  /** 視点計算（TableCamera）へ渡す現在の状態 */
+  private get cameraState(): CameraState {
+    return {
+      positionX: this.viewPotisonX, positionY: this.viewPotisonY, positionZ: this.viewPotisonZ,
+      rotateX: this.viewRotateX, rotateY: this.viewRotateY, rotateZ: this.viewRotateZ,
+    };
+  }
+
+  private applyCameraState(state: CameraState) {
+    this.viewPotisonX = state.positionX;
+    this.viewPotisonY = state.positionY;
+    this.viewPotisonZ = state.positionZ;
+    this.viewRotateX = state.rotateX;
+    this.viewRotateY = state.rotateY;
+    this.viewRotateZ = state.rotateZ;
+  }
+
+  private get tableSize(): TableSize {
+    let table = this.currentTable;
+    return toTableSize(table.width, table.height, table.gridSize);
+  }
 
   private mouseGesture: TableMouseGesture = null;
   private touchGesture: TableTouchGesture = null;
@@ -185,8 +217,6 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     let scale = (1000 + Math.abs(this.viewPotisonZ)) / 1000;
     transformX *= scale;
     transformY *= scale;
-    if (80 < rotateX + this.viewRotateX) rotateX += 80 - (rotateX + this.viewRotateX);
-    if (rotateX + this.viewRotateX < 0) rotateX += 0 - (rotateX + this.viewRotateX);
     if (750 < transformZ + this.viewPotisonZ) transformZ += 750 - (transformZ + this.viewPotisonZ);
 
     this.setTransform(transformX, transformY, transformZ, rotateX, rotateY, rotateZ);
@@ -194,6 +224,10 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onTableMouseStart(e: any) {
+    this.rotatePivot = e.button === 2
+      ? TableCamera.tabletopPointAt(this.cameraState, this.tableSize, this.toScreenPoint(e.clientX, e.clientY))
+      : null;
+
     if (e.target.contains(this.gameObjects.nativeElement) || e.button === 1 || e.button === 2) {
       this.isTableTransformMode = true;
     } else {
@@ -212,7 +246,7 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     this.cancelInput();
   }
 
-  onTableMouseTransform(transformX: number, transformY: number, transformZ: number, rotateX: number, rotateY: number, rotateZ: number, event: string, srcEvent: TouchEvent | MouseEvent | PointerEvent) {
+  onTableMouseTransform(transformX: number, transformY: number, transformZ: number, rotateX: number, rotateY: number, rotateZ: number, event: TableMouseGestureEvent, srcEvent: TouchEvent | MouseEvent | PointerEvent | KeyboardEvent) {
     if (!this.isTableTransformMode || document.body !== document.activeElement) return;
 
     if (!this.pointerDeviceService.isAllowedToOpenContextMenu && this.contextMenuService.isShow) {
@@ -226,7 +260,10 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     transformX *= scale;
     transformY *= scale;
 
-    this.setTransform(transformX, transformY, transformZ, rotateX, rotateY, rotateZ);
+    // 右ドラッグは押下時に確定した支点、キーボード（Shift+矢印）は支点になる地点がないので画面中心
+    let pivot = event === TableMouseGestureEvent.ROTATE ? this.rotatePivot : null;
+
+    this.setTransform(transformX, transformY, transformZ, rotateX, rotateY, rotateZ, pivot);
     this.isTableTransformed = true;
   }
 
@@ -312,16 +349,25 @@ export class GameTableComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.isTableTransformed && !this.pointerDeviceService.isAllowedToOpenContextMenu) e.preventDefault();
   }
 
-  private setTransform(transformX: number, transformY: number, transformZ: number, rotateX: number, rotateY: number, rotateZ: number) {
-    this.viewRotateX += rotateX;
-    this.viewRotateY += rotateY;
-    this.viewRotateZ += rotateZ;
+  private setTransform(transformX: number, transformY: number, transformZ: number, rotateX: number, rotateY: number, rotateZ: number, pivot: TabletopPoint | null = null) {
+    // ズーム・パンはカメラをテーブル平面へ近づける方向にも働くので、h を割らない範囲に丸める
+    this.viewPotisonZ += TableCamera.clampTransformZ(this.cameraState, transformZ);
+    this.viewPotisonY += TableCamera.clampTransformY(this.cameraState, transformY);
+    this.viewPotisonX += TableCamera.clampTransformX(this.cameraState, transformX);
 
-    this.viewPotisonX += transformX;
-    this.viewPotisonY += transformY;
-    this.viewPotisonZ += transformZ;
+    // 支点を固定したまま回す。指定が無ければ画面中心を支点にする
+    if (rotateX !== 0 || rotateY !== 0 || rotateZ !== 0) {
+      let anchor = pivot ?? TableCamera.tabletopPointAt(this.cameraState, this.tableSize);
+      this.applyCameraState(TableCamera.rotateAround(this.cameraState, anchor, rotateX, rotateY, rotateZ));
+    }
 
     this.gameTable.nativeElement.style.transform = `translateZ(${this.viewPotisonZ.toFixed(4)}px) translateY(${this.viewPotisonY.toFixed(4)}px) translateX(${this.viewPotisonX.toFixed(4)}px) rotateY(${this.viewRotateY.toFixed(4)}deg) rotateX(${this.viewRotateX.toFixed(4) + 'deg) rotateZ(' + this.viewRotateZ.toFixed(4)}deg)`;
+  }
+
+  /** クライアント座標を #root（perspective origin）中心の座標に直す */
+  private toScreenPoint(clientX: number, clientY: number): ScreenPoint {
+    let rect = this.rootElementRef.nativeElement.getBoundingClientRect();
+    return { x: clientX - (rect.left + rect.width / 2), y: clientY - (rect.top + rect.height / 2) };
   }
 
   private setGameTableGrid(width: number, height: number, gridSize: number = 50, gridType: GridType = GridType.SQUARE, gridColor: string = '#000000e6') {

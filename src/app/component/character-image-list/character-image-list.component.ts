@@ -4,8 +4,10 @@ import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem } from '@udonarium/core/system';
 import { DataElement } from '@udonarium/data-element';
 import { GameCharacter } from '@udonarium/game-character';
+import { ImageCrop } from '@udonarium/image-crop';
 
 import { FileSelecterComponent } from 'component/file-selecter/file-selecter.component';
+import { ImageCropSettingComponent, ImageCropSettingOption } from 'component/image-crop-setting/image-crop-setting.component';
 import { ContextMenuAction } from 'service/context-menu.service';
 import { ImageService } from 'service/image.service';
 import { ModalService } from 'service/modal.service';
@@ -30,6 +32,7 @@ export class CharacterImageListComponent implements OnChanges, OnDestroy {
     return gameCharacter.imageElements.map((element, index) => ({
       name: `${index === selectedIndex ? '☑' : '☐'} ${GameCharacter.getImageName(element) || index + 1}`,
       thumbnailUrl: CharacterImageListComponent.imageUrlOf(element, imageService),
+      thumbnailCrop: ImageCrop.from(element),
       action: () => { gameCharacter.imageIndex = index; }
     }));
   }
@@ -41,6 +44,8 @@ export class CharacterImageListComponent implements OnChanges, OnDestroy {
 
   /** 入力中の表示名。書き戻しをデバウンスする間だけ値を保持する */
   private nameCache: Map<string, string> = new Map();
+  /** 画像ごとの表示調整。identifier -> 属性の生値とそこから作った値 */
+  private cropCache: Map<string, { source: string, crop: ImageCrop }> = new Map();
   private updateTimer: NodeJS.Timeout = null;
 
   constructor(
@@ -78,6 +83,21 @@ export class CharacterImageListComponent implements OnChanges, OnDestroy {
 
   imageUrl(element: DataElement): string {
     return CharacterImageListComponent.imageUrlOf(element, this.imageService);
+  }
+
+  /**
+   * テンプレートから変更検知のたびに呼ばれるので、属性の生値が変わったときだけ作り直す。
+   * TabletopObject.imageCrop と同じ形。
+   */
+  crop(element: DataElement): ImageCrop {
+    if (!element) return ImageCrop.default;
+    let source = ImageCrop.sourceOf(element);
+    let cached = this.cropCache.get(element.identifier);
+    if (!cached || cached.source !== source) {
+      cached = { source: source, crop: ImageCrop.parse(source) };
+      this.cropCache.set(element.identifier, cached);
+    }
+    return cached.crop;
   }
 
   isSelected(index: number): boolean { return this.gameCharacter.imageIndex === index; }
@@ -136,6 +156,22 @@ export class CharacterImageListComponent implements OnChanges, OnDestroy {
       let element = this.imageElements[index];
       if (!element || value == null) return;
       element.value = value;
+    });
+  }
+
+  adjustImage(index: number) {
+    let element = this.imageElements[index];
+    if (!element) return;
+    let option: ImageCropSettingOption = {
+      imageUrl: this.imageUrl(element),
+      crop: this.crop(element),
+      name: GameCharacter.getImageName(element) || `${index + 1}`
+    };
+    this.modalService.open<ImageCrop>(ImageCropSettingComponent, option).then(value => {
+      // モーダルを開いている間に他のピアが画像を消しているかもしれないので、取り直す
+      let element = this.imageElements[index];
+      if (!element || value == null) return;
+      ImageCrop.write(element, value);
     });
   }
 

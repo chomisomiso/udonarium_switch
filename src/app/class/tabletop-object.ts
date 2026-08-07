@@ -5,6 +5,7 @@ import { ObjectNode } from './core/synchronize-object/object-node';
 import { ObjectStore } from './core/synchronize-object/object-store';
 import { MathUtil } from './core/system/util/math-util';
 import { DataElement } from './data-element';
+import { ImageCrop } from './image-crop';
 
 export interface TabletopLocation {
   name: string;
@@ -59,6 +60,8 @@ export class TabletopObject extends ObjectNode {
   get isVisibleOnTable(): boolean { return this.location.name === 'table'; }
 
   private _imageFile: ImageFile = ImageFile.Empty;
+  private _imageCrop: ImageCrop = ImageCrop.default;
+  private _imageCropSource: string = null;
   private _dataElements: { [name: string]: string } = {};
 
   // GameDataElement getter/setter
@@ -85,6 +88,17 @@ export class TabletopObject extends ObjectNode {
       this._imageFile = file ? file : ImageFile.Empty;
     }
     return this._imageFile;
+  }
+
+  /** imageFile を枠に収めるときの切り抜き方。imageFile と同様、属性が変わったときだけ作り直す */
+  get imageCrop(): ImageCrop {
+    let imageIdElement: DataElement = this.currentImageElement;
+    let source: string = ImageCrop.sourceOf(imageIdElement);
+    if (this._imageCropSource !== source) {
+      this._imageCropSource = source;
+      this._imageCrop = ImageCrop.parse(source);
+    }
+    return this._imageCrop;
   }
 
   calcSqrDistance(other: TabletopObject): number {

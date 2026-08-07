@@ -58,7 +58,10 @@
     </div>
     <div class="object-tags-box">
       <div class="table-cell image-box">
-        <img *ngIf="gameObject.imageFile.url" [src]="gameObject.imageFile.url | safe: 'resourceUrl'" />
+        <div class="image-frame">
+          <img *ngIf="gameObject.imageFile.url" [src]="gameObject.imageFile.url | safe: 'resourceUrl'"
+            [imageCrop]="gameObject.imageCrop" imageCropCovers />
+        </div>
       </div>
       <div class="table-cell">
         <div *ngIf="gameObject.rootDataElement">

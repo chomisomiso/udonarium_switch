@@ -1,0 +1,110 @@
+:host {
+  display: block;
+}
+
+.editor {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 4px;
+}
+
+/*
+ * 表示側と同じ組み合わせ。枠を覆う画像のサイズと位置は imageCrop ディレクティブが絶対配置で入れ、
+ * はみ出したぶんをここで切る
+ */
+.frame {
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #999;
+  /* 切り抜きの境目が分かるよう、下に市松模様を敷く */
+  background-color: #FFF;
+  background-image:
+    linear-gradient(45deg, #DDD 25%, transparent 25%, transparent 75%, #DDD 75%),
+    linear-gradient(45deg, #DDD 25%, transparent 25%, transparent 75%, #DDD 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 8px 8px;
+}
+
+.frame img {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.editor > .frame {
+  flex: 0 0 auto;
+  width: 300px;
+  height: 300px;
+  cursor: move;
+  touch-action: none;
+}
+
+.side {
+  flex: 1 1 240px;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hint {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+/* 実際に表示される大きさのプレビュー。小さすぎて潰れないか、ここで確かめる */
+.previews {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.preview-item {
+  text-align: center;
+}
+
+.preview-label {
+  font-size: 0.8em;
+  margin-top: 2px;
+}
+
+.size-50 {
+  width: 52px;
+  height: 52px;
+}
+
+.size-32 {
+  width: 34px;
+  height: 34px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider-slider {
+  flex: 1 1 auto;
+  min-width: 80px;
+}
+
+.slider-value {
+  flex: 0 0 auto;
+  min-width: 3.5em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.buttons .spacer {
+  flex: 1 1 auto;
+}

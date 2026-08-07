@@ -9,19 +9,21 @@
   */
   width: 250px;
   height: 250px;
+  z-index: -1;
 }
+/*
+ * 切り抜かずに元画像の全体を見せる。枠からはみ出した部分は z-index でシートの裏へ回す
+ */
 .main-image {
-  width: 250px;
+  width: 100%;
+  vertical-align: bottom;
 }
 
-/* 画像一覧を common 欄の下端に寄せて、左隣の画像表示と高さを揃える */
+/* 画像一覧を common 欄の下に縦積みする。左隣の画像表示に合わせて最低幅を確保する */
 .flex-item.has-image-list {
   display: flex;
   flex-direction: column;
   min-width: 250px;
-}
-.flex-item.has-image-list > character-image-list {
-  margin-top: auto;
 }
 
 .table {

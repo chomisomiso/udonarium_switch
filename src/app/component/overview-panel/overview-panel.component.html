@@ -77,10 +77,12 @@
     <div class="title-bg-area title-background"
       [ngClass]="{ 'is-pointer-events-auto': !this.isPointerDragging, 'pointer-events-none': this.isPointerDragging }">
     </div>
-    <div class="image-area character-image-box"
+    <!-- 未調整の画像は枠の高さを従来どおり中身任せにしたいので、調整済みのときだけ切り抜きに切り替える -->
+    <div class="image-area character-image-box" [class.is-cropped]="!imageCrop.isDefault"
       [ngClass]="{ 'is-pointer-events-auto': !this.isPointerDragging, 'pointer-events-none': this.isPointerDragging }"
       *ngIf="hasImage">
-      <img class="character-image" [src]="imageUrl | safe: 'resourceUrl'" />
+      <img class="character-image" [src]="imageUrl | safe: 'resourceUrl'" [imageCrop]="imageCrop"
+        [imageCropCovers]="!imageCrop.isDefault" />
     </div>
     <div class="title-area component-title" [ngClass]="{ 'is-pointer-events-auto': !this.isPointerDragging,
     'pointer-events-none': this.isPointerDragging }">{{character.name}}</div>

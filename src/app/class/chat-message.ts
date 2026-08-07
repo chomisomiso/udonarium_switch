@@ -17,6 +17,7 @@ export interface ChatMessageContext {
   tag?: string;
   dicebot?: string;
   imageIdentifier?: string;
+  imageCrop?: string;
   targetIds?: string;
 }
 
@@ -31,6 +32,8 @@ export class ChatMessage extends ObjectNode implements ChatMessageContext {
   @SyncVar() tag: string;
   @SyncVar() dicebot: string;
   @SyncVar() imageIdentifier: string;
+  /** 発言時点の表示調整値。 */
+  @SyncVar() imageCrop: string;
   @SyncVar() private _isEdited: boolean = false;
 
   get tabIdentifier(): string { return this.parent.identifier; }

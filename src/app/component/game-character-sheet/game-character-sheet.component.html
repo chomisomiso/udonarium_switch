@@ -41,7 +41,7 @@
 <div *ngIf="tabletopObject" class="flex-container">
   <div *ngIf="0 < tabletopObject.imageFile?.url.length" class="box main-image-box">
     <img class="main-image" [src]="tabletopObject.imageFile.url | safe: 'resourceUrl'" [alt]="tabletopObject.imageFile.name"
-    />
+      [imageCrop]="tabletopObject.imageCrop" />
   </div>
   <ng-container *ngIf="tabletopObject.commonDataElement">
     <!-- キャラクターは common の下の余白に画像一覧を置き、画像表示と高さを揃える -->

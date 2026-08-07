@@ -2,7 +2,7 @@
   <div class="message" [ngClass]="{'direct-message': (chatMessage.isDirect || chatMessage.isSecret), 'system-message':chatMessage.isSystem, 'dicebot-message': chatMessage.isDicebot}"
     [@flyInOut]="animeState">
     <div class="image">
-      <img *ngIf="0 < imageFile?.url?.length" [src]="imageFile?.url | safe: 'resourceUrl'" />
+      <img *ngIf="0 < imageFile?.url?.length" [src]="imageFile?.url | safe: 'resourceUrl'" [imageCrop]="imageCrop" imageCropCovers />
     </div>
     <div class="body">
       <div class="title">

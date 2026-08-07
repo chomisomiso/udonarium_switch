@@ -272,12 +272,15 @@ input[type='range']::-ms-tooltip {
   vertical-align: top;
 }
 
-.image-box img{
-  width: 100%;
-  height: 100%;
-  vertical-align: bottom;
-  object-fit: cover;
-  object-position: 50% 0%;
+/*
+ * table-cell 自体では切り抜けないので、内側に枠を 1 枚挟む。
+ * 枠を覆う画像のサイズと位置は imageCrop ディレクティブが絶対配置で入れる
+ */
+.image-frame {
+  width: 32px;
+  height: 32px;
+  position: relative;
+  overflow: hidden;
 }
 
 .inventory-object {

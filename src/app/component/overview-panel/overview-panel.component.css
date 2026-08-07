@@ -157,6 +157,15 @@
   vertical-align: bottom;
 }
 
+/*
+ * 表示調整を適用する枠（キャラクター）だけ。枠を覆わせるには定まった高さが要るので max-height を height にする。
+ * 画像のサイズと位置は imageCrop ディレクティブが絶対配置で入れる
+ */
+.character-image-box.is-cropped {
+  height: 120px;
+  position: relative;
+}
+
 .is-black-mask {
   filter: brightness(0);
  }

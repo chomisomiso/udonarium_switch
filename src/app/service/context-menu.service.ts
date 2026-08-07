@@ -1,4 +1,5 @@
 import { ComponentRef, Injectable, ViewContainerRef } from '@angular/core';
+import { ImageCrop } from '@udonarium/image-crop';
 
 interface ContextMenuPoint {
   x: number,
@@ -33,7 +34,9 @@ export interface ContextMenuAction {
   subActions?: ContextMenuAction[],
   slider?: ContextMenuSliderOption,
   /** 指定すると項目名の左にサムネイルを表示する */
-  thumbnailUrl?: string
+  thumbnailUrl?: string,
+  /** サムネイルの表示調整。省略すると既定の切り抜き */
+  thumbnailCrop?: ImageCrop
 }
 
 @Injectable()

@@ -26,6 +26,7 @@ import { GameObjectInventoryComponent } from 'component/game-object-inventory/ga
 import { GameTableMaskComponent } from 'component/game-table-mask/game-table-mask.component';
 import { GameTableSettingComponent } from 'component/game-table-setting/game-table-setting.component';
 import { GameTableComponent } from 'component/game-table/game-table.component';
+import { ImageCropSettingComponent } from 'component/image-crop-setting/image-crop-setting.component';
 import { JukeboxComponent } from 'component/jukebox/jukebox.component';
 import { LobbyComponent } from 'component/lobby/lobby.component';
 import { ModalComponent } from 'component/modal/modal.component';
@@ -41,6 +42,7 @@ import { TextNoteComponent } from 'component/text-note/text-note.component';
 import { TextViewComponent } from 'component/text-view/text-view.component';
 import { UIPanelComponent } from 'component/ui-panel/ui-panel.component';
 import { DraggableDirective } from 'directive/draggable.directive';
+import { ImageCropDirective } from 'directive/image-crop.directive';
 import { MovableDirective } from 'directive/movable.directive';
 import { ResizableDirective } from 'directive/resizable.directive';
 import { RotableDirective } from 'directive/rotable.directive';
@@ -108,6 +110,8 @@ import { AppComponent } from './app.component';
     ResizableDirective,
     ChatInputComponent,
     TargetableDirective,
+    ImageCropSettingComponent,
+    ImageCropDirective,
   ],
   imports: [
     BrowserModule,

@@ -2,7 +2,9 @@
   <!-- title の有無で切り替え可能かを表す。CSS 側もこの属性を見ている -->
   <div class="table-cell imagebox" [attr.title]="sendFromCharacter ? 'クリックでコマ画像を切り替え' : null"
     (click)="selectImage()">
-    <img *ngIf="0 < imageFile.url.length" class="image" [src]="imageFile.url | safe: 'resourceUrl'" />
+    <div class="image-frame">
+      <img *ngIf="0 < imageFile.url.length" [src]="imageFile.url | safe: 'resourceUrl'" [imageCrop]="imageCrop" imageCropCovers />
+    </div>
   </div>
   <div class="table-cell">
     <div>

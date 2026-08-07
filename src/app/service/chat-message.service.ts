@@ -89,6 +89,7 @@ export class ChatMessageService {
       targetIds: targetIdentifiers,
       name: this.makeMessageName(sendFrom, sendTo),
       imageIdentifier: this.findImageIdentifier(sendFrom),
+      imageCrop: this.findImageCrop(sendFrom),
       timestamp: this.calcTimeStamp(chatTab),
       tag: gameType,
       text: text,
@@ -133,6 +134,12 @@ export class ChatMessageService {
       return object.imageIdentifier;
     }
     return identifier;
+  }
+
+  /** 発言時点の表示調整を焼き込む。既定値なら空文字を返し、ChatTab.addMessage が属性ごと省く */
+  private findImageCrop(identifier: string): string {
+    let object = ObjectStore.instance.get(identifier);
+    return object instanceof GameCharacter ? object.imageCrop.toString() : '';
   }
 
   private calcTimeStamp(chatTab: ChatTab): number {

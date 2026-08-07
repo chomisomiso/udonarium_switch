@@ -6,6 +6,7 @@ import { EventSystem, Network } from '@udonarium/core/system';
 import { PeerContext } from '@udonarium/core/system/network/peer-context';
 import { ResettableTimeout } from '@udonarium/core/system/util/resettable-timeout';
 import { GameCharacter } from '@udonarium/game-character';
+import { ImageCrop } from '@udonarium/image-crop';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { CharacterImageListComponent } from 'component/character-image-list/character-image-list.component';
 import { TextViewComponent } from 'component/text-view/text-view.component';
@@ -62,6 +63,11 @@ export class ChatInputComponent implements OnInit, OnDestroy {
       image = object.image;
     }
     return image ? image : ImageFile.Empty;
+  }
+
+  get imageCrop(): ImageCrop {
+    let object = ObjectStore.instance.get(this.sendFrom);
+    return object instanceof GameCharacter ? object.imageCrop : ImageCrop.default;
   }
 
   /** 発言者に複数のコマ画像が登録されているときだけ、アイコンから切り替えられる */

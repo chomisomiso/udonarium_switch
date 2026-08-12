@@ -9,7 +9,10 @@ import { ChatInputComponent } from 'component/chat-input/chat-input.component';
 import { ChatMessageService } from 'service/chat-message.service';
 import { DiceBot } from '@udonarium/dice-bot';
 import { PanelService } from 'service/panel.service';
-import { getPaletteTopLine, scrollPaletteToLine } from './palette-scroll';
+import { openPaletteIndexMenu } from 'component/chat-palette/palette-index';
+import { getPaletteTopLine, scrollPaletteToLine } from 'component/chat-palette/palette-scroll';
+import { ContextMenuService } from 'service/context-menu.service';
+import { PointerDeviceService } from 'service/pointer-device.service';
 
 @Component({
   selector: 'chat-palette',
@@ -51,9 +54,14 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
   get myPeer(): PeerCursor { return PeerCursor.myCursor; }
   get otherPeers(): PeerCursor[] { return ObjectStore.instance.getObjects(PeerCursor); }
 
+  /** 索引のもとになる行。編集中はまだ確定していない編集内容を見る */
+  private get indexSourceLines(): string[] { return this.isEdit ? this.editPalette.split('\n') : this.palette.getPalette(); }
+
   constructor(
     public chatMessageService: ChatMessageService,
-    private panelService: PanelService
+    private panelService: PanelService,
+    private contextMenuService: ContextMenuService,
+    private pointerDeviceService: PointerDeviceService,
   ) { }
 
   ngOnInit() {
@@ -105,6 +113,17 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
       this.text = line;
       this.doubleClickTimer = setTimeout(() => { this.doubleClickTimer = null }, 400);
     }
+  }
+
+  /** 索引一覧を開く。選んだ見出しが先頭に来るようスクロールさせる */
+  openIndexMenu(event: MouseEvent) {
+    event.stopPropagation();
+
+    let deps = { contextMenuService: this.contextMenuService, pointerDeviceService: this.pointerDeviceService };
+    openPaletteIndexMenu(deps, this.indexSourceLines, line => {
+      // select の selectedIndex は動かさない。見出し行が入力欄に入ってしまう
+      scrollPaletteToLine(this.paletteElement, line);
+    });
   }
 
   sendChat(value: { text: string, gameType: string, sendFrom: string, sendTo: string }) {

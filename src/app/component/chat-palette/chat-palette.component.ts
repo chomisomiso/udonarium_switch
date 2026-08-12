@@ -9,6 +9,7 @@ import { ChatInputComponent } from 'component/chat-input/chat-input.component';
 import { ChatMessageService } from 'service/chat-message.service';
 import { DiceBot } from '@udonarium/dice-bot';
 import { PanelService } from 'service/panel.service';
+import { getPaletteTopLine, scrollPaletteToLine } from './palette-scroll';
 
 @Component({
   selector: 'chat-palette',
@@ -18,6 +19,7 @@ import { PanelService } from 'service/panel.service';
 export class ChatPaletteComponent implements OnInit, OnDestroy {
   @ViewChild('chatInput', { static: true }) chatInputComponent: ChatInputComponent;
   @ViewChild('chatPlette') chatPletteElementRef: ElementRef<HTMLSelectElement>;
+  @ViewChild('paletteTextArea') paletteTextAreaElementRef: ElementRef<HTMLTextAreaElement>;
   @Input() character: GameCharacter = null;
 
   get palette(): ChatPalette { return this.character.chatPalette; }
@@ -71,7 +73,7 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     EventSystem.unregister(this);
-    if (this.isEdit) this.toggleEditMode();
+    if (this.isEdit) this.setEditMode(false);
   }
 
   updatePanelTitle() {
@@ -79,7 +81,8 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
   }
 
   onSelectedCharacter(identifier: string) {
-    if (this.isEdit) this.toggleEditMode();
+    // 別のパレットを表示することになるのでスクロール位置は引き継がない
+    if (this.isEdit) this.setEditMode(false);
     let object = ObjectStore.instance.get(identifier);
     if (object instanceof GameCharacter) {
       this.character = object;
@@ -116,8 +119,22 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
     this.chatPletteElementRef.nativeElement.selectedIndex = -1;
   }
 
+  /** いま表示されているパレット本体。閲覧時は select、編集時は textarea */
+  private get paletteElement(): HTMLSelectElement | HTMLTextAreaElement | null {
+    let elementRef = this.isEdit ? this.paletteTextAreaElementRef : this.chatPletteElementRef;
+    return elementRef ? elementRef.nativeElement : null;
+  }
+
   toggleEditMode() {
-    this.isEdit = this.isEdit ? false : true;
+    // select と textarea は *ngIf で入れ替わるので、先頭行を控えて差し替え先へ引き継ぐ
+    let topLine = getPaletteTopLine(this.paletteElement);
+    this.setEditMode(this.isEdit ? false : true);
+    setTimeout(() => scrollPaletteToLine(this.paletteElement, topLine));
+  }
+
+  /** 編集モードの出入り。スクロール位置の引き継ぎはしない */
+  private setEditMode(isEdit: boolean) {
+    this.isEdit = isEdit;
     if (this.isEdit) {
       this.editPalette = this.palette.value + '';
     } else {

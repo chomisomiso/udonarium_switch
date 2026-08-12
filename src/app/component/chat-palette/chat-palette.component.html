@@ -20,7 +20,7 @@
     </select>
   </div>
   <div *ngIf="isEdit" style="flex-grow: 1; height: 0; min-height: 100px;">
-    <textarea class="palette" style="resize: none;" [(ngModel)]="editPalette" placeholder="チャットパレット"></textarea>
+    <textarea #paletteTextArea class="palette" style="resize: none;" [(ngModel)]="editPalette" placeholder="チャットパレット"></textarea>
   </div>
   <div style="flex-grow: 0;">
     <button type="submit" (click)="toggleEditMode()">

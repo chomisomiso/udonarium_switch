@@ -1,65 +1,96 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem } from '@udonarium/core/system';
 import { GameCharacter } from '@udonarium/game-character';
 
+/**
+ * ターゲット中のキャラクターを保持する。ローカル状態でピア間の同期はしない。
+ *
+ * 作りは upstream の TabletopSelectionService に倣っているが、あちらが Map なのは
+ * 選択が3状態（SelectionState）を持つため。ターゲットは二値なので Set で足りる。
+ *
+ * ターゲットから外す条件（テーブルを降りた・削除された）はここが自分で見る。
+ * コマの DOM が消えたかどうかとは無関係に保つため。
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class GameCharacterTargetingService {
-  private readonly targetingMap: Map<GameCharacter, boolean> = new Map();
+  private readonly targets: Set<GameCharacter> = new Set();
   private readonly previous: Set<GameCharacter> = new Set();
   private isUpdateBatching = false;
 
-  get size(): number { return this.targetingMap.size; }
-  get objects(): GameCharacter[] { return Array.from(this.targetingMap.keys()); }
+  constructor() { this.initialize(); }
 
-  constructor() { }
-
-  getState(object: GameCharacter): boolean {
-    return this.targetingMap.get(object) ?? false;
+  // root シングルトンで破棄されないので unregister はしない（tabletop.service.ts と同じ作法）
+  private initialize() {
+    EventSystem.register(this)
+      .on('UPDATE_GAME_OBJECT', event => this.removeIfLeftTable(event.data.identifier))
+      .on('DELETE_GAME_OBJECT', event => this.removeByIdentifier(event.data.identifier));
   }
 
-  add(object: GameCharacter, state: boolean = true) {
-    if (!state) return this.remove(object);
-    let prevs = this.objects;
-    this.targetingMap.set(object, state);
-    this.updateHighlight(prevs);
+  /**
+   * テーブルを降りたキャラをターゲットから外す。
+   * UPDATE_GAME_OBJECT はドラッグ中も流れる高頻度イベントなので O(1) に保つこと。
+   */
+  private removeIfLeftTable(identifier: string) {
+    let object = ObjectStore.instance.get<GameCharacter>(identifier);
+    if (object instanceof GameCharacter && !object.isVisibleOnTable) this.remove(object);
+  }
+
+  /**
+   * 削除されたキャラをターゲットから外す。
+   * イベントが届く時点で ObjectStore からは消えているため、identifier で走査するしかない。
+   */
+  private removeByIdentifier(identifier: string) {
+    for (let target of this.targets) {
+      if (target.identifier !== identifier) continue;
+      this.remove(target);
+      return;
+    }
+  }
+
+  has(object: GameCharacter): boolean {
+    return this.targets.has(object);
+  }
+
+  /** ターゲット中のキャラクター */
+  getTargets(): ReadonlySet<GameCharacter> {
+    return this.targets;
+  }
+
+  // 範囲ドラッグは pointermove ごとに全キャラへ状態を書き込むので、
+  // 変化しなかったときに抜けないと通知が毎フレーム空振りで飛ぶ
+  add(object: GameCharacter) {
+    if (this.targets.has(object)) return;
+    this.targets.add(object);
+    this.updateHighlight();
   }
 
   remove(object: GameCharacter) {
-    if (!this.targetingMap.has(object)) return;
-    let prevs = this.objects;
-    this.targetingMap.delete(object);
-    this.updateHighlight(prevs);
-  }
-
-  toggle(object: GameCharacter) {
-    this.getState(object) ? this.remove(object) : this.add(object);
+    if (!this.targets.has(object)) return;
+    this.targets.delete(object);
+    this.updateHighlight([object]);
   }
 
   clear() {
-    let prevs = this.objects;
-    this.targetingMap.clear();
-    this.updateHighlight(prevs);
+    let removed = Array.from(this.targets);
+    this.targets.clear();
+    this.updateHighlight(removed);
   }
 
-  getTargets() {
-    let targets: Set<GameCharacter> = new Set();
-    this.targetingMap.forEach((value, key) => {
-      if (value) targets.add(key);
-    });
-    return targets;
-  }
-
-  private updateHighlight(prevs: GameCharacter[] = []) {
-    prevs.forEach(prev => this.previous.add(prev));
+  /**
+   * ハイライト更新を microtask にまとめて通知する。
+   * 現在ターゲット中のものは flush 時に拾うので、渡すのは外れたものだけでよい。
+   */
+  private updateHighlight(removed: GameCharacter[] = []) {
+    removed.forEach(object => this.previous.add(object));
     if (this.isUpdateBatching) return;
     queueMicrotask(() => {
       this.isUpdateBatching = false;
-      this.targetingMap.forEach((state, object) => this.previous.add(object));
+      this.targets.forEach(object => this.previous.add(object));
       let targets = Array.from(this.previous);
       this.previous.clear();
-      console.log('UPDATE_TARGET');
       if (0 < targets.length) EventSystem.trigger('UPDATE_TARGET', { changed: targets });
       for (let target of targets) {
         EventSystem.trigger(`UPDATE_TARGET/identifier/${target.identifier}`, { changed: targets });

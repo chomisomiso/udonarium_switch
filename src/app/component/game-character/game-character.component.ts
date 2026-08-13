@@ -72,7 +72,7 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
   get selectionState(): SelectionState { return this.selectionService.state(this.gameCharacter); }
   get isSelected(): boolean { return this.selectionState !== SelectionState.NONE; }
   get isMagnetic(): boolean { return this.selectionState === SelectionState.MAGNETIC; }
-  get isTargeted(): boolean { return this.targetingService.getState(this.gameCharacter); }
+  get isTargeted(): boolean { return this.targetingService.has(this.gameCharacter); }
 
   get buffs(): DataElement[] { return this.gameCharacter.getBuffs(); }
   get hasExpiredBuffs(): boolean { return this.buffs.some(b => b.currentValue !== '' && Number(b.currentValue) <= 0); }

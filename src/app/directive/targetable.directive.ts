@@ -26,11 +26,7 @@ export class TargetableDirective implements AfterViewInit, OnChanges, OnDestroy 
   get gameCharacter(): GameCharacter { return this._gameCharacter; }
 
   @Input('targetable.option') set option(option: TargetableOption) {
-    this.unregister();
-
     this._gameCharacter = option.gameCharacter ?? null;
-
-    this.register();
   }
   @Input('targetable.disable') isDisable: boolean = false;
   @Output('targetable.onstart') onstart: EventEmitter<PointerEvent> = new EventEmitter();
@@ -40,8 +36,11 @@ export class TargetableDirective implements AfterViewInit, OnChanges, OnDestroy 
 
   private overlapDetector: RegionOverlapDetector;
 
-  get state(): boolean { return this.targetingService.getState(this.gameCharacter); }
-  set state(state: boolean) { this.targetingService.add(this.gameCharacter, state); }
+  get state(): boolean { return this.targetingService.has(this.gameCharacter); }
+  set state(state: boolean) {
+    if (state) this.targetingService.add(this.gameCharacter);
+    else this.targetingService.remove(this.gameCharacter);
+  }
 
   private callbackOnTargetRegion = this.onTargetRegion.bind(this);
   private callbackOnTargetObject = this.onTargetObject.bind(this);
@@ -62,19 +61,17 @@ export class TargetableDirective implements AfterViewInit, OnChanges, OnDestroy 
     if (this.isDisable && this.state !== false) this.state = false;
   }
 
+  // ターゲット状態はコマの DOM より寿命が長い。外す条件は GameCharacterTargetingService が見る
   ngOnDestroy() {
-    this.unregister();
     this.dispose();
   }
 
   initialize() {
     this.overlapDetector = new RegionOverlapDetector(this.nativeElement);
-    this.register();
     this.addEventListeners();
   }
 
   destroy() {
-    this.unregister();
     this.removeEventListeners();
   }
 
@@ -106,11 +103,4 @@ export class TargetableDirective implements AfterViewInit, OnChanges, OnDestroy 
     this.nativeElement.ownerDocument.removeEventListener('targetregion', this.callbackOnTargetRegion);
   }
 
-  private register() {
-    this.targetingService.add(this.gameCharacter, this.state);
-  }
-
-  private unregister() {
-    this.targetingService.remove(this.gameCharacter);
-  }
 }

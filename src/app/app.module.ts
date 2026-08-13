@@ -53,7 +53,6 @@ import { SafePipe } from 'pipe/safe.pipe';
 import { AppConfigService } from 'service/app-config.service';
 import { ChatMessageService } from 'service/chat-message.service';
 import { ContextMenuService } from 'service/context-menu.service';
-import { GameCharacterTargetingService } from 'service/game-character-targeting.service';
 import { GameObjectInventoryService } from 'service/game-object-inventory.service';
 import { ModalService } from 'service/modal.service';
 import { PanelService } from 'service/panel.service';
@@ -128,7 +127,6 @@ import { AppComponent } from './app.component';
     PanelService,
     PointerDeviceService,
     TabletopService,
-    GameCharacterTargetingService,
   ],
   bootstrap: [AppComponent]
 })

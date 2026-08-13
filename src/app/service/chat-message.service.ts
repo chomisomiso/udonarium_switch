@@ -98,6 +98,20 @@ export class ChatMessageService {
     return chatTab.addMessage(chatMessage);
   }
 
+  /** システム発言として、自分にだけ見えるメッセージを送る。 */
+  sendSystemMessageToSelf(chatTab: ChatTab, text: string): ChatMessage {
+    let userId = Network.peer.userId;
+    return chatTab.addMessage({
+      from: 'System-ChatPalette',
+      originFrom: userId,
+      to: userId,
+      name: 'System',
+      timestamp: this.calcTimeStamp(chatTab),
+      tag: 'system',
+      text: text,
+    });
+  }
+
   private findId(identifier: string): string {
     let object = ObjectStore.instance.get(identifier);
     if (object instanceof GameCharacter) {

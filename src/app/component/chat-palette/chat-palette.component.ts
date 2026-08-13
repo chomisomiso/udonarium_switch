@@ -12,6 +12,7 @@ import { PanelService } from 'service/panel.service';
 import { openPaletteIndexMenu } from 'component/chat-palette/palette-index';
 import { getPaletteTopLine, scrollPaletteToLine } from 'component/chat-palette/palette-scroll';
 import { ContextMenuService } from 'service/context-menu.service';
+import { GameCharacterTargetingService } from 'service/game-character-targeting.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 
 @Component({
@@ -62,6 +63,7 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
     private panelService: PanelService,
     private contextMenuService: ContextMenuService,
     private pointerDeviceService: PointerDeviceService,
+    private targetingService: GameCharacterTargetingService,
   ) { }
 
   ngOnInit() {
@@ -127,10 +129,24 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
   }
 
   sendChat(value: { text: string, gameType: string, sendFrom: string, sendTo: string }) {
-    if (this.chatTab) {
-      let text = this.palette.evaluate(value.text, this.character.rootDataElement);
-      this.chatMessageService.sendMessage(this.chatTab, text, value.gameType, value.sendFrom, value.sendTo);
+    if (!this.chatTab) return;
+
+    let text: string;
+    if (ChatPalette.hasTargetNotation(value.text)) {
+      let targets = Array.from(this.targetingService.getTargets());
+      if (targets.length < 1) {
+        this.chatMessageService.sendSystemMessageToSelf(this.chatTab, 'ターゲットが未選択です');
+        return;
+      }
+      // ターゲットごとに展開し、どの行が誰のものか分かるよう名前を添えて並べる
+      text = targets
+        .map(target => `${this.palette.evaluate(value.text, this.character.rootDataElement, target.rootDataElement)} [${target.name}]`)
+        .join('\n');
+    } else {
+      text = this.palette.evaluate(value.text, this.character.rootDataElement);
     }
+
+    this.chatMessageService.sendMessage(this.chatTab, text, value.gameType, value.sendFrom, value.sendTo);
   }
 
   resetPletteSelect() {

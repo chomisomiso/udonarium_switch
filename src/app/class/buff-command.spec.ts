@@ -340,4 +340,38 @@ describe('BuffCommand', () => {
       expect(targetCommand.addBuffs.length).toBe(1);
     });
   });
+
+  // 走査の機構そのものは command-token.spec.ts が担当する。ここは接頭辞の意味だけ見る
+  describe('stripNonTargetCommands', () => {
+    it('自分向けは落ちてターゲット向けは残る', () => {
+      expect(BuffCommand.stripNonTargetCommands('t&毒/3 &祝福/2')).toBe('t&毒/3');
+    });
+
+    // a& は targetIds を見ずに全員へ効くので、ターゲットごとに分けると重複して掛かる
+    it('全体向け（a&）も落ちる', () => {
+      expect(BuffCommand.stripNonTargetCommands('t&毒/3 a&霧/5')).toBe('t&毒/3');
+    });
+
+    it('空白なしで混在していても切り分ける', () => {
+      expect(BuffCommand.stripNonTargetCommands('t&毒/3&祝福/2')).toBe('t&毒/3');
+    });
+
+    it('全角の接頭辞も判定できる', () => {
+      expect(BuffCommand.stripNonTargetCommands('ｔ＆毒 ＆祝福')).toBe('ｔ＆毒');
+    });
+
+    // バフ名の文字クラスが空白を含むと、&祝福 が後続の t& を飲み込んで両方消える
+    it('落とす側が先にあっても後続を巻き込まない', () => {
+      expect(BuffCommand.stripNonTargetCommands('&祝福 t&毒/3')).toBe('t&毒/3');
+    });
+
+    // parse() と対で整合していること
+    it('結果を parse すると自分向けと全体向けが null になる', () => {
+      let [selfCommand, targetCommand, allCommand] = BuffCommand.parse(BuffCommand.stripNonTargetCommands('t&毒/3 &祝福 a&霧'));
+
+      expect(selfCommand).toBeNull();
+      expect(allCommand).toBeNull();
+      expect(targetCommand.addBuffs.length).toBe(1);
+    });
+  });
 });

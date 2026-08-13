@@ -1,3 +1,4 @@
+import { CommandToken } from './command-token';
 import { StringUtil } from './core/system/util/string-util';
 
 /** 発言から読み取ったリソース操作ひとつぶん */
@@ -66,6 +67,21 @@ export namespace ResourceCommand {
       + options.value.toString()
       + (options.zeroLimit ? 'Z' : '')
       + (options.rangeLimit ? 'L' : '');
+  }
+
+  /**
+   * ターゲットに紐付かないリソース操作を取り除く。`t:` 付きだけが残る。
+   *
+   * ターゲットごとに1通ずつ発言を分ける場合、2通目以降でこれを通さないと
+   * 自分向けの操作がターゲット数ぶん適用される。
+   */
+  export function stripNonTargetCommands(text: string): string {
+    return CommandToken.strip(text, commandRegToken, command => isTargetCommand(command));
+  }
+
+  /** 半角化されたコマンド文字列が `t:` 付きか */
+  function isTargetCommand(command: string): boolean {
+    return /^t/i.test(command);
   }
 
   /**

@@ -1,3 +1,4 @@
+import { CommandToken } from './command-token';
 import { StringUtil } from './core/system/util/string-util';
 
 export type BuffCommandTarget = 'self' | 'target' | 'all';
@@ -122,6 +123,17 @@ export namespace BuffCommand {
   /** ラウンドを 1 進めて期限切れを掃除する。`&R- &D` の並び */
   export function makeProgressRound(target: BuffCommandTarget = 'self'): string {
     return `${makeChangeRound(-1, target)} ${makeRemoveExpired(target)}`;
+  }
+
+  /**
+   * ターゲットに紐付かないバフ操作を取り除く。`t&` 付きだけが残る。
+   *
+   * 効いている区別は「発言1通につき1回適用されるか（self・all）」と
+   * 「ターゲットごとに1回適用されるか（target）」。全体向けは targetIds を見ずに
+   * テーブル上の全員へ適用されるので、前者として落とす必要がある。
+   */
+  export function stripNonTargetCommands(text: string): string {
+    return CommandToken.strip(text, commandRegToken, command => scopeOf(command) === 'target');
   }
 
   /** 半角化されたコマンド文字列から、接頭辞が指す対象を読む */

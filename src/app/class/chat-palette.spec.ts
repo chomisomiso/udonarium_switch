@@ -25,42 +25,57 @@ describe('ChatPalette', () => {
     return palette;
   }
 
-  describe('hasTargetNotation', () => {
-    it('t{} を含む', () => {
-      expect(ChatPalette.hasTargetNotation('t{HP}')).toBe(true);
+  /** ターゲット未指定で展開したときに t{} を踏んだか */
+  function usedTarget(text: string, palette: ChatPalette = makePalette()): boolean {
+    return palette.expand(text, makeVariables()).usedTarget;
+  }
+
+  describe('expand - usedTarget', () => {
+    it('t{} を踏むと立つ', () => {
+      expect(usedTarget('t{HP}')).toBe(true);
     });
 
-    it('全角の t・波括弧も含む', () => {
-      expect(ChatPalette.hasTargetNotation('ｔ{HP}')).toBe(true);
-      expect(ChatPalette.hasTargetNotation('T｛HP｝')).toBe(true);
-      expect(ChatPalette.hasTargetNotation('Ｔ｛HP｝')).toBe(true);
+    it('全角の t・波括弧でも立つ', () => {
+      expect(usedTarget('ｔ{HP}')).toBe(true);
+      expect(usedTarget('T｛HP｝')).toBe(true);
+      expect(usedTarget('Ｔ｛HP｝')).toBe(true);
     });
 
-    it('最大値サフィックス付きも含む', () => {
-      expect(ChatPalette.hasTargetNotation('t{HP^}')).toBe(true);
+    it('最大値サフィックス付きでも立つ', () => {
+      expect(usedTarget('t{HP^}')).toBe(true);
     });
 
-    it('行の途中にあっても見つける', () => {
-      expect(ChatPalette.hasTargetNotation('2d6+{命中} 対 t{回避}')).toBe(true);
+    it('行の途中にあっても立つ', () => {
+      expect(usedTarget('2d6+{命中} 対 t{回避}')).toBe(true);
     });
 
-    it('自分参照の {} だけなら含まない', () => {
-      expect(ChatPalette.hasTargetNotation('2d6+{命中}')).toBe(false);
+    // 解決の成否とは無関係。踏んだ事実だけを見る
+    it('ターゲットに無い項目でも立つ', () => {
+      expect(makePalette().expand('t{知らない項目}', makeVariables(), makeVariables()).usedTarget).toBe(true);
     });
 
-    it('リソース操作コマンドは含まない', () => {
-      expect(ChatPalette.hasTargetNotation('t:HP-5')).toBe(false);
+    it('自分参照の {} だけなら立たない', () => {
+      expect(usedTarget('2d6+{命中}')).toBe(false);
     });
 
-    it('波括弧が無ければ含まない', () => {
-      expect(ChatPalette.hasTargetNotation('ただの発言')).toBe(false);
+    it('リソース操作コマンドでは立たない', () => {
+      expect(usedTarget('t:HP-5')).toBe(false);
     });
 
-    // evaluate() と正規表現を共用しているため、lastIndex が残ると交互に false を返す
-    it('同じ入力を続けて判定しても結果が変わらない', () => {
-      expect(ChatPalette.hasTargetNotation('t{HP}')).toBe(true);
-      expect(ChatPalette.hasTargetNotation('t{HP}')).toBe(true);
-      expect(ChatPalette.hasTargetNotation('t{HP}')).toBe(true);
+    it('波括弧が無ければ立たない', () => {
+      expect(usedTarget('ただの発言')).toBe(false);
+    });
+
+    // 事前走査をやめた理由そのもの。変数は展開して初めて t{} が現れる
+    it('パレット変数の中に隠れた t{} でも立つ', () => {
+      expect(usedTarget('{攻撃}', makePalette('//攻撃=2d6 vs t{回避}'))).toBe(true);
+    });
+
+    // static な g フラグ付き正規表現を呼び出し間で使い回しているため、lastIndex が残ると結果がぶれる
+    it('同じ入力を続けて展開しても結果が変わらない', () => {
+      expect(usedTarget('t{HP}')).toBe(true);
+      expect(usedTarget('t{HP}')).toBe(true);
+      expect(usedTarget('t{HP}')).toBe(true);
     });
   });
 
@@ -149,6 +164,13 @@ describe('ChatPalette', () => {
     it('t{} はパレット変数を引かない', () => {
       expect(makePalette('//防護点=変数のほう').evaluate('t{防護点}', self, target)).toBe('3');
     });
+
+    // 事前走査をやめたので、変数を経由した t{} もターゲットの値で埋まる
+    it('パレット変数の中の t{} もターゲットの値で展開される', () => {
+      let palette = makePalette('//攻撃=2d6 vs t{防護点}');
+
+      expect(palette.evaluate('{攻撃}', self, target)).toBe('2d6 vs 3');
+    });
   });
 
   // コメントで仕様として宣言している挙動。リファクタで静かに変わらないよう固定しておく
@@ -157,16 +179,10 @@ describe('ChatPalette', () => {
       let self = makeVariables();
       addPlain(self, 'HP', '30');
 
-      expect(ChatPalette.hasTargetNotation('Result{HP}')).toBe(true);
-      expect(makePalette().evaluate('Result{HP}', self)).toBe('Resul');
-    });
+      let expansion = makePalette().expand('Result{HP}', self);
 
-    // 検出は展開前のテキストだけを見るので、変数を経由した t{} は通常パスに落ちて空文字になる
-    it('パレット変数の中の t{} は検出をすり抜けて空文字になる', () => {
-      let palette = makePalette('//攻撃=2d6 vs t{回避}');
-
-      expect(ChatPalette.hasTargetNotation('{攻撃}')).toBe(false);
-      expect(palette.evaluate('{攻撃}', makeVariables())).toBe('2d6 vs ');
+      expect(expansion.usedTarget).toBe(true);
+      expect(expansion.text).toBe('Resul');
     });
   });
 });

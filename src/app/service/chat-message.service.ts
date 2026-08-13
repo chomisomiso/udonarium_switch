@@ -7,7 +7,6 @@ import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { Network } from '@udonarium/core/system';
 import { GameCharacter } from '@udonarium/game-character';
 import { PeerCursor } from '@udonarium/peer-cursor';
-import { GameCharacterTargetingService } from './game-character-targeting.service';
 
 const HOURS = 60 * 60 * 1000;
 
@@ -23,9 +22,7 @@ export class ChatMessageService {
 
   gameType: string = 'SwordWorld2.5';
 
-  constructor(
-    private targetingService: GameCharacterTargetingService
-  ) { }
+  constructor() { }
 
   get chatTabs(): ChatTab[] {
     return ChatTabList.instance.chatTabs;
@@ -77,9 +74,13 @@ export class ChatMessageService {
     return Math.floor(this.timeOffset + (performance.now() - this.performanceOffset));
   }
 
-  sendMessage(chatTab: ChatTab, text: string, gameType: string, sendFrom: string, sendTo?: string): ChatMessage {
-    // ターゲット情報を取得
-    let targets = this.targetingService.getTargets();
+  /**
+   * @param sendTo ひそひそ話の宛先。宛先を指定しないなら空文字（chat-input が流す既定値と同じ）
+   * @param targets このメッセージが作用するターゲット。
+   *   t: / t& のリソース操作はここに載せた全員へ適用される。現在のターゲット選択に
+   *   効かせたい呼び出し元は GameCharacterTargetingService.getTargets() を渡すこと。
+   */
+  sendMessage(chatTab: ChatTab, text: string, gameType: string, sendFrom: string, sendTo: string, targets: Iterable<GameCharacter>): ChatMessage {
     let targetIdentifiers = Array.from(targets).map(t => t.identifier).join(' ');
 
     let chatMessage: ChatMessageContext = {

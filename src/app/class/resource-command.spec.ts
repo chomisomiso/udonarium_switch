@@ -206,6 +206,40 @@ describe('ResourceCommand', () => {
     });
   });
 
+  // 走査の機構そのものは command-token.spec.ts が担当する。ここは t: の意味だけ見る
+  describe('stripNonTargetCommands', () => {
+    it('自分向けは落ちてターゲット向けは残る', () => {
+      expect(ResourceCommand.stripNonTargetCommands('t:HP-5 :MP+1')).toBe('t:HP-5');
+    });
+
+    // 空白なしで混在したトークンを切り分けられること。これができないと MP が N 回減る
+    it('空白なしで混在していても切り分ける', () => {
+      expect(ResourceCommand.stripNonTargetCommands('t:HP-5:MP+1')).toBe('t:HP-5');
+    });
+
+    it('全角の接頭辞も判定できる', () => {
+      expect(ResourceCommand.stripNonTargetCommands('ｔ：ＨＰ－５ ：ＭＰ＋１')).toBe('ｔ：ＨＰ－５');
+    });
+
+    it('大文字の接頭辞も判定できる', () => {
+      expect(ResourceCommand.stripNonTargetCommands('T:HP-5 :MP+1')).toBe('T:HP-5');
+    });
+
+    // 値の文字クラスが空白を含むと、:MP+1 が後続の t: を飲み込んで両方消える
+    it('落とす側が先にあっても後続を巻き込まない', () => {
+      expect(ResourceCommand.stripNonTargetCommands(':MP+1 t:HP-5')).toBe('t:HP-5');
+    });
+
+    // parse() と対で整合していること
+    it('結果を parse すると自分向けが空になる', () => {
+      let [selfCommands, targetCommands] = ResourceCommand.parse(ResourceCommand.stripNonTargetCommands('t:HP-5 :MP+1'));
+
+      expect(selfCommands).toEqual([]);
+      expect(targetCommands.length).toBe(1);
+      expect(targetCommands[0].resource).toBe('HP');
+    });
+  });
+
   /**
    * make で組み立てた文字列を parse が意図どおり読み戻せることを確認する。
    * 組み立て側の制約は解釈側の文法から導かれているので、この往復が両者の整合を保証する。

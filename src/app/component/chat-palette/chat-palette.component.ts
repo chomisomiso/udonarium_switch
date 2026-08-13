@@ -1,6 +1,8 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { BuffCommand } from '@udonarium/buff-command';
 import { ChatPalette } from '@udonarium/chat-palette';
 import { ChatTab } from '@udonarium/chat-tab';
+import { ResourceCommand } from '@udonarium/resource-command';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem } from '@udonarium/core/system';
 import { GameCharacter } from '@udonarium/game-character';
@@ -131,22 +133,26 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
   sendChat(value: { text: string, gameType: string, sendFrom: string, sendTo: string }) {
     if (!this.chatTab) return;
 
-    let text: string;
-    if (ChatPalette.hasTargetNotation(value.text)) {
-      let targets = Array.from(this.targetingService.getTargets());
-      if (targets.length < 1) {
-        this.chatMessageService.sendSystemMessageToSelf(this.chatTab, 'ターゲットが未選択です');
-        return;
-      }
-      // ターゲットごとに展開し、どの行が誰のものか分かるよう名前を添えて並べる
-      text = targets
-        .map(target => `${this.palette.evaluate(value.text, this.character.rootDataElement, target.rootDataElement)} [${target.name}]`)
-        .join('\n');
-    } else {
-      text = this.palette.evaluate(value.text, this.character.rootDataElement);
+    // ターゲット参照の有無は展開してみないと分からない（パレット変数の中に隠れうる）
+    let expansion = this.palette.expand(value.text, this.character.rootDataElement);
+    if (!expansion.usedTarget) {
+      this.chatMessageService.sendMessage(this.chatTab, expansion.text, value.gameType, value.sendFrom, value.sendTo, this.targetingService.getTargets());
+      return;
     }
 
-    this.chatMessageService.sendMessage(this.chatTab, text, value.gameType, value.sendFrom, value.sendTo);
+    let targets = Array.from(this.targetingService.getTargets());
+    if (targets.length < 1) {
+      this.chatMessageService.sendSystemMessageToSelf(this.chatTab, 'ターゲットが未選択です');
+      return;
+    }
+
+    // 多重適用を避けるため1体1通で送る（理由は sendMessage の targets を参照）
+    targets.forEach((target, index) => {
+      let line = this.palette.evaluate(value.text, this.character.rootDataElement, target.rootDataElement);
+      // 自分向けリソース／バフ操作と a&（全体バフ）は1通目にだけ残す
+      if (0 < index) line = BuffCommand.stripNonTargetCommands(ResourceCommand.stripNonTargetCommands(line));
+      this.chatMessageService.sendMessage(this.chatTab, `${line} [${target.name}]`, value.gameType, value.sendFrom, value.sendTo, [target]);
+    });
   }
 
   resetPletteSelect() {

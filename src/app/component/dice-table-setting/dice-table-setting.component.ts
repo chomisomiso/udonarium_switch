@@ -110,8 +110,9 @@ export class DiceTableSettingComponent implements OnInit, OnDestroy {
     let chatTab = this.chatTab;
     if (!diceTable || !chatTab || !this.canRoll) return;
 
+    // 表のロールにターゲット選択は乗せない（コマンドに t: が混ざっていても選択中の相手へ適用しない）
     this.chatMessageService.sendMessage(
-      chatTab, diceTable.command, this.chatMessageService.gameType, PeerCursor.myCursor.identifier);
+      chatTab, diceTable.command, this.chatMessageService.gameType, PeerCursor.myCursor.identifier, '', []);
   }
 
   async save() {

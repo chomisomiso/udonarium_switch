@@ -34,8 +34,8 @@ export interface ResourceCommandOptions {
  * 発言を組み立てる UI と実行する側は互いを知らない。両者が共有するのはこの文法だけ。
  */
 export namespace ResourceCommand {
-  const commandRegToken: RegExp = /t?:[^\+\-\=\>:]+[\+\-\=\>][^:]+/ig;
-  const commandRegParts: RegExp = /^(t?):([^\+\-\=\>:]+)([\+\-\=\>])([^:]+)/;
+  const commandRegToken: RegExp = /t?:[^\+\-\=\>:\s]+[\+\-\=\>][^:\s]+/ig;
+  const commandRegParts: RegExp = /^(t?):([^\+\-\=\>:\s]+)([\+\-\=\>])([^:\s]+)/i;
 
   /**
    * リソース名として使えない文字。
@@ -76,39 +76,34 @@ export namespace ResourceCommand {
     let selfResourceCommands: ResourceCommand[] = [];
     let targetResourceCommands: ResourceCommand[] = [];
 
-    let checkTexts: string[] = StringUtil.toHalfWidth(text).trim().split(/\s+/);
+    let commands: string[] = StringUtil.toHalfWidth(text).match(commandRegToken) ?? [];
 
-    for (let t of checkTexts) {
-      let regArray = t.match(commandRegToken);
-      if (!regArray) continue;
+    for (let c of commands) {
+      let res = c.match(commandRegParts);
+      let isTargeting = /^t$/i.test(res[1]);
+      let resource = res[2];
+      let operator = res[3];
+      let command = res[4];
 
-      for (let c of regArray) {
-        let res = c.match(commandRegParts);
-        let isTargeting = res[1] === 't';
-        let resource = res[2];
-        let operator = res[3];
-        let command = res[4];
+      let optionL = /LZ?$/i.test(command);
+      let optionZ = /ZL?$/i.test(command);
+      let optionMax = /\^$/.test(resource);
 
-        let optionL = /LZ?$/i.test(command);
-        let optionZ = /ZL?$/i.test(command);
-        let optionMax = /\^$/.test(resource);
+      if (optionL || optionZ) command = command.replace(/(L?Z|Z?L)$/i, '');
+      if (optionMax) resource = resource.replace(/\^$/, '');
 
-        if (optionL || optionZ) command = command.replace(/(L?Z|Z?L)$/i, '');
-        if (optionMax) resource = resource.replace(/\^$/, '');
+      // 数式・ダイス式のみで構成されているか。BCDice へ渡す整形は実行側が行う
+      let isCalculate: boolean = !/[^d\d\(\)\+\-\*\/]/.test(command);
 
-        // 数式・ダイス式のみで構成されているか。BCDice へ渡す整形は実行側が行う
-        let isCalculate: boolean = !/[^d\d\(\)\+\-\*\/]/.test(command);
-
-        (isTargeting ? targetResourceCommands : selfResourceCommands).push({
-          resource: resource,
-          operator: operator,
-          command: command,
-          isCalculate: isCalculate,
-          enableOptionL: optionL,
-          enableOptionZ: optionZ,
-          enableOptionMax: optionMax,
-        });
-      }
+      (isTargeting ? targetResourceCommands : selfResourceCommands).push({
+        resource: resource,
+        operator: operator,
+        command: command,
+        isCalculate: isCalculate,
+        enableOptionL: optionL,
+        enableOptionZ: optionZ,
+        enableOptionMax: optionMax,
+      });
     }
     return [selfResourceCommands, targetResourceCommands];
   }

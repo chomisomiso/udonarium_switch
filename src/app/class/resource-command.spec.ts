@@ -181,6 +181,29 @@ describe('ResourceCommand', () => {
     it('全角のターゲット指定も解釈する', () => {
       expect(ResourceCommand.parse('ｔ：ＭＰ＋３')[1].length).toBe(1);
     });
+
+    // commandRegToken だけが /i だった頃は、大文字が commandRegParts に落ちず例外になっていた
+    it('大文字のターゲット指定も解釈する', () => {
+      expect(() => ResourceCommand.parse('T:HP-5')).not.toThrow();
+      expect(ResourceCommand.parse('T:HP-5')[1].length).toBe(1);
+    });
+
+    // 行全体に正規表現を当てているので、地の文を挟んでも取りこぼさない
+    it('地の文を挟んだ複数コマンドを拾う', () => {
+      let [selfCommands, targetCommands] = ResourceCommand.parse(':HP+5 斬りつけた t:MP-1');
+
+      expect(selfCommands.length).toBe(1);
+      expect(targetCommands.length).toBe(1);
+      expect(selfCommands[0].resource).toBe('HP');
+      expect(targetCommands[0].resource).toBe('MP');
+    });
+
+    it('改行で区切られていても拾う', () => {
+      let [selfCommands, targetCommands] = ResourceCommand.parse(':HP+5\nt:MP-1');
+
+      expect(selfCommands.length).toBe(1);
+      expect(targetCommands.length).toBe(1);
+    });
   });
 
   /**

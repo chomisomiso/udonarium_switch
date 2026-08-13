@@ -321,4 +321,23 @@ describe('BuffCommand', () => {
       expect(BuffCommand.parse(BuffCommand.makeAdd({ name: '祝福', target: 'all' }))[2]).not.toBeNull();
     });
   });
+
+  describe('parse - 行全体からの抽出', () => {
+    // 行全体に正規表現を当てているので、地の文を挟んでも取りこぼさない
+    it('地の文を挟んだ複数コマンドを拾う', () => {
+      let [selfCommand, targetCommand] = BuffCommand.parse('&祝福/2 斬りつけた t&毒/3');
+
+      expect(selfCommand.addBuffs.length).toBe(1);
+      expect(targetCommand.addBuffs.length).toBe(1);
+      expect(selfCommand.addBuffs[0].buffName).toBe('祝福');
+      expect(targetCommand.addBuffs[0].buffName).toBe('毒');
+    });
+
+    it('改行で区切られていても拾う', () => {
+      let [selfCommand, targetCommand] = BuffCommand.parse('&祝福/2\nt&毒/3');
+
+      expect(selfCommand.addBuffs.length).toBe(1);
+      expect(targetCommand.addBuffs.length).toBe(1);
+    });
+  });
 });

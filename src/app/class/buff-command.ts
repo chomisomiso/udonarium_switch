@@ -31,12 +31,12 @@ export interface BuffAddOptions {
  * 発言を組み立てる UI と実行する側は互いを知らない。両者が共有するのはこの文法だけ。
  */
 export namespace BuffCommand {
-  const commandRegAdd: RegExp = /^[ta]?&([^\/]+)(?:\/([^\/]+))?(?:\/([^\/]+))?/i;  // &バフ名/R数/効果 or &バフ名/効果/R数（後ろ2つは省略可能・順不同）
-  const commandRegRemove: RegExp = /^[ta]?&([^\/]+)\-$/i;  // &バフ名-  指定バフを削除
+  const commandRegAdd: RegExp = /^[ta]?&([^\/\s]+)(?:\/([^\/\s]+))?(?:\/([^\/\s]+))?/i;  // &バフ名/R数/効果 or &バフ名/効果/R数（後ろ2つは省略可能・順不同）
+  const commandRegRemove: RegExp = /^[ta]?&([^\/\s]+)\-$/i;  // &バフ名-  指定バフを削除
   const commandRegDecreaseAll: RegExp = /^[ta]?&R\-$/i;    // &R- すべてのバフのラウンドを-1
   const commandRegIncreaseAll: RegExp = /^[ta]?&R\+$/i;    // &R+ すべてのバフのラウンドを+1
   const commandRegDeleteExpired: RegExp = /^[ta]?&D$/i;    // &D  0R以下のバフを消去
-  const commandRegToken: RegExp = /[ta]?&[^&]+/ig;
+  const commandRegToken: RegExp = /[ta]?&[^&\s]+/ig;
 
   /**
    * バフ名として使えない文字。
@@ -124,6 +124,13 @@ export namespace BuffCommand {
     return `${makeChangeRound(-1, target)} ${makeRemoveExpired(target)}`;
   }
 
+  /** 半角化されたコマンド文字列から、接頭辞が指す対象を読む */
+  function scopeOf(command: string): BuffCommandTarget {
+    if (/^a/i.test(command)) return 'all';
+    if (/^t/i.test(command)) return 'target';
+    return 'self';
+  }
+
   /**
    * 発言からバフ操作コマンドを抽出する。
    * @returns [自分向け, ターゲット向け, 全体向け]。該当するコマンドが無い対象は null
@@ -133,38 +140,34 @@ export namespace BuffCommand {
     let targetBuffCommand: BuffCommand | null = null;
     let allBuffCommand: BuffCommand | null = null;
 
-    let checkTexts: string[] = StringUtil.toHalfWidth(text).trim().split(/\s+/);
+    let commands: string[] = StringUtil.toHalfWidth(text).match(commandRegToken) ?? [];
 
-    for (let t of checkTexts) {
-      let regArray = t.match(commandRegToken);
-      if (!regArray) continue;
+    for (let c of commands) {
+      let commandTarget: BuffCommand;
+      let scope = scopeOf(c);
+      if (scope === 'all') {
+        if (!allBuffCommand) allBuffCommand = emptyCommand();
+        commandTarget = allBuffCommand;
+      } else if (scope === 'target') {
+        if (!targetBuffCommand) targetBuffCommand = emptyCommand();
+        commandTarget = targetBuffCommand;
+      } else {
+        if (!selfBuffCommand) selfBuffCommand = emptyCommand();
+        commandTarget = selfBuffCommand;
+      }
 
-      for (let c of regArray) {
-        let commandTarget: BuffCommand;
-        if (/^a/i.test(c)) {
-          if (!allBuffCommand) allBuffCommand = emptyCommand();
-          commandTarget = allBuffCommand;
-        } else if (/^t/i.test(c)) {
-          if (!targetBuffCommand) targetBuffCommand = emptyCommand();
-          commandTarget = targetBuffCommand;
-        } else {
-          if (!selfBuffCommand) selfBuffCommand = emptyCommand();
-          commandTarget = selfBuffCommand;
-        }
-
-        if (commandRegDecreaseAll.test(c)) {
-          commandTarget.changeAllRounds -= 1;
-        } else if (commandRegIncreaseAll.test(c)) {
-          commandTarget.changeAllRounds += 1;
-        } else if (commandRegDeleteExpired.test(c)) {
-          commandTarget.removeExpired = true;
-        } else if (commandRegRemove.test(c)) {
-          commandTarget.removeBuffNames.push(c.match(commandRegRemove)[1]);
-        } else if (commandRegAdd.test(c)) {
-          commandTarget.addBuffs.push(parseAddCommand(c));
-        } else {
-          continue;
-        }
+      if (commandRegDecreaseAll.test(c)) {
+        commandTarget.changeAllRounds -= 1;
+      } else if (commandRegIncreaseAll.test(c)) {
+        commandTarget.changeAllRounds += 1;
+      } else if (commandRegDeleteExpired.test(c)) {
+        commandTarget.removeExpired = true;
+      } else if (commandRegRemove.test(c)) {
+        commandTarget.removeBuffNames.push(c.match(commandRegRemove)[1]);
+      } else if (commandRegAdd.test(c)) {
+        commandTarget.addBuffs.push(parseAddCommand(c));
+      } else {
+        continue;
       }
     }
     return [selfBuffCommand, targetBuffCommand, allBuffCommand];

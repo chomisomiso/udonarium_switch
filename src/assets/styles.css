@@ -1,1 +1,24 @@
 /* global styles */
+
+/*
+ * アイコンフォントは Material Symbols（現行セット）を使う。
+ * クラス名を material-symbols-outlined へ置換すると upstream 由来ファイル 36 個に
+ * 差分が出るため、旧クラス名 .material-icons のまま実体だけ差し替えている。
+ * 定義は Material Symbols 公式配布 CSS と同等。
+ * 塗りつぶしの見た目は index.html 側で FILL 軸を 1 に固定して維持している。
+ */
+.material-icons {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}

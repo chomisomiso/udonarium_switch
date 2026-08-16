@@ -1,0 +1,67 @@
+<div class="buff-list">
+  <ng-container *ngIf="0 < buffs.length; else noBuff">
+    <div *ngFor="let buff of buffs; trackBy: trackByIdentifier"
+      class="buff-tag"
+      [class.buff-expired]="buff.isExpired"
+      (click)="openBuffEdit(buff, $event)"
+      [title]="editBuffTitle(buff)">
+      <span class="buff-tag-name">{{buff.buffName}}</span>
+      <span class="buff-tag-round">{{buff.roundLabel}}</span>
+      <span class="buff-tag-effect" *ngIf="buff.effect">{{buff.effect}}</span>
+    </div>
+  </ng-container>
+  <ng-template #noBuff>
+    <span class="no-buff">バフなし</span>
+  </ng-template>
+</div>
+<!-- 適用先。form の外の同名ラジオはドキュメント全体で1グループになるので form で括る。 -->
+<form class="target-radios">
+  <span class="target-radios-label">適用先:</span>
+  <span class="segmented" role="radiogroup" aria-label="適用先">
+    <label class="chip">
+      <input type="radio" name="buff-target" value="self" [(ngModel)]="targetMode" /><span>自分</span>
+    </label>
+    <label class="chip">
+      <input type="radio" name="buff-target" value="target" [(ngModel)]="targetMode" /><span>ターゲット</span>
+    </label>
+    <label class="chip">
+      <input type="radio" name="buff-target" value="all" [(ngModel)]="targetMode" /><span>全体</span>
+    </label>
+  </span>
+</form>
+
+<!-- Row 1: バフ名入力 -->
+<input class="text-input buff-input buff-name" type="text" placeholder="バフ名" title="バフの名前を入力" [(ngModel)]="buffName" />
+
+<!-- Row 2: R数・効果入力 -->
+<div class="buff-round-cell" (wheel)="adjustRoundOnWheel($event)" title="空欄で無制限 / ホイールで増減">
+  <input class="text-input no-spinner buff-input buff-round" type="number" placeholder="∞" [(ngModel)]="buffRound" />
+  <span class="suffix-label">R</span>
+  <button class="button insert-resource" (mousedown)="$event.preventDefault()"
+    (click)="setRoundInfinite()" title="効果時間を無制限にする">
+    ∞
+  </button>
+</div>
+<div class="buff-effect-cell">
+  <input #effectInput class="text-input buff-input buff-effect" type="text" placeholder="バフの効果"
+    title="バフの効果を入力（任意）" [(ngModel)]="buffEffect" />
+  <!-- mousedown を止めて入力欄からフォーカスを奪わない。選択範囲が見えたまま残る -->
+  <button class="button insert-resource" (mousedown)="$event.preventDefault()"
+    (click)="openResourceMenu($event)" title="リソース名を挿入">
+    +
+  </button>
+</div>
+
+<!-- Row 3: 追加・R増減 -->
+<button class="button add" [class.disable]="addCommand === '' || isCommandDisabled()" (click)="addBuff()" title="バフ追加">追加</button>
+
+<!-- Row 4: ラウンド進行・期限切れ削除 -->
+<button class="button progress" [class.disable]="isCommandDisabled()" (click)="progressRound()" title="バフのRを-1 & 期限切れを削除）">ラウンドを進行</button>
+
+<!-- Row 5: コマンドプレビュー -->
+<div class="command-preview">
+  <span class="command-label">コマンド</span>
+  <span class="command-content" *ngIf="addCommand !== ''"
+    (click)="addBuffCommandToText()" [title]="'クリックで入力欄へコピー\n' + addCommand">{{addCommand}}</span>
+  <span class="command-placeholder" *ngIf="addCommand === ''">フォーマット≫ &amp;バフ名/R数/効果</span>
+</div>

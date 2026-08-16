@@ -1,0 +1,48 @@
+<label class="value" (wheel)="adjustValueOnKeypadWheel($event)" title="ホイールで増減">
+  <span class="next-value">▲</span>
+  <!-- 満タンは最大値の代入なので増減値を使わない -->
+  <input type="number" class="no-spinner input-value" [disabled]="fillToMax" [(ngModel)]="keypadValue"/>
+  <span class="prev-value">▼</span>
+</label>
+<button class="button add-ten" (click)="adjustValue(10)" title="+10">+10</button>
+<button class="button minus-ten" (click)="adjustValue(-10)" title="-10">−10</button>
+<button class="button clear" (click)="clearValue()" title="クリア">Clear</button>
+<button class="button apply" [class.disable]="command === ''" (click)="sendResourceCommand()" title="コマンド実行">実行</button>
+<!-- 適用先。form の外の同名ラジオはドキュメント全体で1グループになるので form で括る。 -->
+<form class="target-radios">
+  <span class="target-radios-label">適用先:</span>
+  <span class="segmented" role="radiogroup" aria-label="適用先">
+    <label class="chip">
+      <input type="radio" name="target" [value]="false" [(ngModel)]="isTargetMode" /><span>自分</span>
+    </label>
+    <label class="chip">
+      <input type="radio" name="target" [value]="true" [(ngModel)]="isTargetMode" /><span>ターゲット</span>
+    </label>
+  </span>
+</form>
+<label class="chip toggle l-option" [title]="lOptionTitle">
+  <input type="checkbox" [(ngModel)]="rangeLimit" /><span>{{ rangeLimit ? '☑' : '☐' }}最大・最小に収める</span>
+</label>
+<label class="chip toggle full-option" [title]="fillOptionTitle">
+  <input type="checkbox" [disabled]="!canFillToMax" [(ngModel)]="fillToMax" /><span>{{ fillToMax ? '☑' : '☐' }}満タンにする</span>
+</label>
+<div class="resource-list">
+<select class="resource-options" [(ngModel)]="selectedResourceKey" aria-label="操作するリソース"
+  (wheel)="selectResourceOnWheel($event)" title="操作するリソース / ホイールで切替">
+  <option value="" disabled>リソースを選択</option>
+  <optgroup label="現在値" *ngIf="0 < currentValueOptions.length">
+    <option *ngFor="let tag of currentValueOptions; trackBy: trackByDataElement"
+      [value]="tag.name">{{tag.name}}</option>
+  </optgroup>
+  <optgroup label="最大値" *ngIf="0 < maxValueOptions.length">
+    <option *ngFor="let tag of maxValueOptions; trackBy: trackByDataElement"
+      [value]="tag.name + '^'">最大{{tag.name}}</option>
+  </optgroup>
+</select>
+</div>
+<div class="command-preview">
+  <span class="command-label">コマンド</span>
+  <span class="command-content" *ngIf="command !== ''"
+    (click)="addResourceCommandToText()" [title]="'クリックで入力欄へコピー\n' + command">{{command}}</span>
+  <span class="command-placeholder" *ngIf="command === ''">フォーマット≫ :リソース±値</span>
+</div>

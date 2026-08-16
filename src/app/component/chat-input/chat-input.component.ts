@@ -1,21 +1,21 @@
 import { Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ChatInputHistory, WritingNotifier } from '@udonarium/chat-input';
 import { ChatMessage } from '@udonarium/chat-message';
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem, Network } from '@udonarium/core/system';
-import { PeerContext } from '@udonarium/core/system/network/peer-context';
 import { ResettableTimeout } from '@udonarium/core/system/util/resettable-timeout';
 import { GameCharacter } from '@udonarium/game-character';
 import { ImageCrop } from '@udonarium/image-crop';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { CharacterImageListComponent } from 'component/character-image-list/character-image-list.component';
-import { TextViewComponent } from 'component/text-view/text-view.component';
+import { openDicebotHelp } from 'component/chat-input/dicebot-help';
 import { BatchService } from 'service/batch.service';
 import { ChatMessageService } from 'service/chat-message.service';
 import { ContextMenuService } from 'service/context-menu.service';
 import { DiceBot } from '@udonarium/dice-bot';
 import { ImageService } from 'service/image.service';
-import { PanelOption, PanelService } from 'service/panel.service';
+import { PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 
 @Component({
@@ -52,7 +52,6 @@ export class ChatInputComponent implements OnInit, OnDestroy {
   @Output() chat = new EventEmitter<{ text: string, gameType: string, sendFrom: string, sendTo: string }>();
 
   get isDirect(): boolean { return this.sendTo != null && this.sendTo.length ? true : false }
-  gameHelp: string = '';
 
   get imageFile(): ImageFile {
     let object = ObjectStore.instance.get(this.sendFrom);
@@ -97,8 +96,7 @@ export class ChatInputComponent implements OnInit, OnDestroy {
     return this._gameCharacters;
   }
 
-  private writingEventInterval: NodeJS.Timeout = null;
-  private previousWritingLength: number = 0;
+  private writing = new WritingNotifier();
   writingPeers: Map<string, ResettableTimeout> = new Map();
   writingPeerNames: string[] = [];
 
@@ -175,48 +173,17 @@ export class ChatInputComponent implements OnInit, OnDestroy {
   }
 
   onInput() {
-    if (this.writingEventInterval === null && this.previousWritingLength <= this.text.length) {
-      let sendTo: string = null;
-      if (this.isDirect) {
-        let object = ObjectStore.instance.get(this.sendTo);
-        if (object instanceof PeerCursor) {
-          let peer = PeerContext.parse(object.peerId);
-          if (peer) sendTo = peer.peerId;
-        }
-      }
-      EventSystem.call('WRITING_A_MESSAGE', this.chatTabidentifier, sendTo);
-      this.writingEventInterval = setTimeout(() => {
-        this.writingEventInterval = null;
-      }, 200);
-    }
-    this.previousWritingLength = this.text.length;
+    this.writing.notify(this.text, this.chatTabidentifier, this.sendTo);
     this.calcFitHeight();
   }
 
-  private history: string[] = new Array();
-  private currentHistoryIndex: number = -1;
-  private static MAX_HISTORY_NUM = 1000;
+  private history = new ChatInputHistory();
 
   moveHistory(event: Partial<KeyboardEvent>, direction: number) {
     if (event) event.preventDefault();
 
-    if (direction < 0 && this.currentHistoryIndex < 0) {
-      this.currentHistoryIndex = this.history.length - 1;
-    } else if (direction > 0 && this.currentHistoryIndex >= this.history.length - 1) {
-      this.currentHistoryIndex = -1;
-    } else {
-      this.currentHistoryIndex = this.currentHistoryIndex + direction;
-    }
-
-    let histText: string;
-    if (this.currentHistoryIndex < 0) {
-      histText = '';
-    } else {
-      histText = this.history[this.currentHistoryIndex];
-    }
-
-    this.text = histText;
-    this.previousWritingLength = this.text.length;
+    this.text = this.history.move(direction);
+    this.writing.sync(this.text.length);
   }
 
   sendChat(event: Partial<KeyboardEvent>) {
@@ -228,13 +195,9 @@ export class ChatInputComponent implements OnInit, OnDestroy {
     if (!this.sendFrom.length) this.sendFrom = this.myPeer.identifier;
     this.chat.emit({ text: this.text, gameType: this.gameType, sendFrom: this.sendFrom, sendTo: this.sendTo });
 
-    if (this.history.length >= ChatInputComponent.MAX_HISTORY_NUM) {
-      this.history.shift();
-    }
     this.history.push(this.text);
-    this.currentHistoryIndex = -1;
     this.text = '';
-    this.previousWritingLength = this.text.length;
+    this.writing.sync(0);
     let textArea: HTMLTextAreaElement = this.textAreaElementRef.nativeElement;
     textArea.value = '';
     this.calcFitHeight();
@@ -256,46 +219,7 @@ export class ChatInputComponent implements OnInit, OnDestroy {
   }
 
   showDicebotHelp() {
-    DiceBot.getHelpMessage(this.gameType).then(help => {
-      this.gameHelp = help;
-
-      let gameName: string = 'ダイスボット';
-      for (let diceBotInfo of DiceBot.infos) {
-        if (diceBotInfo.id === this.gameType) {
-          gameName = 'ダイスボット<' + diceBotInfo.name + '＞'
-        }
-      }
-      gameName += 'の説明';
-
-      let coordinate = this.pointerDeviceService.pointers[0];
-      let option: PanelOption = { left: coordinate.x, top: coordinate.y, width: 600, height: 500 };
-      let textView = this.panelService.open(TextViewComponent, option);
-      textView.title = gameName;
-      textView.text =
-        '【ダイスボット】チャットにダイス用の文字を入力するとダイスロールが可能\n'
-        + '入力例）２ｄ６＋１　攻撃！\n'
-        + '出力例）2d6+1　攻撃！\n'
-        + '　　　　  diceBot: (2d6) → 7\n'
-        + '上記のようにダイス文字の後ろに空白を入れて発言する事も可能。\n'
-        + '以下、使用例\n'
-        + '　3D6+1>=9 ：3d6+1で目標値9以上かの判定\n'
-        + '　1D100<=50 ：D100で50％目標の下方ロールの例\n'
-        + '　3U6[5] ：3d6のダイス目が5以上の場合に振り足しして合計する(上方無限)\n'
-        + '　3B6 ：3d6のダイス目をバラバラのまま出力する（合計しない）\n'
-        + '　10B6>=4 ：10d6を振り4以上のダイス目の個数を数える\n'
-        + '　2R6[>3]>=5 ：2D6のダイス目が3より大きい場合に振り足して、5以上のダイス目の個数を数える\n'
-        + '　(8/2)D(4+6)<=(5*3)：個数・ダイス・達成値には四則演算も使用可能\n'
-        + '　c(10-4*3/2+2)：c(計算式）で計算だけの実行も可能\n'
-        + '　choice[a,b,c]：列挙した要素から一つを選択表示。ランダム攻撃対象決定などに\n'
-        + '　S3d6 ： 各コマンドの先頭に「S」を付けると他人結果の見えないシークレットロール\n'
-        + '　3d6/2 ： ダイス出目を割り算（端数処理はゲームシステム依存）。切り上げは /2C、四捨五入は /2R、切り捨ては /2F\n'
-        + '　D66 ： D66ダイス。順序はゲームに依存。D66N：そのまま、D66A：昇順、D66D：降順\n'
-        + '\n'
-        + '詳細は下記URLのコマンドガイドを参照\n'
-        + 'https://docs.bcdice.org/\n'
-        + '===================================\n'
-        + this.gameHelp;
-    });
+    openDicebotHelp(this.gameType, this.panelService, this.pointerDeviceService);
   }
 
   private allowsChat(gameCharacter: GameCharacter): boolean {

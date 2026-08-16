@@ -14,15 +14,12 @@ import { EventSystem, Network } from '@udonarium/core/system';
 import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { GameCharacter } from '@udonarium/game-character';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
-import { CharacterImageListComponent } from 'component/character-image-list/character-image-list.component';
-import { ChatPaletteComponent } from 'component/chat-palette/chat-palette.component';
-import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
-import { TabletopObjectSettingComponent } from 'component/tabletop-object-setting/tabletop-object-setting.component';
+import { GameCharacterContextMenu } from 'component/game-character/game-character-context-menu';
 import { MovableOption } from 'directive/movable.directive';
 import { RotableOption } from 'directive/rotable.directive';
-import { ContextMenuAction, ContextMenuSeparator, ContextMenuService, ContextMenuType } from 'service/context-menu.service';
+import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
 import { ImageService } from 'service/image.service';
-import { PanelOption, PanelService } from 'service/panel.service';
+import { PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 import { SelectionState, TabletopSelectionService } from 'service/tabletop-selection.service';
 import { GameCharacterTargetingService } from 'service/game-character-targeting.service';
@@ -222,82 +219,10 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
   }
 
   private makeContextMenu(): ContextMenuAction[] {
-    let actions: ContextMenuAction[] = [];
-
-    actions.push({ name: '詳細を表示', action: () => { this.showDetail(this.gameCharacter); } });
-    actions.push({ name: 'チャットパレットを表示', action: () => { this.showChatPalette(this.gameCharacter) } });
-    actions.push(ContextMenuSeparator);
-    actions.push({
-      name: '共有イベントリに移動', action: () => {
-        this.gameCharacter.setLocation('common');
-        SoundEffect.play(PresetSound.piecePut);
-      }
-    });
-    actions.push({
-      name: '個人イベントリに移動', action: () => {
-        this.gameCharacter.setLocation(Network.peerId);
-        SoundEffect.play(PresetSound.piecePut);
-      }
-    });
-    actions.push({
-      name: '墓場に移動', action: () => {
-        this.gameCharacter.setLocation('graveyard');
-        SoundEffect.play(PresetSound.sweep);
-      }
-    });
-    if (1 < this.gameCharacter.imageCount) {
-      actions.push(ContextMenuSeparator);
-      // action を持たせないことで、親項目のクリックではメニューが閉じないようにする
-      actions.push({
-        name: '画像',
-        subActions: CharacterImageListComponent.makeContextMenuActions(this.gameCharacter, this.imageService)
-      });
-    }
-    actions.push(ContextMenuSeparator);
-    actions.push(this.isKomaImageHeightSpecified
-      ? { name: '☑ 画像の高さを指定', action: () => { this.isKomaImageHeightSpecified = false; } }
-      : { name: '☐ 画像の高さを指定', action: () => { this.isKomaImageHeightSpecified = true; } });
-    if (this.isKomaImageHeightSpecified) {
-      actions.push({
-        name: '高さ',
-        type: ContextMenuType.SLIDER,
-        slider: {
-          min: GameCharacter.minKomaImageHeight,
-          max: GameCharacter.maxKomaImageHeight,
-          step: 5,
-          value: this.komaImageHeight,
-          onInput: value => this.komaImageHeight = value
-        }
-      });
-    }
-    actions.push(ContextMenuSeparator);
-    actions.push({
-      name: 'コピーを作る', action: () => {
-        let cloneObject = this.gameCharacter.clone();
-        cloneObject.location.x += this.gridSize;
-        cloneObject.location.y += this.gridSize;
-        cloneObject.update();
-        SoundEffect.play(PresetSound.piecePut);
-      }
-    });
-    actions.push(ContextMenuSeparator);
-    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, this.gameCharacter, this.pointerDeviceService.pointers[0]) });
-    return actions;
-  }
-
-  private showDetail(gameObject: GameCharacter) {
-    let coordinate = this.pointerDeviceService.pointers[0];
-    let title = 'キャラクターシート';
-    if (gameObject.name.length) title += ' - ' + gameObject.name;
-    let option: PanelOption = { title: title, left: coordinate.x - 400, top: coordinate.y - 300, width: 800, height: 600 };
-    let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
-    component.tabletopObject = gameObject;
-  }
-
-  private showChatPalette(gameObject: GameCharacter) {
-    let coordinate = this.pointerDeviceService.pointers[0];
-    let option: PanelOption = { left: coordinate.x - 250, top: coordinate.y - 175, width: 615, height: 350 };
-    let component = this.panelService.open<ChatPaletteComponent>(ChatPaletteComponent, option);
-    component.character = gameObject;
+    return GameCharacterContextMenu.make(this.gameCharacter, {
+      panelService: this.panelService,
+      pointerDeviceService: this.pointerDeviceService,
+      imageService: this.imageService
+    }, { gridSize: this.gridSize });
   }
 }

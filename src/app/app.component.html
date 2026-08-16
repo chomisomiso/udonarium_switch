@@ -1,7 +1,7 @@
 <div id="app-table-layer" style="position: absolute; width: 100%; height: 100%; overflow: hidden;">
   <game-table></game-table>
 </div>
-<ui-panel [top]="0" [left]="0" [width]="100" [height]="480" [title]="'メニュー'" [showTitleButtons]="false">
+<ui-panel [top]="0" [left]="0" [width]="100" [height]="530" [title]="'メニュー'" [showTitleButtons]="false">
   <nav>
     <ul>
       <li (click)="open('PeerMenuComponent')">
@@ -38,6 +38,12 @@
         <a routerLink="/" routerLinkActive="active">
           <div><i class="material-icons icon-size">folder_shared</i></div>
           <div>インベントリ</div>
+        </a>
+      </li>
+      <li (click)="open('GameCharacterDashboardComponent')">
+        <a routerLink="/" routerLinkActive="active">
+          <div><i class="material-icons icon-size">team_dashboard</i></div>
+          <div>ダッシュボード</div>
         </a>
       </li>
       <li (click)="open('DiceTableSettingComponent')">

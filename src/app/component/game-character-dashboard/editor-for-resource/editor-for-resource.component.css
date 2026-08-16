@@ -1,0 +1,103 @@
+/* ========== ルート / レイアウト骨格 ========== */
+/* 外枠（高さ・背景）は dashboard-shared.css の :host(...) を参照 */
+:host {
+  display: grid;
+  grid-template-areas:
+    "target target cmd    cmd       cmd   cmd"
+    ".      .      .      .         .     ."
+    "list   list   value  add-ten   apply ."
+    ".      l-opt  value  clear     apply ."
+    ".      full   value  minus-ten apply ."
+    ".      .      .      .         .     .";
+  grid-template-columns: 15px 135px 70px 40px auto 1fr;
+  grid-template-rows: auto 1fr auto auto auto 2fr;
+  gap: 2px;
+  padding: 6px;
+}
+
+/* ========== grid エリア割り当て ========== */
+.target-radios { grid-area: target; }
+.add-ten { grid-area: add-ten; }
+.clear { grid-area: clear; }
+.minus-ten { grid-area: minus-ten; }
+.full-option { grid-area: full; }
+
+/* ========== ボタン ========== */
+.button {
+  margin: unset;
+  padding: 2px;
+  font-size: 0.8em;
+}
+
+/* ========== キーパッド ========== */
+.value {
+  grid-area: value;
+  display: flex;
+  flex-direction: column;
+  margin: 0 5px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.prev-value,
+.next-value {
+  width: -moz-available;
+  width: -webkit-fill-available;
+  width: stretch;
+  height: 15px;
+  background-color: #fff;
+  color: rgba(170, 0, 0, 0.5);
+  font-size: 0.5em;
+  text-align: center;
+}
+.next-value, .add-ten {
+  border-radius: 6px 6px 0 0;
+}
+.prev-value, .minus-ten {
+  border-radius: 0 0 6px 6px;
+}
+.value:hover span {
+  background-color: #f0f0f0;
+  color: transparent;
+  cursor: text;
+}
+.l-option {
+  grid-area: l-opt;
+  min-width: 0;
+  align-self: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.apply {
+  grid-area: apply;
+  padding:0 5px;
+  width: fit-content;
+}
+
+.input-value {
+  width: 100%;
+  height: fit-content;
+  border: none;
+  font: 24px/1 "Lucida Console", monospace;
+  text-align: center;
+}
+.input-value:focus {
+  outline: none;
+}
+
+/* ========== リソース選択 ========== */
+.resource-list {
+  grid-area: list;
+  display: flex;
+}
+.resource-options {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-self: center;
+}
+
+/* ========== コマンド ==========*/
+.command-preview {
+  grid-area: cmd;
+  align-self: end;
+}

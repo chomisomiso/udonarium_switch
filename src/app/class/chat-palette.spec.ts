@@ -25,6 +25,39 @@ describe('ChatPalette', () => {
     return palette;
   }
 
+  describe('parse', () => {
+    it('全行を getPalette() で返す（変数定義行も含む）', () => {
+      expect(makePalette('//器用=3\n2d6+{器用}\n').getPalette()).toEqual(['//器用=3', '2d6+{器用}', '']);
+    });
+
+    it('// で始まる name=value 行を変数として拾う', () => {
+      let palette = makePalette('//器用=3');
+
+      expect(palette.paletteVariables).toEqual([{ name: '器用', value: '3' }]);
+      expect(palette.paletteLines).toEqual([]);
+    });
+
+    it('全角の ／／名前＝値 も変数として拾い、名前は半角に正規化する', () => {
+      expect(makePalette('／／ＡＢＣ＝3').paletteVariables).toEqual([{ name: 'ABC', value: '3' }]);
+    });
+
+    it('= を持たない // 行は変数ではなくパレット行として残す', () => {
+      let palette = makePalette('//ただのコメント');
+
+      expect(palette.paletteVariables).toEqual([]);
+      expect(palette.paletteLines).toEqual([{ palette: '//ただのコメント' }]);
+    });
+
+    it('setPalette() で解析結果が作り直される', () => {
+      let palette = makePalette('//器用=3');
+      expect(palette.paletteVariables.length).toBe(1);
+
+      palette.setPalette('2d6');
+      expect(palette.paletteVariables).toEqual([]);
+      expect(palette.paletteLines).toEqual([{ palette: '2d6' }]);
+    });
+  });
+
   /** ターゲット未指定で展開したときに t{} を踏んだか */
   function usedTarget(text: string, palette: ChatPalette = makePalette()): boolean {
     return palette.expand(text, makeVariables()).usedTarget;
@@ -86,6 +119,37 @@ describe('ChatPalette', () => {
       expect(palette.evaluate('{命中}')).toBe('2d6+3');
     });
 
+    // 全角のゆらぎはフォークの入力経路（ダッシュボード）で普通に来るので固定しておく
+    it('全角の波括弧も展開する', () => {
+      expect(makePalette('//器用=3').evaluate('2d6+｛器用｝')).toBe('2d6+3');
+    });
+
+    it('変数名の全角半角を区別しない', () => {
+      expect(makePalette('//ABC=3').evaluate('2d6+{ＡＢＣ}')).toBe('2d6+3');
+    });
+
+    it('入れ子の変数を解決する', () => {
+      expect(makePalette('//器用=10+{器用A}\n//器用A=2').evaluate('{器用}')).toBe('10+2');
+    });
+
+    // 展開ループには 128 回の上限がある
+    it('自己参照でも無限ループしない', () => {
+      expect(makePalette('//A={A}').evaluate('{A}')).toBe('{A}');
+    });
+
+    it('PaletteLine を渡しても文字列と同じ結果になる', () => {
+      let palette = makePalette('//器用=3\n2d6+{器用}');
+
+      expect(palette.evaluate(palette.paletteLines[0])).toBe('2d6+3');
+    });
+
+    it('波括弧を含まない発言はそのまま通す', () => {
+      let palette = makePalette('//器用=3');
+
+      expect(palette.evaluate(':HP-5')).toBe(':HP-5');
+      expect(palette.evaluate('&祝福/3/命中+1')).toBe('&祝福/3/命中+1');
+    });
+
     it('パレット変数はデータ要素より優先される', () => {
       let palette = makePalette('//HP=変数のほう');
       let self = makeVariables();
@@ -115,8 +179,19 @@ describe('ChatPalette', () => {
       expect(makePalette().evaluate('{打撃点}', self)).toBe('7');
     });
 
+    it('データ要素名の全角半角も区別しない', () => {
+      let self = makeVariables();
+      addPlain(self, 'ＨＰ', '7');
+
+      expect(makePalette().evaluate('{HP}', self)).toBe('7');
+    });
+
     it('解決できない名前は空文字になる', () => {
       expect(makePalette().evaluate('[{知らない項目}]', makeVariables())).toBe('[]');
+    });
+
+    it('データ要素を渡さなくても未定義の名前は空文字になる', () => {
+      expect(makePalette().evaluate('[{器用}]')).toBe('[]');
     });
   });
 

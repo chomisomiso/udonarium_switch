@@ -43,6 +43,35 @@ describe('ResourceCommand', () => {
     });
   });
 
+  // 満タンは `{}` 参照記法に乗せる。展開はパレット経路（palette-message）が行うので、
+  // ここでは組み立てだけを見る
+  describe('make - 満タン', () => {
+    it('自分向けは自分の最大値を参照して代入する', () => {
+      expect(ResourceCommand.make({ resourceName: 'HP', value: 0, fillToMax: true })).toBe(':HP={HP^}');
+    });
+
+    it('ターゲット向けはターゲットの最大値を参照する', () => {
+      expect(ResourceCommand.make({ resourceName: 'HP', value: 0, isTargetMode: true, fillToMax: true }))
+        .toBe('t:HP=t{HP^}');
+    });
+
+    // 代入なので増減値もオプションも使わない。1.5 は通常の経路なら null になる値
+    it('値とオプションは無視する（整数チェックも掛からない）', () => {
+      expect(ResourceCommand.make({
+        resourceName: 'HP', value: 1.5, fillToMax: true, rangeLimit: true, zeroLimit: true,
+      })).toBe(':HP={HP^}');
+    });
+
+    it('最大値そのものの操作とは併用できないので null', () => {
+      expect(ResourceCommand.make({ resourceName: 'HP', value: 0, fillToMax: true, isMaxValue: true })).toBeNull();
+    });
+
+    // 名前の検査は満タンの分岐より前に走る
+    it('リソース名の検査は満タンでも効く', () => {
+      expect(ResourceCommand.make({ resourceName: '魔力 残量', value: 0, fillToMax: true })).toBeNull();
+    });
+  });
+
   describe('make - 解釈を壊す指定を弾く', () => {
     it('リソース名が空なら null', () => {
       expect(ResourceCommand.make({ resourceName: '', value: 5 })).toBeNull();
@@ -67,6 +96,57 @@ describe('ResourceCommand', () => {
     it('小数は null', () => {
       expect(ResourceCommand.make({ resourceName: 'HP', value: 1.5 })).toBeNull();
       expect(ResourceCommand.make({ resourceName: 'HP', value: NaN })).toBeNull();
+    });
+  });
+
+  describe('pruneResourceKey', () => {
+    function tag(name: string): DataElement {
+      return DataElement.create(name, 200, { type: 'numberResource', currentValue: '100' });
+    }
+
+    it('候補に残っている選択はそのまま返す', () => {
+      expect(ResourceCommand.pruneResourceKey('HP', [tag('HP'), tag('MP')], [tag('HP'), tag('MP')])).toBe('HP');
+    });
+
+    // コマを切り替えると候補が入れ替わる。残すと select は空表示なのに
+    // コマンドの組み立てだけ古い選択で動いてしまう
+    it('候補から消えた選択は落とす', () => {
+      expect(ResourceCommand.pruneResourceKey('MP', [tag('HP')], [tag('HP')])).toBe('');
+    });
+
+    it('最大値の選択は最大値の候補で判定する', () => {
+      expect(ResourceCommand.pruneResourceKey('HP^', [tag('HP'), tag('MP')], [tag('HP')])).toBe('HP^');
+      expect(ResourceCommand.pruneResourceKey('MP^', [tag('HP'), tag('MP')], [tag('HP')])).toBe('');
+    });
+
+    // 満タン中は最大値の候補が空になるので、`^` 付きの選択は残らない
+    it('最大値の候補が空なら最大値の選択は落とす', () => {
+      expect(ResourceCommand.pruneResourceKey('HP^', [tag('HP')], [])).toBe('');
+    });
+
+    it('未選択はそのまま未選択', () => {
+      expect(ResourceCommand.pruneResourceKey('', [tag('HP')], [tag('HP')])).toBe('');
+    });
+
+    // option の value はタグ名をそのまま載せるが、make() は trim してから組み立てる
+    it('前後の空白は無視して突き合わせる', () => {
+      expect(ResourceCommand.pruneResourceKey(' HP ', [tag('HP')], [tag('HP')])).toBe(' HP ');
+      expect(ResourceCommand.pruneResourceKey('HP', [tag(' HP ')], [tag(' HP ')])).toBe('HP');
+    });
+  });
+
+  describe('parseResourceKey', () => {
+    it('`^` 接尾を最大値指定として分解する', () => {
+      expect(ResourceCommand.parseResourceKey('HP^')).toEqual({ name: 'HP', isMaxValue: true });
+      expect(ResourceCommand.parseResourceKey('HP')).toEqual({ name: 'HP', isMaxValue: false });
+      expect(ResourceCommand.parseResourceKey('')).toEqual({ name: '', isMaxValue: false });
+    });
+
+    it('makeResourceKey と往復する', () => {
+      for (let [name, isMaxValue] of [['HP', true], ['HP', false]] as [string, boolean][]) {
+        let key = ResourceCommand.makeResourceKey(name, isMaxValue);
+        expect(ResourceCommand.parseResourceKey(key)).withContext(key).toEqual({ name: name, isMaxValue: isMaxValue });
+      }
     });
   });
 

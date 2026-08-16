@@ -274,6 +274,62 @@ describe('GameCharacter', () => {
     });
   });
 
+  describe('isVisibleInInventory', () => {
+    function makeCharacterAt(location: string, isHiddenInInventory: boolean = false): GameCharacter {
+      let character = makeCharacterWithResources();
+      character.location.name = location;
+      character.isHiddenInInventory = isHiddenInInventory;
+      return character;
+    }
+
+    it('テーブル上で一覧に出すコマは true', () => {
+      expect(makeCharacterAt('table').isVisibleInInventory).toBe(true);
+    });
+
+    it('一覧から除外したコマは false', () => {
+      expect(makeCharacterAt('table', true).isVisibleInInventory).toBe(false);
+    });
+
+    it('テーブル外のコマは false', () => {
+      expect(makeCharacterAt('graveyard').isVisibleInInventory).toBe(false);
+      expect(makeCharacterAt('common').isVisibleInInventory).toBe(false);
+    });
+  });
+
+  // 一覧の再描画を促すかの判定に使う。ここに入れ忘れた値は他ピアで古いまま残る
+  describe('inventoryRenderKey', () => {
+    it('コマ画像の切り替えで変わる', () => {
+      let character = makeCharacterWithResources();
+      let before = character.inventoryRenderKey;
+
+      character.imageIndexSetting = 1;
+
+      expect(character.inventoryRenderKey).not.toBe(before);
+    });
+
+    it('一覧非表示の切り替えで変わる', () => {
+      let character = makeCharacterWithResources();
+      let before = character.inventoryRenderKey;
+
+      character.isHiddenInInventory = true;
+
+      expect(character.inventoryRenderKey).not.toBe(before);
+    });
+
+    // 含めるとドラッグ中ずっと再描画が走る
+    it('位置と回転では変わらない', () => {
+      let character = makeCharacterWithResources();
+      let before = character.inventoryRenderKey;
+
+      character.location.x = 100;
+      character.location.y = 200;
+      character.posZ = 5;
+      character.rotate = 90;
+
+      expect(character.inventoryRenderKey).toBe(before);
+    });
+  });
+
   // NaN を書き込むとリソースが表示も計算も壊れたまま同期され、補正コマンドを撃っても NaN のままになる
   describe('リソースへの書き込み', () => {
     it('現在値に NaN を渡しても書き込まない', () => {

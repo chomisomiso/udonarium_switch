@@ -30,6 +30,7 @@ import { DiceTableSettingComponent } from 'component/dice-table-setting/dice-tab
 import { FileStorageComponent } from 'component/file-storage/file-storage.component';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
 import { GameObjectInventoryComponent } from 'component/game-object-inventory/game-object-inventory.component';
+import { GameCharacterDashboardComponent } from 'component/game-character-dashboard/game-character-dashboard.component';
 import { GameTableSettingComponent } from 'component/game-table-setting/game-table-setting.component';
 import { JukeboxComponent } from 'component/jukebox/jukebox.component';
 import { ModalComponent } from 'component/modal/modal.component';
@@ -249,6 +250,11 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         break;
       case 'GameObjectInventoryComponent':
         component = GameObjectInventoryComponent;
+        break;
+      case 'GameCharacterDashboardComponent':
+        component = GameCharacterDashboardComponent;
+        option.width = 700;
+        option.height = 675;
         break;
     }
     if (component) {

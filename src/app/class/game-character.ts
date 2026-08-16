@@ -25,6 +25,14 @@ export class GameCharacter extends TabletopObject implements BuffResourceOwner {
   /** チャットの発言者リストに表示しない */
   @SyncVar() isNonTalking: boolean = false;
 
+  /** テーブル上にあり、一覧に出してよいコマか。DI の外からも要るのでここに置く。 */
+  get isVisibleInInventory(): boolean { return this.isVisibleOnTable && !this.isHiddenInInventory; }
+
+  /** 一覧の表示に効く値のうち、DataElement に乗らないものを列挙。別ピア表示用。 */
+  get inventoryRenderKey(): string {
+    return `${this.isHiddenInInventory}:${this.imageIndexSetting}`;
+  }
+
   get komaImageHeight(): number { return GameCharacter.clampKomaImageHeight(this.komaImageHeightSetting); }
   set komaImageHeight(height: number) { this.komaImageHeightSetting = GameCharacter.clampKomaImageHeight(+height); }
 

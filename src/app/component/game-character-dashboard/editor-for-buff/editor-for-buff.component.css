@@ -1,0 +1,110 @@
+/* ========== ルート / レイアウト骨格 ========== */
+/* 外枠（高さ・背景）は dashboard-shared.css の :host(...) を参照 */
+:host {
+  display: grid;
+  grid-template-areas:
+    "target target   target   target command"
+    ".      .        .        .      ."
+    ".      name     name     round  list"
+    ".      effect   effect   effect list"
+    ".      progress progress add    list"
+    ".      .        .        .      list";
+  grid-template-columns: 20px 60px 50px 60px 1fr;
+  grid-template-rows: auto 1fr auto auto auto 2fr;
+  gap: 2px;
+  padding: 6px;
+}
+
+/* ========== grid エリア割り当て ========== */
+.target-radios { grid-area: target; }
+.buff-name { grid-area: name; }
+.add { grid-area: add; }
+.progress { grid-area: progress; }
+
+/* ========== 入力 ========== */
+.buff-input {
+  min-width: 0;
+}
+
+.buff-round-cell {
+  grid-area: round;
+  display: flex;
+  align-items: center;
+}
+.buff-round {
+  width: 2em;
+}
+
+.buff-effect-cell {
+  grid-area: effect;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.buff-effect {
+  flex: 1 1 auto;
+}
+
+/* ========== ボタン ========== */
+.button {
+  margin-bottom: auto;
+  padding: 2px;
+  font-size: 0.8em;
+}
+
+/* ========== バフ一覧 ========== */
+.buff-list {
+  grid-area: list;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 4px;
+  padding: 4px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.buff-tag {
+  display: flex;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid #ccc;
+  border-radius: 100px;
+  font-size: 0.7em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.buff-tag:hover {
+  background-color: #55555522;
+  border-color: #555;
+}
+.buff-tag:hover::before {
+  content: '⚙ ';
+}
+.buff-tag.buff-expired {
+  border-color: #c44;
+  color: #c44;
+  font-weight: bold;
+}
+
+.buff-tag-name {
+  font-weight: bold;
+}
+.buff-tag-round {
+  color: #888;
+}
+.buff-tag-effect {
+  color: #666;
+}
+
+.no-buff {
+  padding: 4px;
+  color: #999;
+  font-size: 0.8em;
+}
+
+/* ========== コマンド ========== */
+.command-preview {
+  grid-area: command;
+  align-self: end; 
+}

@@ -1,6 +1,7 @@
 import { ChatPalette } from '@udonarium/chat-palette';
 import { DataElement } from '@udonarium/data-element';
 import { GameCharacter } from '@udonarium/game-character';
+import { ResourceCommand } from '@udonarium/resource-command';
 import { planPaletteMessages } from 'component/chat-palette/palette-message';
 import { resetGameObjects } from 'testing/game-object-testing';
 
@@ -70,6 +71,17 @@ describe('planPaletteMessages', () => {
       expect(texts(plan)).toEqual(['t:HP=20 [ゴブリン]', 't:HP=50 [オーガ]']);
       // 1通が1体だけを見るからこそ、ハンドラ側のループと掛け算にならない
       expect(plan.messages.map(message => message.targets)).toEqual([[goblin], [ogre]]);
+    });
+
+    // 上の spec と ResourceCommand の spec は同じ文字列を別々に固定しているだけなので、
+    // 組み立てと展開が本当に噛み合っているかはここで見る
+    it('ResourceCommand が組み立てた満タンコマンドがそのまま展開できる', () => {
+      let goblin = addResource(makeCharacter('ゴブリン'), 'HP', 8, 20);
+      let command = ResourceCommand.make({ resourceName: 'HP', value: 0, isTargetMode: true, fillToMax: true });
+
+      let plan = planPaletteMessages(makeCharacter('術者', ''), command, [goblin]);
+
+      expect(texts(plan)).toEqual(['t:HP=20 [ゴブリン]']);
     });
 
     it('末尾の ^ がなければ現在値で展開する', () => {

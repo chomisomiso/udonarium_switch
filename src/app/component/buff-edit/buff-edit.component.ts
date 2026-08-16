@@ -5,6 +5,7 @@ import { DataElement } from '@udonarium/data-element';
 import { GameCharacter } from '@udonarium/game-character';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { ResourceCommand } from '@udonarium/resource-command';
+import { getCharacter, getCharacterDataTags } from 'component/game-character-dashboard/character-tags';
 import { EventSystem } from '@udonarium/core/system';
 import { ContextMenuService } from 'service/context-menu.service';
 import { GameObjectInventoryService } from 'service/game-object-inventory.service';
@@ -12,25 +13,15 @@ import { PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 import { openBuffEffectResourceMenu } from 'component/buff-edit/buff-effect-resource-menu';
 
-export interface CharacterTagsSource {
-  readonly tableInventory: { dataElementMap: Map<string, DataElement[]> };
-  readonly newLineDataElement: DataElement;
-}
 /** パネルごとに一意な id を作るための連番 */
 let nextBuffEditId = 0;
-
-function getCharacterDataTags(source: CharacterTagsSource, identifier: string): DataElement[] {
-  if (!identifier) return [];
-  let tags = source.tableInventory.dataElementMap.get(identifier);
-  // 改行マーカーはモック要素なのでタグとしては扱わない
-  return tags ? tags.filter(tag => tag != null && tag !== source.newLineDataElement) : [];
-}
 
 /** バフ 1 つぶんの編集ウィンドウ。バフタグのクリックで開く。 */
 @Component({
   selector: 'buff-edit',
   templateUrl: './buff-edit.component.html',
-  styleUrls: ['./buff-edit.component.css'],
+  // 入力欄・ボタンの見た目はダッシュボードのエディタ群と揃える（.text-input / .button / .spacer）
+  styleUrls: ['../game-character-dashboard/dashboard-shared.css', './buff-edit.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BuffEditComponent implements OnInit, OnDestroy {
@@ -47,10 +38,7 @@ export class BuffEditComponent implements OnInit, OnDestroy {
   buffRound: number | null = null;
   buffEffect: string = '';
 
-  get character(): GameCharacter | null {
-    let object = ObjectStore.instance.get(this.characterIdentifier);
-    return object instanceof GameCharacter ? object : null;
-  }
+  get character(): GameCharacter | null { return getCharacter(this.characterIdentifier); }
 
   /** 効果欄へ挿入できるリソースの候補。親よりライフサイクルが長いので都度導出する */
   get resourceOptions(): DataElement[] {

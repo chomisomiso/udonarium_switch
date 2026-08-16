@@ -1,0 +1,210 @@
+/* ダッシュボード配下で共有する部品スタイル。 */
+
+/* ========== エディタの外殻 ========== */
+/*
+ * editor-for-resource / editor-for-buff / editor-for-palette のホスト要素。
+ * 要素名で括って各エディタのホストだけに当てる。
+ */
+:host(editor-for-resource),
+:host(editor-for-buff),
+:host(editor-for-palette) {
+  box-sizing: border-box;
+  border: solid 1px #444;
+  height: 140px;
+  overflow: hidden;
+  background: #fff5;
+}
+:host(editor-for-palette) {
+  flex: 1 1 auto;
+}
+:host-context(.mode-column) {
+  border-top: none;
+}
+
+/* ========== ラジオ／チェックボックスの隠蔽 ========== */
+.chip input,
+.pill-radios input,
+.mode-switcher input,
+.editor-tabs input {
+  display: none;
+}
+
+/* ========== チップ型ラジオ／トグル ========== */
+/* 隣接する span を見た目の本体として使う。 */
+.chip {
+  color: #444;
+  font-size: 0.7em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.chip input:checked + span {
+  background-color: #555;
+  color: #CCC;
+}
+
+/* ========== 排他選択（セグメンテッドコントロール） ========== */
+/* 3つを1枠に連結して「レール1本に1つだけ点灯」を作り、排他だと示す。 */
+.target-radios {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.target-radios-label {
+  flex: 0 0 auto;
+  align-self: center;
+  color: #888;
+  font-size: 0.7em;
+  white-space: nowrap;
+}
+.segmented {
+  flex: 0 0 auto;
+  display: flex;
+  overflow: hidden; /* 内側 chip の角を外枠の丸みで切る */
+  border: 1px solid #888;
+  border-radius: 100px;
+}
+
+.segmented .chip span {
+  display: block;
+  padding: 1px 6px;
+}
+/* 内部の区切り線。外枠は .segmented が持つ */
+.segmented .chip + .chip {
+  border-left: 1px solid #888;
+}
+/* 選択中はホバーしても色を変えない。 */
+.segmented .chip input:not(:checked) + span:hover {
+  background-color: #888;
+  color: #eee;
+}
+
+/* ========== 独立トグル（チェックボックス） ========== */
+.chip.toggle {
+  border: 1px solid #888;
+  border-radius: 3px;
+}
+
+.toggle span{
+  display: block;
+  height: -moz-available;
+  height: -webkit-fill-available;
+  height: stretch;
+  padding: 1px 4px;
+}
+
+/* ========== ピル型ラジオ ========== */
+/* 隣接する div を見た目の本体として使う。 */
+.pill-radios {
+  user-select: none;
+}
+.pill-radios label {
+  display: inline-block;
+  position: relative;
+}
+.pill-radios input[type="radio"] + div {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 2px;
+  padding: 2px 8px;
+  outline: 0;
+  background-color: transparent;
+  border: solid 1px #555;
+  border-radius: 100px;
+  color: #444;
+  cursor: pointer;
+}
+.pill-radios input[type="radio"] + div:hover {
+  background-color: #888;
+  color: #eee;
+}
+.pill-radios input[type="radio"]:checked + div {
+  background: #555;
+  color: #CCC;
+}
+
+/* ========== コマンドプレビュー ========== */
+.command-preview {
+  display: flex;
+  overflow: hidden;
+  border: solid 1px #555;
+  border-radius: 100px;
+  align-items: stretch;
+  font-size: 0.65em;
+  white-space: nowrap; /* 子へ継承させる */
+}
+.command-preview span {
+  padding: 0 6px;
+  height: 16px;
+  text-overflow: ellipsis;
+}
+
+.command-label {
+  flex: 0 0 auto;
+  background-color: #888;
+  color: #eee;
+}
+.command-content {
+  flex: 1 1 auto;
+  background-color: #eee;
+  font-weight: bold;
+  cursor: pointer;
+}
+.command-content:hover {
+  background-color: #ccc;
+}
+.command-placeholder {
+  flex: 1 1 auto;
+  color: #555;
+}
+
+/* ========== ボタン ========== */
+.button {
+  white-space: nowrap;
+}
+.button.disable,
+.button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* ========== スペーサ ========== */
+.spacer {
+  flex: 1 1 auto;
+}
+
+/* ========== フォーム部品 ========== */
+.text-input {
+  padding: 2px 6px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+.text-input:focus {
+  border-color: #888;
+  outline: none;
+}
+
+/* 数値入力のスピナーを消す。ホイールで増減させる欄はスピナーが幅を食うだけなので落とす */
+.no-spinner {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 入力欄の右に添える単位ラベル（「R」など） */
+.suffix-label {
+  flex: 0 0 auto;
+  color: #666;
+  font-size: 0.8em;
+}
+
+/* 入力欄の右に添えるリソース名挿入ボタン。 */
+.button.insert-resource {
+  flex: 0 0 auto;
+  padding: 1px 4px;
+}

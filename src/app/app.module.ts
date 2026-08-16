@@ -25,6 +25,11 @@ import { GameCharacterSheetComponent } from 'component/game-character-sheet/game
 import { GameCharacterComponent } from 'component/game-character/game-character.component';
 import { GameDataElementComponent } from 'component/game-data-element/game-data-element.component';
 import { GameObjectInventoryComponent } from 'component/game-object-inventory/game-object-inventory.component';
+import { GameCharacterDashboardComponent } from 'component/game-character-dashboard/game-character-dashboard.component';
+import { CharacterListComponent } from 'component/game-character-dashboard/character-list/character-list.component';
+import { EditorForResourceComponent } from 'component/game-character-dashboard/editor-for-resource/editor-for-resource.component';
+import { EditorForBuffComponent } from 'component/game-character-dashboard/editor-for-buff/editor-for-buff.component';
+import { EditorForPaletteComponent } from 'component/game-character-dashboard/editor-for-palette/editor-for-palette.component';
 import { GameTableMaskComponent } from 'component/game-table-mask/game-table-mask.component';
 import { GameTableSettingComponent } from 'component/game-table-setting/game-table-setting.component';
 import { GameTableComponent } from 'component/game-table/game-table.component';
@@ -83,6 +88,11 @@ import { AppComponent } from './app.component';
     FileStorageComponent,
     GameCharacterSheetComponent,
     GameCharacterComponent,
+    GameCharacterDashboardComponent,
+    CharacterListComponent,
+    EditorForBuffComponent,
+    EditorForPaletteComponent,
+    EditorForResourceComponent,
     GameDataElementComponent,
     GameObjectInventoryComponent,
     GameTableMaskComponent,

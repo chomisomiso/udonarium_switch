@@ -1,0 +1,74 @@
+<h3 *ngIf="gameCharacters.length === 0">テーブルインベントリは空です</h3>
+<div
+  *ngFor="let gameCharacter of gameCharacters; trackBy: trackByIdentifier"
+  (click)="selectCharacter(gameCharacter)"
+  (contextmenu)="onContextMenu($event, gameCharacter)"
+  [class.main-selected]="gameCharacter.identifier === selectedIdentifier"
+  [class.targeting]="isTargeting(gameCharacter)"
+  class="character-card">
+  <div class="header-row">
+    <span class="character-name">{{ gameCharacter.name }}</span>
+    <span class="target-badge"
+      [class.on]="isTargeting(gameCharacter)"
+      [title]="isTargeting(gameCharacter) ? 'ターゲットから外す' : 'ターゲットにする'"
+      (click)="toggleTarget(gameCharacter); $event.stopPropagation()">{{ isTargeting(gameCharacter) ? '☑ Target' : '☐ Target' }}</span>
+  </div>
+  <div class="card-body">
+    <div class="character-imagebox">
+      <img *ngIf="gameCharacter.imageFile.url" [src]="gameCharacter.imageFile.url | safe: 'resourceUrl'"
+        [imageCrop]="gameCharacter.imageCrop" imageCropCovers />
+    </div>
+    <div class="card-data">
+      <div class="data-rows">
+        <div class="resources-row">
+          <div
+            *ngFor="let tag of getCharacterResourceTags(gameCharacter.identifier)"
+            class="tag number-resource">
+            <span class="tag-name">{{ tag.name }}</span>
+            <span class="tag-resource-box">
+              <span style="display: flex; flex-direction: row;">
+                <!-- 素の text だと `あ` や `1 2` がそのまま同期され、以後の計算が NaN になる（インベントリ側と揃える） -->
+                <input class="tag-resource input no-spinner" type="number" [(ngModel)]="tag.currentValue" (click)="$event.stopPropagation()" />
+                <span>/{{ tag.value }}</span>
+              </span>
+              <meter class="resource-bar" [value]="tag.currentValue" [max]="tag.value" [style.--meter-width]="getResourceBarWidth(tag)"></meter>
+            </span>
+          </div>
+        </div>
+        <div class="other-data-row">
+          <div
+            *ngFor="let tag of getCharacterOtherDataTags(gameCharacter.identifier)"
+            class="tag other-data">
+            <span class="tag-name">{{ tag.name }}</span>
+            <span class="hidden-spacer" style="font-weight: bold;">{{tag.value}}</span>
+            <input class="tag-value input" size="1" [(ngModel)]="tag.value" (click)="$event.stopPropagation()" />
+          </div>
+        </div>
+      </div>
+    <!-- buffs は毎回配列を作り直すので、1カードにつき1回だけ評価する -->
+    <ng-container *ngIf="getCharacterBuffs(gameCharacter.identifier) as buffs">
+      <div class="buff-row" *ngIf="0 < buffs.length">
+        <div class="buff-expanded">
+          <span class="buff-badge"
+            *ngIf="!isBuffExpanded(gameCharacter.identifier)"
+            [title]="getBuffSummaryTitle(buffs)"
+            (click)="toggleBuffExpanded(gameCharacter.identifier); $event.stopPropagation()">
+            {{'▽バフx' + buffs.length + '...' }}
+          </span>
+          <span class="buff-badge expanded" title="折りたたむ"
+            *ngIf="isBuffExpanded(gameCharacter.identifier)"
+            (click)="toggleBuffExpanded(gameCharacter.identifier); $event.stopPropagation()">
+            ▶
+          </span>
+          <ng-container *ngIf="isBuffExpanded(gameCharacter.identifier)">
+            <div *ngFor="let buff of buffs; trackBy: trackByBuff" class="buff-tag" [title]="buff.effect" (click)="openBuffEdit(gameCharacter, buff, $event)">
+              <span class="buff-name">{{ buff.buffName }}</span>
+              <span class="buff-round">{{ buff.roundLabel }}</span>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </ng-container>
+    </div>
+  </div>
+</div>

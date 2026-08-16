@@ -9,6 +9,7 @@ import { ChatInputComponent } from 'component/chat-input/chat-input.component';
 import { ChatMessageService } from 'service/chat-message.service';
 import { DiceBot } from '@udonarium/dice-bot';
 import { PanelService } from 'service/panel.service';
+import { DoublePressDetector } from 'component/chat-palette/double-press';
 import { openPaletteIndexMenu } from 'component/chat-palette/palette-index';
 import { sendPaletteMessages } from 'component/chat-palette/palette-message';
 import { getPaletteTopLine, scrollPaletteToLine } from 'component/chat-palette/palette-scroll';
@@ -48,7 +49,7 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
   isEdit: boolean = false;
   editPalette: string = '';
 
-  private doubleClickTimer: NodeJS.Timeout = null;
+  private doublePress = new DoublePressDetector();
 
   get diceBotInfos() { return DiceBot.infos }
 
@@ -84,6 +85,7 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     EventSystem.unregister(this);
+    this.doublePress.cancel();
     if (this.isEdit) this.setEditMode(false);
   }
 
@@ -107,15 +109,12 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
     this.text = line;
   }
 
-  clickPalette(line: string) {
-    if (this.doubleClickTimer && this.text === line) {
-      clearTimeout(this.doubleClickTimer);
-      this.doubleClickTimer = null;
+  clickPalette(line: string, index: number) {
+    if (this.doublePress.press(index)) {
       this.chatInputComponent.sendChat(null);
-    } else {
-      this.text = line;
-      this.doubleClickTimer = setTimeout(() => { this.doubleClickTimer = null }, 400);
+      return;
     }
+    this.selectPalette(line);
   }
 
   /** 索引一覧を開く。選んだ見出しが先頭に来るようスクロールさせる */

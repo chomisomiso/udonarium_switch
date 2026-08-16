@@ -11,6 +11,11 @@ type ObjectIdentifier = string;
 type LocationName = string;
 type ElementName = string;
 
+/**
+ * 1. コマを置き場所ごとのインベントリへ振り分け、表示するタグを引けるようにする
+ * 2. 一覧の再描画の合図を出す（`UPDATE_INVENTORY`）。
+ *    OnPush のビューが個々の `UPDATE_GAME_OBJECT` を購読するとコマの移動で毎フレーム dirty になるので、直前の値と突き合わせる役をここが引き受ける
+ */
 @Injectable({
   providedIn: 'root'
 })
@@ -30,8 +35,14 @@ export class GameObjectInventoryService {
   privateInventory: ObjectInventory = new ObjectInventory(object => { return object.location.name === Network.peerId; });
   graveyardInventory: ObjectInventory = new ObjectInventory(object => { return object.location.name === 'graveyard'; });
 
+  /** テーブル上の、一覧に出してよいコマ。判定は GameCharacter.isVisibleInInventory が持つ。 */
+  get visibleTableCharacters(): GameCharacter[] {
+    return (this.tableInventory.tabletopObjects as GameCharacter[])
+      .filter(character => character.isVisibleInInventory);
+  }
+
   private locationMap: Map<ObjectIdentifier, LocationName> = new Map();
-  private hiddenInInventoryMap: Map<ObjectIdentifier, boolean> = new Map();
+  private renderKeyMap: Map<ObjectIdentifier, string> = new Map();
   private tagNameMap: Map<ObjectIdentifier, ElementName> = new Map();
 
   static _newLineDataElement = createMockElement('/');
@@ -51,15 +62,15 @@ export class GameObjectInventoryService {
         if (!object) return;
 
         if (object instanceof GameCharacter) {
+          // コマの移動でも飛ぶ。何が変わったかは直前の値と突き合わせ
           let prevLocation = this.locationMap.get(object.identifier);
+          let prevRenderKey = this.renderKeyMap.get(object.identifier);
+          this.locationMap.set(object.identifier, object.location.name);
+          this.renderKeyMap.set(object.identifier, object.inventoryRenderKey);
+
           if (object.location.name !== prevLocation) {
-            this.locationMap.set(object.identifier, object.location.name);
             this.refresh();
-          }
-          // 一覧非表示コマの再描画を促す
-          let prevHidden = this.hiddenInInventoryMap.get(object.identifier);
-          if (object.isHiddenInInventory !== prevHidden) {
-            this.hiddenInInventoryMap.set(object.identifier, object.isHiddenInInventory);
+          } else if (object.inventoryRenderKey !== prevRenderKey) {
             this.callInventoryUpdate();
           }
         } else if (object instanceof DataElement) {
@@ -86,7 +97,7 @@ export class GameObjectInventoryService {
       })
       .on('DELETE_GAME_OBJECT', event => {
         this.locationMap.delete(event.data.identifier);
-        this.hiddenInInventoryMap.delete(event.data.identifier);
+        this.renderKeyMap.delete(event.data.identifier);
         this.tagNameMap.delete(event.data.identifier);
         this.refresh();
       })

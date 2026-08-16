@@ -27,6 +27,8 @@ export interface ResourceCommandOptions {
   zeroLimit?: boolean;
   /** リソースを 0〜最大値の範囲に収める（`L`） */
   rangeLimit?: boolean;
+  /** 現在値を最大値で満たす。他オプションと排他。 */
+  fillToMax?: boolean;
 }
 
 /**
@@ -63,6 +65,30 @@ export namespace ResourceCommand {
     return tag.isNumberResource || (tag.type == null && NUMERIC_VALUE_PATTERN.test(String(tag.value)));
   }
 
+  /** UI上、現在値と最大値でリソース名を共有するので、ひとつの文字列キーにまとめる。 */
+  export function makeResourceKey(name: string, isMaxValue: boolean): string {
+    return name + (isMaxValue ? '^' : '');
+  }
+
+  /** `HP^` を `{ name: 'HP', isMaxValue: true }` へ分解する */
+  export function parseResourceKey(key: string): { name: string, isMaxValue: boolean } {
+    let isMaxValue = key != null && key.endsWith('^');
+    return { name: isMaxValue ? key.slice(0, -1) : (key ?? ''), isMaxValue: isMaxValue };
+  }
+
+  /** 選択中のリソースをコマ切り替え後も残すか。 */
+  export function pruneResourceKey(key: string, currentOptions: DataElement[], maxOptions: DataElement[]): string {
+    if (!key) return '';
+    let { name, isMaxValue } = parseResourceKey(key);
+    let trimmed = name.trim();
+    let available = isMaxValue ? maxOptions : currentOptions;
+    return available.some(tag => tag.name.trim() === trimmed) ? key : '';
+  }
+
+  /**
+   * タグの並びを、コマンドの対象にできる要素へ展開する。
+   * 「バフ・デバフ」のように配下へリソースをぶら下げただけのタグは、配下を候補として並べる。
+   */
   export function expandTargets(tags: DataElement[]): DataElement[] {
     let targets: DataElement[] = [];
     for (let tag of tags) {
@@ -82,12 +108,22 @@ export namespace ResourceCommand {
   export function make(options: ResourceCommandOptions): string | null {
     let name = options.resourceName != null ? options.resourceName.trim() : '';
     if (!isValidResourceName(name)) return null;
+
+    // コマンドの接頭と参照記法の接頭は同じ `t`。ターゲット参照を含む発言は
+    // palette-message がターゲットごとに1通へ分ける
+    let scope = options.isTargetMode ? 't' : '';
+
+    if (options.fillToMax) {
+      // 最大値を最大値で満たす指定は意味を成さない
+      if (options.isMaxValue) return null;
+      return scope + ':' + name + '=' + scope + '{' + name + '^}';
+    }
+
     // 小数を渡すと解釈側が数式と見なさず文字列として扱ってしまう
     if (!Number.isInteger(options.value)) return null;
 
-    return (options.isTargetMode ? 't:' : ':')
-      + name
-      + (options.isMaxValue ? '^' : '')
+    return scope + ':'
+      + makeResourceKey(name, options.isMaxValue)
       + (0 <= options.value ? '+' : '')
       + options.value.toString()
       + (options.zeroLimit ? 'Z' : '')
@@ -122,16 +158,14 @@ export namespace ResourceCommand {
     for (let c of commands) {
       let res = c.match(commandRegParts);
       let isTargeting = /^t$/i.test(res[1]);
-      let resource = res[2];
+      let { name: resource, isMaxValue: optionMax } = parseResourceKey(res[2]);
       let operator = res[3];
       let command = res[4];
 
       let optionL = /LZ?$/i.test(command);
       let optionZ = /ZL?$/i.test(command);
-      let optionMax = /\^$/.test(resource);
 
       if (optionL || optionZ) command = command.replace(/(L?Z|Z?L)$/i, '');
-      if (optionMax) resource = resource.replace(/\^$/, '');
 
       // 数式・ダイス式のみで構成されているか。BCDice へ渡す整形は実行側が行う
       let isCalculate: boolean = !/[^d\d\(\)\+\-\*\/]/.test(command);

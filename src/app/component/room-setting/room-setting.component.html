@@ -3,6 +3,7 @@
       placeholder="ルームの名前は必須" /></div>
   <div>パスワード: <input #input class="input" (input)="calcPeerId(roomName, input.value)" [(ngModel)]="password" maxlength="12" #passwordValidation="ngModel" placeholder="空ならパスワードなし"
     /></div>
+  <div>ゲームシステム: <dicebot-select [(gameType)]="gameType"></dicebot-select></div>
   <hr/>
   <div *ngIf="roomNameValidation.errors && (roomNameValidation.dirty || roomNameValidation.touched)">
     <div [hidden]="!roomNameValidation.errors.required">

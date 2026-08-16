@@ -15,6 +15,7 @@ import { ObjectSynchronizer } from '@udonarium/core/synchronize-object/object-sy
 import { EventSystem, Network } from '@udonarium/core/system';
 import { DataSummarySetting } from '@udonarium/data-summary-setting';
 import { DiceBot } from '@udonarium/dice-bot';
+import { GameSystemSetting } from '@udonarium/game-system-setting';
 import { Jukebox } from '@udonarium/Jukebox';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { DiceRollHandler } from '@udonarium/dice-roll-handler';
@@ -88,6 +89,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     TableSelecter.instance.initialize();
     ChatTabList.instance.initialize();
     DataSummarySetting.instance.initialize();
+    GameSystemSetting.instance.initialize();
 
     let diceBot: DiceRollHandler = new DiceRollHandler('DiceBot');
     diceBot.initialize();

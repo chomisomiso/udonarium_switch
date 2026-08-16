@@ -4,6 +4,7 @@ import { ChatPalette } from './chat-palette';
 import { SyncObject, SyncVar } from './core/synchronize-object/decorator';
 import { MathUtil } from './core/system/util/math-util';
 import { DataElement } from './data-element';
+import { GameSystemSetting } from './game-system-setting';
 import { TabletopObject } from './tabletop-object';
 
 @SyncObject('character')
@@ -169,6 +170,7 @@ export class GameCharacter extends TabletopObject implements BuffResourceOwner {
     let gameCharacterXMLDocument: Document = domParser.parseFromString(this.rootDataElement.toXml(), 'application/xml');
 
     let palette: ChatPalette = new ChatPalette('ChatPalette_' + this.identifier);
+    palette.dicebot = GameSystemSetting.instance.gameType; // ルーム設定に追随
     palette.setPalette(`チャットパレット入力例：
 2d6+1 ダイスロール
 １ｄ２０＋{敏捷}＋｛格闘｝　{name}の格闘！

@@ -1,5 +1,6 @@
 import { DataElement } from '@udonarium/data-element';
 import { GameCharacter } from '@udonarium/game-character';
+import { GameSystemSetting } from '@udonarium/game-system-setting';
 import { resetGameObjects } from 'testing/game-object-testing';
 
 describe('GameCharacter', () => {
@@ -354,5 +355,13 @@ describe('GameCharacter', () => {
       expect(character.detailDataElement.getFirstElementByName('弱点等').value).toBe('炎に弱い');
     });
 
+  });
+
+  describe('create', () => {
+    it('チャットパレットの既定ダイスボットがルーム設定に追随する', () => {
+      GameSystemSetting.instance.gameType = 'Cthulhu7th';
+
+      expect(GameCharacter.create('テスト', 1, '').chatPalette.dicebot).toBe('Cthulhu7th');
+    });
   });
 });

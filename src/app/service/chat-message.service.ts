@@ -6,6 +6,7 @@ import { ChatTabList } from '@udonarium/chat-tab-list';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { Network } from '@udonarium/core/system';
 import { GameCharacter } from '@udonarium/game-character';
+import { GameSystemSetting } from '@udonarium/game-system-setting';
 import { PeerCursor } from '@udonarium/peer-cursor';
 
 const HOURS = 60 * 60 * 1000;
@@ -20,7 +21,10 @@ export class ChatMessageService {
     'https://worldtimeapi.org/api/ip',
   ];
 
-  gameType: string = 'SwordWorld2.5';
+  /** ローカル上書き。未設定ならルーム設定（GameSystemSetting）に従う */
+  private _gameType: string = null;
+  get gameType(): string { return this._gameType || GameSystemSetting.instance.gameType; }
+  set gameType(gameType: string) { this._gameType = gameType; }
 
   constructor() { }
 

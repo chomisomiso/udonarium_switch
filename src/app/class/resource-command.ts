@@ -1,5 +1,6 @@
 import { CommandToken } from './command-token';
 import { StringUtil } from './core/system/util/string-util';
+import { DataElement } from './data-element';
 
 /** 発言から読み取ったリソース操作ひとつぶん */
 export interface ResourceCommand {
@@ -51,6 +52,30 @@ export namespace ResourceCommand {
     let trimmed = name != null ? name.trim() : '';
     if (trimmed.length < 1) return false;
     return !INVALID_RESOURCE_NAME_PATTERN.test(trimmed);
+  }
+
+  /** 型なしタグの値を、増減しても壊れない数値と見なせるか。 */
+  const NUMERIC_VALUE_PATTERN = /^\s*[+-]?\d+\s*$/;
+
+  /** 増減の対象にできるタグか。 */
+  export function isOperableTarget(tag: DataElement): boolean {
+    if (tag == null) return false;
+    return tag.isNumberResource || (tag.type == null && NUMERIC_VALUE_PATTERN.test(String(tag.value)));
+  }
+
+  export function expandTargets(tags: DataElement[]): DataElement[] {
+    let targets: DataElement[] = [];
+    for (let tag of tags) {
+      if (tag == null) continue;
+      if (tag.isNumberResource) {
+        targets.push(tag);
+        continue;
+      }
+      let resources = tag.getElementsByType('numberResource');
+      // リソースを持たないタグは残す
+      Array.prototype.push.apply(targets, 0 < resources.length ? resources : [tag]);
+    }
+    return targets;
   }
 
   /** `:HP+5ZL` / `t:HP^-3Z` を組み立てる。解釈できない指定なら null */

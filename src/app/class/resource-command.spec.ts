@@ -1,6 +1,9 @@
+import { DataElement } from '@udonarium/data-element';
 import { ResourceCommand } from '@udonarium/resource-command';
+import { resetGameObjects } from 'testing/game-object-testing';
 
 describe('ResourceCommand', () => {
+  afterEach(resetGameObjects);
 
   describe('make', () => {
     it('増加コマンドを組み立てる', () => {
@@ -64,6 +67,108 @@ describe('ResourceCommand', () => {
     it('小数は null', () => {
       expect(ResourceCommand.make({ resourceName: 'HP', value: 1.5 })).toBeNull();
       expect(ResourceCommand.make({ resourceName: 'HP', value: NaN })).toBeNull();
+    });
+  });
+
+  describe('expandTargets', () => {
+    function resource(name: string): DataElement {
+      return DataElement.create(name, 10, { type: 'numberResource', currentValue: 5 });
+    }
+    function plain(name: string): DataElement {
+      return DataElement.create(name, 'ゴブリン');
+    }
+    function note(name: string): DataElement {
+      return DataElement.create(name, 'ここに説明を書く', { type: 'note', currentValue: 'ここに説明を書く' });
+    }
+    /** 子をぶら下げたコンテナタグを作る */
+    function container(name: string, children: DataElement[]): DataElement {
+      let parent = DataElement.create(name);
+      for (let child of children) parent.appendChild(child);
+      return parent;
+    }
+    function names(tags: DataElement[]): string[] {
+      return ResourceCommand.expandTargets(tags).map(tag => tag.name);
+    }
+
+    it('リソースタグはそのまま通る', () => {
+      expect(names([resource('HP'), resource('MP')])).toEqual(['HP', 'MP']);
+    });
+
+    it('リソースでないタグもそのまま残る', () => {
+      expect(names([plain('種族')])).toEqual(['種族']);
+    });
+
+    it('配下にリソースを持つタグは子に置き換わり、親は消える', () => {
+      let tag = container('バフ・デバフ', [resource('命中強化'), resource('防御低下')]);
+
+      expect(names([tag])).toEqual(['命中強化', '防御低下']);
+    });
+
+    it('入れ子が深くても子を拾う', () => {
+      let tag = container('バフ・デバフ', [container('戦闘', [resource('命中強化')])]);
+
+      expect(names([tag])).toEqual(['命中強化']);
+    });
+
+    // 配下にリソースが1つも無ければ展開しない。増減の対象が無いので親を残すしかない
+    it('子にリソースが無いタグは親のまま残る', () => {
+      let tag = container('情報', [note('説明'), note('メモ')]);
+
+      expect(names([tag])).toEqual(['情報']);
+    });
+
+    it('リソースとそれ以外が混ざっていても順序を保つ', () => {
+      let tags = [resource('HP'), container('バフ・デバフ', [resource('命中強化')]), plain('種族')];
+
+      expect(names(tags)).toEqual(['HP', '命中強化', '種族']);
+    });
+
+    it('空配列なら空配列', () => {
+      expect(ResourceCommand.expandTargets([])).toEqual([]);
+    });
+  });
+
+  describe('isOperableTarget', () => {
+    /** 判定に効くのは値だけなので、名前は固定して値だけ振る */
+    function numberResourceValued(currentValue: number | string): DataElement {
+      return DataElement.create('HP', 200, { type: 'numberResource', currentValue: currentValue });
+    }
+    function plainTagValued(value: number | string): DataElement {
+      return DataElement.create('弱点等', value);
+    }
+
+    it('numberResource は対象', () => {
+      expect(ResourceCommand.isOperableTarget(numberResourceValued(5))).toBe(true);
+    });
+
+    it('型なしタグは値が数値なら対象', () => {
+      expect(ResourceCommand.isOperableTarget(plainTagValued(3000))).toBe(true);
+      expect(ResourceCommand.isOperableTarget(plainTagValued('3000'))).toBe(true);
+      expect(ResourceCommand.isOperableTarget(plainTagValued('-5'))).toBe(true);
+      expect(ResourceCommand.isOperableTarget(plainTagValued(' 12 '))).toBe(true);
+    });
+
+    // 読み出す側の parseInt より厳しくしている。'1500 G' は 1500 と読めてしまうが、
+    // 増減を当てると ' G' が落ちて戻せない
+    it('型なしタグの値が数値でなければ対象外', () => {
+      expect(ResourceCommand.isOperableTarget(plainTagValued('炎に弱い'))).toBe(false);
+      expect(ResourceCommand.isOperableTarget(plainTagValued('1500 G'))).toBe(false);
+    });
+
+    // 空も parseInt が NaN になる。増減の起点にできないので候補から外す
+    it('値が空の型なしタグは対象外', () => {
+      expect(ResourceCommand.isOperableTarget(plainTagValued(''))).toBe(false);
+      expect(ResourceCommand.isOperableTarget(plainTagValued('   '))).toBe(false);
+    });
+
+    // 数値が読めても、numberResource 以外の型が付いていれば増減の対象にしない
+    it('numberResource 以外の型が付いたタグは対象外', () => {
+      expect(ResourceCommand.isOperableTarget(DataElement.create('紹介', '10', { type: 'note', currentValue: '10' }))).toBe(false);
+      expect(ResourceCommand.isOperableTarget(DataElement.create('imageIdentifier', '10', { type: 'image' }))).toBe(false);
+    });
+
+    it('null は対象外', () => {
+      expect(ResourceCommand.isOperableTarget(null)).toBe(false);
     });
   });
 

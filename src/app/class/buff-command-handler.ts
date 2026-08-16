@@ -55,26 +55,26 @@ export class BuffCommandHandler extends ChatCommandHandler {
     if (!(character instanceof GameCharacter)) { console.log('キャラクターが存在しません'); return ''; }
 
     if (command.changeAllRounds !== 0) {
-      character.changeAllBuffRounds(command.changeAllRounds);
+      character.buffList?.changeAllRounds(command.changeAllRounds);
       result += ` ラウンド${command.changeAllRounds > 0 ? '+' : ''}${command.changeAllRounds}\n`;
     }
     if (command.removeExpired) {
-      let removed = character.removeExpiredBuffs();
-      if (removed.length > 0) result += ` 効果時間切れ：${removed.map(b => b.name).join(' ')}\n`;
+      let removed = character.buffList?.removeExpired() ?? [];
+      if (removed.length > 0) result += ` 効果時間切れ：${removed.map(b => b.buffName).join(' ')}\n`;
       else result += ` 効果時間切れ：なし\n`;
     }
     if (command.removeBuffNames.length > 0) {
       result += ` 削除：`;
       for (let buffName of command.removeBuffNames) {
-        let success = character.removeBuff(buffName);
-        if (success) result += ` ${buffName}`;
+        let removed = character.buffList?.removeByName(buffName) ?? [];
+        if (removed.length > 0) result += ` ${buffName}${removed.length > 1 ? `x${removed.length}` : ''}`;
       }
       result += `\n`;
     }
     if (command.addBuffs.length > 0) {
       result += ` 追加：`;
       for (let buffInfo of command.addBuffs) {
-        character.addBuff(buffInfo.buffName, buffInfo.expire, buffInfo.buffEffect);
+        character.ensureBuffList().add(buffInfo.buffName, buffInfo.expire, buffInfo.buffEffect);
         result += ` ${buffInfo.buffName}(R:${buffInfo.expire != null ? buffInfo.expire : '無制限'} 効果:${buffInfo.buffEffect})`;
       }
       result += `\n`;

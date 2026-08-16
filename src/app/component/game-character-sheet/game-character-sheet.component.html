@@ -62,6 +62,11 @@
     </div>
   </ng-container>
 
+  <!-- バフはデータ要素ではないので上の detail のループには乗らない。読み取り専用で並べる -->
+  <div class="flex-item" *ngIf="isCharacter">
+    <character-buff-list [gameCharacter]="$any(tabletopObject)"></character-buff-list>
+  </div>
+
   <ng-container *ngIf="isEdit">
     <div class="flex-item">
       <button style="width:100%; color: #555;" (click)="addDataElement()">新しい項目を追加</button>

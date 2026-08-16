@@ -1,3 +1,4 @@
+import { DataElement } from '@udonarium/data-element';
 import { GameCharacter } from '@udonarium/game-character';
 import { resetGameObjects } from 'testing/game-object-testing';
 
@@ -20,6 +21,16 @@ describe('GameCharacter', () => {
 
   function imageNames(character: GameCharacter): string[] {
     return character.imageElements.map(element => GameCharacter.getImageName(element));
+  }
+
+  /** HP 200 / MP 100 を持つコマ。createTestGameDataElement が既定リソースを組む */
+  function makeCharacterWithResources(): GameCharacter {
+    return GameCharacter.create('テスト', 1, '');
+  }
+
+  /** 型を持たないプレーンテキストのタグを足す */
+  function appendPlainTag(character: GameCharacter, name: string, value: string): void {
+    character.detailDataElement.appendChild(DataElement.create(name, value));
   }
 
   describe('imageIndex', () => {
@@ -261,5 +272,31 @@ describe('GameCharacter', () => {
 
       expect(character.komaImageHeight).toBe(300);
     });
+  });
+
+  // NaN を書き込むとリソースが表示も計算も壊れたまま同期され、補正コマンドを撃っても NaN のままになる
+  describe('リソースへの書き込み', () => {
+    it('現在値に NaN を渡しても書き込まない', () => {
+      let character = makeCharacterWithResources();
+
+      expect(character.setCurrentDataValue('HP', NaN)).toBe(false);
+      expect(character.getCurrentDataValue('HP')).toBe(200);
+    });
+
+    it('最大値に NaN を渡しても書き込まない', () => {
+      let character = makeCharacterWithResources();
+
+      expect(character.setMaxDataValue('HP', NaN)).toBe(false);
+      expect(character.getMaxDataValue('HP')).toBe(200);
+    });
+
+    it('非数値の型なしタグへ NaN を書き込まない', () => {
+      let character = makeCharacterWithResources();
+      appendPlainTag(character, '弱点等', '炎に弱い');
+
+      expect(character.setCurrentDataValue('弱点等', NaN)).toBe(false);
+      expect(character.detailDataElement.getFirstElementByName('弱点等').value).toBe('炎に弱い');
+    });
+
   });
 });

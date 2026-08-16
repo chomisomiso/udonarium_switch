@@ -4,9 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BadgeComponent } from 'component/badge/badge.component';
+import { BuffEditComponent } from 'component/buff-edit/buff-edit.component';
 import { CardStackListComponent } from 'component/card-stack-list/card-stack-list.component';
 import { CardStackComponent } from 'component/card-stack/card-stack.component';
 import { CardComponent } from 'component/card/card.component';
+import { CharacterBuffListComponent } from 'component/character-buff-list/character-buff-list.component';
 import { CharacterImageListComponent } from 'component/character-image-list/character-image-list.component';
 import { ChatInputComponent } from 'component/chat-input/chat-input.component';
 import { ChatMessageComponent } from 'component/chat-message/chat-message.component';
@@ -65,9 +67,11 @@ import { AppComponent } from './app.component';
   declarations: [
     AppComponent,
     BadgeComponent,
+    BuffEditComponent,
     CardComponent,
     CardStackComponent,
     CardStackListComponent,
+    CharacterBuffListComponent,
     CharacterImageListComponent,
     ChatMessageComponent,
     ChatPaletteComponent,

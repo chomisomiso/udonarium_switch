@@ -1,5 +1,6 @@
 import { CommandToken } from './command-token';
 import { StringUtil } from './core/system/util/string-util';
+import { ResourceCommand } from './resource-command';
 
 export type BuffCommandTarget = 'self' | 'target' | 'all';
 
@@ -72,6 +73,15 @@ export namespace BuffCommand {
     let trimmed = effect != null ? effect.trim() : '';
     if (trimmed.length < 1) return true;   // 効果は省略可
     return !INVALID_NAME_PATTERN.test(trimmed);
+  }
+
+  export function isInsertableEffectTarget(name: string): boolean {
+    let trimmed = name != null ? name.trim() : '';
+    if (trimmed.length < 1) return false;
+    if (!isValidEffect(trimmed)) return false;
+    // addBuff 側は `,` もリソース名の区切りとして扱う
+    if (/,/.test(trimmed)) return false;
+    return ResourceCommand.isValidResourceName(trimmed);
   }
 
   /** 削除対象のバフ名として妥当か */

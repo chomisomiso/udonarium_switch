@@ -1,3 +1,5 @@
+import { Buff } from './buff';
+import { BuffList, BuffResourceOwner } from './buff-list';
 import { ChatPalette } from './chat-palette';
 import { SyncObject, SyncVar } from './core/synchronize-object/decorator';
 import { MathUtil } from './core/system/util/math-util';
@@ -5,7 +7,7 @@ import { DataElement } from './data-element';
 import { TabletopObject } from './tabletop-object';
 
 @SyncObject('character')
-export class GameCharacter extends TabletopObject {
+export class GameCharacter extends TabletopObject implements BuffResourceOwner {
   @SyncVar() rotate: number = 0;
   @SyncVar() roll: number = 0;
 
@@ -227,7 +229,13 @@ export class GameCharacter extends TabletopObject {
     return false;
   }
 
+  /**
+   * NaN は書き込まない。一度書くと表示も以後の計算も壊れたまま同期され、
+   * 補正コマンドを撃っても NaN のままで元の値には戻せない。
+   * 非数値タグを対象にしたリソースコマンドやバフ効果は、ここで書き込みごと落ちる
+   */
   setCurrentDataValue(dataName: string, setValue: number): boolean {
+    if (Number.isNaN(setValue)) return false;
     const data = this.detailDataElement.getFirstElementByName(dataName);
     if (!data) return null;
     switch (data.type) {
@@ -244,6 +252,7 @@ export class GameCharacter extends TabletopObject {
   }
 
   setMaxDataValue(dataName: string, setValue: number): boolean {
+    if (Number.isNaN(setValue)) return false;
     const data = this.detailDataElement.getFirstElementByName(dataName);
     if (!data) return null;
     switch (data.type) {
@@ -258,101 +267,35 @@ export class GameCharacter extends TabletopObject {
     return false;
   }
 
-  // --- バフ操作 ---
+  // --- バフ ---
 
-  getBuffs(): DataElement[] {
-    return this.detailDataElement.getElementsByType('buff');
+  /**
+   * バフの入れ物。持っていなければ null（chatPalette と同じ形）。
+   * 追加・削除・編集は必ずここを通す。バフの効果はリソースの現在値を直接動かすので、
+   * 別ルートから書き換えると打ち消しの辻褄が合わなくなる
+   */
+  get buffList(): BuffList {
+    for (let child of this.children) {
+      if (child instanceof BuffList) return child;
+    }
+    return null;
   }
 
-  addBuff(name: string, expire: number | null, effect: string): DataElement {
-    let parent = this.detailDataElement.getFirstElementByName(`バフ`);
-    if (!parent) {
-      parent = DataElement.create('バフ', '', {}, 'バフ' + this.identifier);
-      this.detailDataElement.appendChild(parent);
-    }
-    let buff = DataElement.create(name, effect, { type: 'buff', currentValue: expire != null ? String(expire) : '' });
-    parent.appendChild(buff);
+  get buffs(): Buff[] { return this.buffList ? this.buffList.buffs : []; }
 
-    let resArray = effect.match(/[^\+\-\=\>:]+[\+\-\=\>]\d+/ig);
-    if (resArray) {
-      for (let s of resArray) {
-        let res = s.match(/([^,\+\-\=\>:]+)([\+\-\=\>])(\d+)/);
-        if (!res) continue;
-        let val = Number(this.getCurrentDataValue(res[1]));
-        switch (res[2]) {
-          case '+':
-            val += Number(res[3]);
-            break;
-          case '-':
-            val -= Number(res[3]);
-            break;
-          default:
-            val = Number(res[3]);
-            break;
-        }
-        this.setCurrentDataValue(res[1], val);
-      }
-    }
-    return buff;
-  }
+  /**
+   * バフを足すときに入れ物を遅延生成する。空になっても消さない
+   * （削除と再生成が P2P で競ると、片方のバフが行方不明になる）。
+   *
+   * 識別子はコマから決まる形にする。2つのピアが同じコマへ同時にバフを足しても、
+   * 同じ識別子なら同期で1つへ収束する
+   */
+  ensureBuffList(): BuffList {
+    let buffList = this.buffList;
+    if (buffList) return buffList;
 
-  removeBuff(name: string): boolean {
-    let parent = this.detailDataElement.getFirstElementByName(`バフ`);
-    if (!parent) return false;
-    let buff = parent.getFirstElementByName(name);
-    if (!buff || !buff.isBuff) return false;
-    parent.removeChild(buff);
-    
-    let resArray = buff.value.toString().match(/[^\+\-\=\>:]+[\+\-\=\>]\d+/ig);
-    console.log(buff.value, resArray)
-    if (resArray) {
-      for (let s of resArray) {
-        let res = s.match(/([^,\+\-\=\>:]+)([\+\-\=\>])(\d+)/);
-        if (!res) continue;
-        let val = Number(this.getCurrentDataValue(res[1]));
-        switch (res[2]) {
-          case '+':
-            val -= Number(res[3]);
-            break;
-          case '-':
-            val += Number(res[3]);
-            break;
-          default:
-            break;
-        }
-        this.setCurrentDataValue(res[1], val);
-      }
-    }
-
-    if (parent.children.length === 0) {
-      this.detailDataElement.removeChild(parent);
-    }
-    return true;
-  }
-
-  removeExpiredBuffs(): DataElement[] {
-    let parent = this.detailDataElement.getFirstElementByName(`バフ`);
-    if (!parent) return [];
-    let removed: DataElement[] = [];
-    for (let buff of this.getBuffs()) {
-      if (buff.currentValue !== '' && Number(buff.currentValue) <= 0) {
-          this.removeBuff(buff.name);
-          removed.push(buff);
-      }
-    }
-    if (parent.children.length === 0) {
-      this.detailDataElement.removeChild(parent);
-    }
-    return removed;
-  }
-
-  changeAllBuffRounds(delta: number): void {
-    let parent = this.detailDataElement.getFirstElementByName(`バフ`);
-    if (!parent) return;
-    for (let buff of this.getBuffs()) {
-      if (buff.currentValue !== '') {
-        buff.currentValue = Number(buff.currentValue) + delta;
-      }
-    }
+    buffList = new BuffList('BuffList_' + this.identifier);
+    buffList.initialize();
+    return this.appendChild(buffList);
   }
 }

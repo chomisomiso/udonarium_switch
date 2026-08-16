@@ -72,6 +72,44 @@ describe('BuffCommand', () => {
     });
   });
 
+  describe('isInsertableEffectTarget', () => {
+    it('ふつうのリソース名は通す', () => {
+      expect(BuffCommand.isInsertableEffectTarget('HP')).toBe(true);
+      expect(BuffCommand.isInsertableEffectTarget('命中')).toBe(true);
+      expect(BuffCommand.isInsertableEffectTarget('防護点')).toBe(true);
+    });
+
+    it('空なら false（効果と違って省略は許さない）', () => {
+      expect(BuffCommand.isInsertableEffectTarget('')).toBe(false);
+      expect(BuffCommand.isInsertableEffectTarget('   ')).toBe(false);
+      expect(BuffCommand.isInsertableEffectTarget(null)).toBe(false);
+    });
+
+    // addBuff は /([^,\+\-\=\>:]+)([\+\-\=\>])(\d+)/ で名前と増減値を切り分ける
+    it('addBuff が名前の区切りに使う文字を含むなら false', () => {
+      expect(BuffCommand.isInsertableEffectTarget('魔力:炎')).toBe(false);
+      expect(BuffCommand.isInsertableEffectTarget('MP-回復')).toBe(false);
+      expect(BuffCommand.isInsertableEffectTarget('攻撃+')).toBe(false);
+      expect(BuffCommand.isInsertableEffectTarget('A=B')).toBe(false);
+      expect(BuffCommand.isInsertableEffectTarget('X>Y')).toBe(false);
+      expect(BuffCommand.isInsertableEffectTarget('生命力,魔力')).toBe(false);
+    });
+
+    it('コマンド文法を壊す文字を含むなら false', () => {
+      expect(BuffCommand.isInsertableEffectTarget('HP MP')).toBe(false);
+      expect(BuffCommand.isInsertableEffectTarget('HP/MP')).toBe(false);
+      expect(BuffCommand.isInsertableEffectTarget('HP&MP')).toBe(false);
+    });
+
+    it('リソースコマンドの最大値指定と衝突する `^` も false', () => {
+      expect(BuffCommand.isInsertableEffectTarget('HP^')).toBe(false);
+    });
+
+    it('前後の空白は落として判定する', () => {
+      expect(BuffCommand.isInsertableEffectTarget('  HP  ')).toBe(true);
+    });
+  });
+
   describe('その他の組み立て', () => {
     it('makeRemove', () => {
       expect(BuffCommand.makeRemove('祝福')).toBe('&祝福-');

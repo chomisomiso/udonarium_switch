@@ -1,0 +1,60 @@
+:host {
+  display: block;
+  min-width: 10em;
+}
+
+.buff-list-title {
+  padding: 2px;
+  font-family: Cambria, Georgia;
+  font-size: 1.0rem;
+  font-weight: bold;
+}
+
+.buff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.buff {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 1px 4px;
+  border: 1px solid rgba(68, 68, 68, 0.3);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.buff:hover {
+  background-color: rgba(255, 255, 255, 0.35);
+}
+
+.buff-name {
+  font-weight: bold;
+}
+
+.buff-round {
+  color: #666;
+}
+
+/* 期限切れは 0R まで減ってラウンド進行で消える状態。見分けが付くよう色を変える */
+.buff.is-expired .buff-round {
+  color: #c44;
+  font-weight: bold;
+}
+
+/* 効果は長くなりうるので、枠を広げずに省略する */
+.buff-effect {
+  overflow: hidden;
+  color: #666;
+  font-size: 0.9em;
+  text-overflow: ellipsis;
+}
+
+.no-buff {
+  color: #777;
+  font-size: 0.85em;
+}

@@ -8,10 +8,10 @@ import {
   OnChanges,
   OnDestroy
 } from '@angular/core';
+import { Buff } from '@udonarium/buff';
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
 import { EventSystem, Network } from '@udonarium/core/system';
 import { MathUtil } from '@udonarium/core/system/util/math-util';
-import { DataElement } from '@udonarium/data-element';
 import { GameCharacter } from '@udonarium/game-character';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { CharacterImageListComponent } from 'component/character-image-list/character-image-list.component';
@@ -74,8 +74,8 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
   get isMagnetic(): boolean { return this.selectionState === SelectionState.MAGNETIC; }
   get isTargeted(): boolean { return this.targetingService.has(this.gameCharacter); }
 
-  get buffs(): DataElement[] { return this.gameCharacter.getBuffs(); }
-  get hasExpiredBuffs(): boolean { return this.buffs.some(b => b.currentValue !== '' && Number(b.currentValue) <= 0); }
+  get buffs(): Buff[] { return this.gameCharacter.buffs; }
+  get hasExpiredBuffs(): boolean { return this.buffs.some(buff => buff.isExpired); }
   buffExpanded: boolean = false;
   toggleBuffExpanded(): void { this.buffExpanded = !this.buffExpanded; }
 

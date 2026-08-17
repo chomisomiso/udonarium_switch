@@ -1,13 +1,14 @@
 {
-  "name": "udonarium",
-  "version": "1.17.4",
+  "name": "udonarium_switch",
+  "version": "1.0.0",
   "license": "MIT",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage"
   },
   "private": true,
   "dependencies": {

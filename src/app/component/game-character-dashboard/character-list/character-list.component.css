@@ -1,0 +1,280 @@
+/* ========== キャラクター一覧 ========== */
+/* ホスト自身がカードを並べる flex コンテナ。表示モードのクラスは親が付ける */
+
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 2px 4px 4px 2px;
+}
+
+/* column flex を避けてブロックフローで縦積み（Firefox cross-size 循環依存回避） */
+.character-card {
+  position: relative; /* imagebox の containing block */
+  flex: 0 1 auto;
+  border: 1px solid #555;
+  border-radius: 6px 0;
+  padding: 4px 8px;
+  background: linear-gradient(-30deg, rgba(255, 244, 232, 0.9), rgba(255, 255, 255, 0.9));
+  box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+.character-card.main-selected {
+  border-left-width: 4px;
+  padding-left: 5px;
+  background: rgba(255, 244, 232, 0.9);
+}
+.character-card.main-selected .character-name::before {
+  content: "▶";
+}
+.character-card:hover {
+  background: #CCC;
+}
+.character-card.targeting {
+  animation: target-shadow 1s ease-in-out infinite;
+}
+@keyframes target-shadow {
+  0%   { box-shadow: 4px 4px 3px #ff6a4d; }
+  50%  { box-shadow: 2px 2px 3px #ff6a4d; }
+  100% { box-shadow: 4px 4px 3px #ff6a4d; }
+}
+
+/* --- 表示モード --- */
+/* auto: コンテンツ幅でカード横並び — base styles がそのまま適用 */
+
+/* compact: 固定幅カード、中身は縮小可 */
+:host(.mode-compact) .character-card { flex: 0 0 260px; }
+:host(.mode-compact) .resources-row,
+:host(.mode-compact) .other-data-row { min-width: 0; }
+
+/* column: 全幅縦並び */
+:host(.mode-column) { flex-direction: column; flex-wrap: nowrap; }
+
+/* ========== カード: ヘッダ ========== */
+
+.header-row {
+  display: flex;
+  flex-direction: row;
+  height: 20px;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+.character-name {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: bold;
+}
+.target-badge {
+  display: none;
+  flex: 0 0 auto;
+  align-self: center;
+  height: 14px;
+  padding: 0 4px;
+  border: 1px solid #777;
+  border-radius: 6px;
+  font-size: 10px;
+  color: #777;
+  font-weight: bold;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.character-card:hover .target-badge {
+  display: inherit;
+}
+.target-badge.on {
+  display: inherit;
+  border-color: #ff2a00;
+  color: #ff2a00;
+}
+.target-badge:hover {
+  background-color: #666;
+  color: #fff;
+}
+.target-badge.on:hover {
+  background-color: #ff2a00;
+  color: #fff;
+}
+
+/* ========== カード: 本体 ========== */
+/* imagebox を absolute にして、card-data を padding-left 後の残りスペースに流す */
+.card-body {
+  padding-left: 52px; /* imagebox: 40px + padding 6px×2 */
+}
+.character-imagebox {
+  position: absolute;
+  top: 19px;
+  left: 0;
+  bottom: 0;
+  width: 40px;
+  padding: 0 6px;
+  overflow: hidden;
+}
+
+/* resources-row + other-data-row の横並び／スタック切り替え */
+.data-rows {
+  display: flex;
+  flex-wrap: wrap;
+}
+.resources-row,
+.other-data-row {
+  flex: 0 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: 6px;
+}
+/* 下に other-data-row が回り込んだときの行間 */
+.resources-row {
+  margin-bottom: 5px;
+}
+
+/* ========== カード: タグ ========== */
+.tag {
+  padding: 1px 4px;
+  border: 1px solid #555;
+  border-radius: 3px;
+  font-size: 0.7em;
+}
+.tag.number-resource {
+  display: flex;
+  flex-direction: row;
+  width: 80px;
+}
+.tag.other-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.tag-name {
+  flex: 0 0 auto;
+  font-size: 0.9em;
+  text-align: center;
+  white-space: nowrap;
+}
+.tag-value {
+  width: 100%;
+  min-width: 1em;
+  max-width: 12em;
+  font-family: inherit;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-align: center;
+}
+
+.tag-resource-box {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+/* type="number" は size 属性が効かないので幅は CSS 側で決めきる。 */
+.tag-resource {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-align: right;
+}
+.tag-resource + span {
+  flex: 0 0 auto;
+  align-self: end;
+  min-width: 1em;
+  max-width: fit-content;
+  padding-right: 3px;
+  font-size: 0.8em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.resource-bar {
+  width: var(--meter-width, 100%);
+  height: 10px;
+  background: #ddd;
+  border: none;
+  border-radius: 2px;
+  appearance: none;
+  -moz-appearance: none;
+}
+.resource-bar::-webkit-meter-bar {
+  background: #ddd;
+  border: none;
+  border-radius: 2px;
+}
+.resource-bar::-webkit-meter-optimum-value {
+  background: #4caf50;
+  border-radius: 2px;
+}
+.resource-bar::-moz-meter-bar {
+  background: #4caf50;
+  border-radius: 2px;
+}
+
+.input {
+  box-sizing: border-box;
+  background: none;
+  border: none;
+  border-radius: 2px;
+  outline: none;
+  color: #444;
+}
+.input:hover {
+  background: #EEE;
+}
+.input:focus {
+  background: #FFF;
+}
+
+/* tag-value の幅を中身に合わせるための、見えない実寸ダミー */
+.hidden-spacer {
+  visibility: hidden;
+  box-sizing: border-box;
+  height: 0;
+  min-width: 1em;
+  max-width: 12em;
+  overflow: hidden;
+  font-size: 1.0em;
+  white-space: nowrap;
+}
+
+/* ========== カード: バフ ========== */
+.buff-row {
+  margin: 2px 0 0 6px;
+  overflow: hidden;
+  contain: inline-size;
+  font-size: 0.7em;
+  cursor: pointer;
+}
+.buff-expanded {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+}
+.buff-tag {
+  display: flex;
+  gap: 4px;
+  padding: 0 4px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.buff-name { font-weight: bold; }
+.buff-round { color: #888; }
+.buff-badge {
+  align-self: center;
+  box-sizing: border-box;
+  height: 20px;
+  padding: 0 4px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.buff-badge.expanded {
+  padding: 0;
+  border-color: transparent;
+}
+.buff-badge:hover {
+  background-color: #666;
+  color: #fff;
+  cursor: pointer;
+}

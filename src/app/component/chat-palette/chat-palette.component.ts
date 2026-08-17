@@ -3,12 +3,19 @@ import { ChatPalette } from '@udonarium/chat-palette';
 import { ChatTab } from '@udonarium/chat-tab';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem } from '@udonarium/core/system';
-import { DiceBot } from '@udonarium/dice-bot';
 import { GameCharacter } from '@udonarium/game-character';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { ChatInputComponent } from 'component/chat-input/chat-input.component';
 import { ChatMessageService } from 'service/chat-message.service';
+import { DiceBot } from '@udonarium/dice-bot';
 import { PanelService } from 'service/panel.service';
+import { DoublePressDetector } from 'component/chat-palette/double-press';
+import { openPaletteIndexMenu } from 'component/chat-palette/palette-index';
+import { sendPaletteMessages } from 'component/chat-palette/palette-message';
+import { getPaletteTopLine, scrollPaletteToLine } from 'component/chat-palette/palette-scroll';
+import { ContextMenuService } from 'service/context-menu.service';
+import { GameCharacterTargetingService } from 'service/game-character-targeting.service';
+import { PointerDeviceService } from 'service/pointer-device.service';
 
 @Component({
   selector: 'chat-palette',
@@ -18,6 +25,7 @@ import { PanelService } from 'service/panel.service';
 export class ChatPaletteComponent implements OnInit, OnDestroy {
   @ViewChild('chatInput', { static: true }) chatInputComponent: ChatInputComponent;
   @ViewChild('chatPlette') chatPletteElementRef: ElementRef<HTMLSelectElement>;
+  @ViewChild('paletteTextArea') paletteTextAreaElementRef: ElementRef<HTMLTextAreaElement>;
   @Input() character: GameCharacter = null;
 
   get palette(): ChatPalette { return this.character.chatPalette; }
@@ -41,17 +49,23 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
   isEdit: boolean = false;
   editPalette: string = '';
 
-  private doubleClickTimer: NodeJS.Timeout = null;
+  private doublePress = new DoublePressDetector();
 
-  get diceBotInfos() { return DiceBot.diceBotInfos }
+  get diceBotInfos() { return DiceBot.infos }
 
   get chatTab(): ChatTab { return ObjectStore.instance.get<ChatTab>(this.chatTabidentifier); }
   get myPeer(): PeerCursor { return PeerCursor.myCursor; }
   get otherPeers(): PeerCursor[] { return ObjectStore.instance.getObjects(PeerCursor); }
 
+  /** 索引のもとになる行。編集中はまだ確定していない編集内容を見る */
+  private get indexSourceLines(): string[] { return this.isEdit ? this.editPalette.split('\n') : this.palette.getPalette(); }
+
   constructor(
     public chatMessageService: ChatMessageService,
-    private panelService: PanelService
+    private panelService: PanelService,
+    private contextMenuService: ContextMenuService,
+    private pointerDeviceService: PointerDeviceService,
+    private targetingService: GameCharacterTargetingService,
   ) { }
 
   ngOnInit() {
@@ -71,7 +85,8 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     EventSystem.unregister(this);
-    if (this.isEdit) this.toggleEditMode();
+    this.doublePress.cancel();
+    if (this.isEdit) this.setEditMode(false);
   }
 
   updatePanelTitle() {
@@ -79,7 +94,8 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
   }
 
   onSelectedCharacter(identifier: string) {
-    if (this.isEdit) this.toggleEditMode();
+    // 別のパレットを表示することになるのでスクロール位置は引き継がない
+    if (this.isEdit) this.setEditMode(false);
     let object = ObjectStore.instance.get(identifier);
     if (object instanceof GameCharacter) {
       this.character = object;
@@ -93,22 +109,30 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
     this.text = line;
   }
 
-  clickPalette(line: string) {
-    if (this.doubleClickTimer && this.text === line) {
-      clearTimeout(this.doubleClickTimer);
-      this.doubleClickTimer = null;
+  clickPalette(line: string, index: number) {
+    if (this.doublePress.press(index)) {
       this.chatInputComponent.sendChat(null);
-    } else {
-      this.text = line;
-      this.doubleClickTimer = setTimeout(() => { this.doubleClickTimer = null }, 400);
+      return;
     }
+    this.selectPalette(line);
+  }
+
+  /** 索引一覧を開く。選んだ見出しが先頭に来るようスクロールさせる */
+  openIndexMenu(event: MouseEvent) {
+    event.stopPropagation();
+
+    let deps = { contextMenuService: this.contextMenuService, pointerDeviceService: this.pointerDeviceService };
+    openPaletteIndexMenu(deps, this.indexSourceLines, line => {
+      // select の selectedIndex は動かさない。見出し行が入力欄に入ってしまう
+      scrollPaletteToLine(this.paletteElement, line);
+    });
   }
 
   sendChat(value: { text: string, gameType: string, sendFrom: string, sendTo: string }) {
-    if (this.chatTab) {
-      let text = this.palette.evaluate(value.text, this.character.rootDataElement);
-      this.chatMessageService.sendMessage(this.chatTab, text, value.gameType, value.sendFrom, value.sendTo);
-    }
+    if (!this.chatTab) return;
+
+    let deps = { chatMessageService: this.chatMessageService, chatTab: this.chatTab };
+    sendPaletteMessages(deps, this.character, value, this.targetingService.getTargets());
   }
 
   resetPletteSelect() {
@@ -116,8 +140,22 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
     this.chatPletteElementRef.nativeElement.selectedIndex = -1;
   }
 
+  /** いま表示されているパレット本体。閲覧時は select、編集時は textarea */
+  private get paletteElement(): HTMLSelectElement | HTMLTextAreaElement | null {
+    let elementRef = this.isEdit ? this.paletteTextAreaElementRef : this.chatPletteElementRef;
+    return elementRef ? elementRef.nativeElement : null;
+  }
+
   toggleEditMode() {
-    this.isEdit = this.isEdit ? false : true;
+    // select と textarea は *ngIf で入れ替わるので、先頭行を控えて差し替え先へ引き継ぐ
+    let topLine = getPaletteTopLine(this.paletteElement);
+    this.setEditMode(this.isEdit ? false : true);
+    setTimeout(() => scrollPaletteToLine(this.paletteElement, topLine));
+  }
+
+  /** 編集モードの出入り。スクロール位置の引き継ぎはしない */
+  private setEditMode(isEdit: boolean) {
+    this.isEdit = isEdit;
     if (this.isEdit) {
       this.editPalette = this.palette.value + '';
     } else {

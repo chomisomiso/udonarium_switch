@@ -1,7 +1,7 @@
 import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { TabletopObject } from '@udonarium/tabletop-object';
 import { Stackable } from '@udonarium/tabletop-object-util';
-import { IPoint2D, Transform } from '@udonarium/transform/transform';
+import { RegionOverlapDetector } from '@udonarium/transform/region-overlap-detector';
 import { PointerCoordinate, PointerDeviceService } from 'service/pointer-device.service';
 import { SelectionState, TabletopSelectionService } from 'service/tabletop-selection.service';
 
@@ -25,8 +25,7 @@ export class MovableSelectionSynchronizer {
   private _isDestroyed: boolean = false;
   get isDestroyed(): boolean { return this._isDestroyed; }
 
-  private latestDomRect: DOMRect;
-  private latestRectPoints: IPoint2D[] = [];
+  private overlapDetector: RegionOverlapDetector;
 
   constructor(
     private movable: MovableDirective,
@@ -35,6 +34,7 @@ export class MovableSelectionSynchronizer {
   ) { }
 
   initialize() {
+    this.overlapDetector = new RegionOverlapDetector(this.movable.nativeElement);
     this.register();
     this.addEventListeners();
   }
@@ -67,48 +67,7 @@ export class MovableSelectionSynchronizer {
   private onPickRegion(e: CustomEvent) {
     if (this.pointerDevice.isDragging || this.movable.isDisable) return;
 
-    let x: number = e.detail.x;
-    let y: number = e.detail.y;
-    let width: number = e.detail.width;
-    let height: number = e.detail.height;
-
-    let targetRect = this.movable.nativeElement.getBoundingClientRect();
-
-    let isMaybeOverlap = targetRect.x <= x + width && x <= targetRect.x + targetRect.width && targetRect.y <= y + height && y <= targetRect.y + targetRect.height;
-    if (!isMaybeOverlap) return;
-
-    let hasUpdatedRect = !(this.latestDomRect != null
-      && this.latestDomRect.x === targetRect.x
-      && this.latestDomRect.y === targetRect.y
-      && this.latestDomRect.width === targetRect.width
-      && this.latestDomRect.height === targetRect.height
-      && this.latestDomRect.top === targetRect.top
-      && this.latestDomRect.left === targetRect.left
-      && this.latestDomRect.bottom === targetRect.bottom
-      && this.latestDomRect.right === targetRect.right);
-
-    if (hasUpdatedRect) {
-      let points: IPoint2D[] = [
-        { x: 0, y: 0 },
-        { x: this.movable.nativeElement.clientWidth, y: 0 },
-        { x: this.movable.nativeElement.clientWidth, y: this.movable.nativeElement.clientHeight },
-        { x: 0, y: this.movable.nativeElement.clientHeight },
-      ];
-      let transformer: Transform = new Transform(this.movable.nativeElement);
-      this.latestDomRect = targetRect;
-      this.latestRectPoints = points.map(point => transformer.localToGlobal(point.x, point.y));
-      transformer.clear();
-    }
-
-    let rectA: IPoint2D[] = [
-      { x: x, y: y },
-      { x: x + width, y: y },
-      { x: x + width, y: y + height },
-      { x: x, y: y + height },
-    ];
-    let rectB: IPoint2D[] = this.latestRectPoints;
-
-    let isOverlap = checkOverlapSAT(rectA, rectB);
+    let isOverlap = this.overlapDetector.checkOverlap(e.detail);
     if (isOverlap) {
       this.movable.state = SelectionState.SELECTED;
     }
@@ -300,38 +259,4 @@ export class MovableSelectionSynchronizer {
       }
     }
   }
-}
-
-function checkOverlapSAT(rectA: IPoint2D[], rectB: IPoint2D[]) {
-  let edges = [...getEdges(rectA), ...getEdges(rectB)];
-
-  for (let edge of edges) {
-    let axis = { x: -edge.y, y: edge.x }; // 法線ベクトル
-    let projA = projectOntoAxis(rectA, axis);
-    let projB = projectOntoAxis(rectB, axis);
-
-    let isProjectionsOverlap = !(projA.max < projB.min || projB.max < projA.min);
-    if (!isProjectionsOverlap) return false;
-  }
-
-  return true; // すべての軸で投影が重なるなら接触している
-}
-
-function getEdges(points: IPoint2D[]): IPoint2D[] {
-  let edges = [];
-  for (let i = 0; i < points.length; i++) {
-    let next = (i + 1) % points.length;
-    edges.push({ x: points[next].x - points[i].x, y: points[next].y - points[i].y });
-  }
-  return edges;
-}
-
-function projectOntoAxis(points: IPoint2D[], axis: IPoint2D): { min: number, max: number } {
-  let min = Infinity, max = -Infinity;
-  for (let p of points) {
-    let projection = (p.x * axis.x + p.y * axis.y);
-    min = Math.min(min, projection);
-    max = Math.max(max, projection);
-  }
-  return { min, max };
 }

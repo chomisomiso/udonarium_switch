@@ -1,0 +1,22 @@
+<div class="palette-body">
+  <select *ngIf="!isEdit" #chatPalette class="palette" size="5"
+    (input)="selectPalette(chatPalette.value)" (click)="clickPalette(chatPalette.value, chatPalette.selectedIndex)">
+    <option *ngFor="let line of paletteLines" [value]="line" [title]="line">{{ line }}</option>
+  </select>
+  <textarea *ngIf="isEdit" #paletteTextArea class="palette" [(ngModel)]="editPalette" placeholder="チャットパレット"></textarea>
+  <div *ngIf="isEdit" class="edit-info">
+    <i class="material-icons">info</i>
+    <span>チャットパレット編集中です</span>
+  </div>
+</div>
+<div class="palette-controls">
+  <button class="index-button" (click)="openIndexMenu($event)"
+    title="見出し行にジャンプ">
+    <span class="material-icons">library_books</span>
+  </button>
+  <div class="spacer"> </div>
+  <button class="edit-button" [class.disable]="!palette" [class.editing]="isEdit" (click)="toggleEditMode()"
+    [title]="isEdit ? 'パレットの編集を確定' : 'チャットパレットを編集'">
+    <span class="material-icons">edit_note</span>
+  </button>
+</div>

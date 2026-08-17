@@ -17,6 +17,10 @@ export namespace MathUtil {
     return value < max ? value : max;
   }
 
+  export function clamp(value: number, min: number, max: number): number {
+    return clampMin(clampMax(value, max), min);
+  }
+
   export function radians(angleDegree: number): number {
     return angleDegree * Math.PI / 180;
   }

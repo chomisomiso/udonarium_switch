@@ -413,6 +413,7 @@ Ctrl+マウス左ボタン+ドラッグ操作 : マウスカーソルの触れ�
     message.to = to;
     message.name = name;
     message.value = text;
+    message.characterId = ''
     return message;
   }
 }

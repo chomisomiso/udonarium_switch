@@ -15,6 +15,9 @@
   <ng-container *ngSwitchCase="'dice-symbol'">
     <button (click)="openModal(tabletopObject['face'])" [disabled]="!tabletopObject['isVisible']">ダイス目の画像を変更</button>
   </ng-container>
+  <ng-container *ngSwitchCase="'character'">
+    <!-- キャラクターは複数画像を持てるので、画像の変更は下の一覧から行う -->
+  </ng-container>
   <ng-container *ngSwitchDefault>
     <button (click)="openModal('imageIdentifier', true)">画像変更</button>
   </ng-container>
@@ -26,7 +29,8 @@
     <div *ngIf="isSaveing" class="progress">{{progresPercent}}%</div>
   </div>
 </button>
-<ng-container *ngIf="tabletopObject.aliasName === 'character'">
+<button (click)="openSettingPanel()">設定</button>
+<ng-container *ngIf="isCharacter">
   <select #select *ngIf="tabletopObject" (change)="setLocation(select.value)" [ngModel]="tabletopObject.location.name">
     <option value="table">テーブル</option>
     <option value="common">共有インベントリ</option>
@@ -37,13 +41,16 @@
 <div *ngIf="tabletopObject" class="flex-container">
   <div *ngIf="0 < tabletopObject.imageFile?.url.length" class="box main-image-box">
     <img class="main-image" [src]="tabletopObject.imageFile.url | safe: 'resourceUrl'" [alt]="tabletopObject.imageFile.name"
-    />
+      [imageCrop]="tabletopObject.imageCrop" />
   </div>
   <ng-container *ngIf="tabletopObject.commonDataElement">
-    <div class="flex-item">
+    <!-- キャラクターは common の下の余白に画像一覧を置き、画像表示と高さを揃える -->
+    <div class="flex-item" [class.has-image-list]="isCharacter">
       <div class="table">
         <div class="table-row" game-data-element [gameDataElement]="tabletopObject.commonDataElement" [isTagLocked]="true"></div>
       </div>
+      <character-image-list *ngIf="isCharacter"
+        [gameCharacter]="$any(tabletopObject)"></character-image-list>
     </div>
   </ng-container>
 
@@ -54,6 +61,11 @@
       </div>
     </div>
   </ng-container>
+
+  <!-- バフはデータ要素ではないので上の detail のループには乗らない。読み取り専用で並べる -->
+  <div class="flex-item" *ngIf="isCharacter">
+    <character-buff-list [gameCharacter]="$any(tabletopObject)"></character-buff-list>
+  </div>
 
   <ng-container *ngIf="isEdit">
     <div class="flex-item">

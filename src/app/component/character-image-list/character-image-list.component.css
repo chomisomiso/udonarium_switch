@@ -1,0 +1,114 @@
+/*
+ * width:0 + min-width:100% で、一覧の中身が親（キャラシの common 欄）の幅を
+ * 押し広げないようにする。これがないと横スクロールにならず親ごと広がってしまう。
+ */
+:host {
+  display: block;
+  width: 0;
+  min-width: 100%;
+}
+
+.image-list-row {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: stretch;
+}
+
+/*
+ * 画像の一覧。枚数が増えても縦に伸びないよう、折り返さずに横スクロールさせる。
+ * ホイール操作は onWheel() でこの横スクロールに割り当てている。
+ * min-width:0 がないと flex アイテムが縮まずスクロールしない。
+ */
+.image-list {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: flex-start;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+}
+
+.image-item {
+  position: relative;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  margin: 2px;
+  padding: 2px;
+  border: 2px solid transparent;
+  border-radius: 3px;
+  text-align: center;
+}
+
+/* 選択中＝コマに表示されている画像 */
+.image-item.is-selected {
+  border-color: #A0E0FF;
+  background-color: rgba(160, 224, 255, 0.15);
+}
+
+/* 枠を覆う画像のサイズと位置は imageCrop ディレクティブが絶対配置で入れる */
+.thumbnail-box {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.name-input {
+  width: 100%;
+  min-width: 10px;
+  box-sizing: border-box;
+  font-size: 0.7em;
+}
+
+.arrow-buttons,
+.buttons {
+  display: flex;
+}
+
+/*
+ * 左右移動はサムネの下端に重ねて置く。bottom は名前入力欄とボタン列を足した高さぶんで、
+ * それらのフォントサイズを変えると合わなくなる暗黙の依存がある。
+ */
+.arrow-buttons {
+  position: absolute;
+  bottom: 45px;
+  left: 0;
+  right: 0;
+  /* サムネの上に乗るので、ボタンの実体以外はクリックを下へ通す */
+  pointer-events: none;
+}
+
+.arrow-buttons button {
+  pointer-events: auto;
+}
+
+.arrow-buttons button,
+.buttons button {
+  padding: 0;
+  line-height: 1;
+}
+
+.buttons button {
+  flex: 1 1 auto;
+}
+
+.arrow-buttons .spacer {
+  flex: 1 1 auto;
+}
+
+.buttons .material-icons,
+.arrow-buttons .material-icons,
+.add-button .material-icons {
+  font-size: 1.4em;
+  vertical-align: middle;
+}
+
+/* 一覧がスクロールしても隠れないよう、追加ボタンは一覧の外に固定で置く */
+.add-button {
+  flex: 0 0 auto;
+  padding: 0 2px;
+  line-height: 1;
+}

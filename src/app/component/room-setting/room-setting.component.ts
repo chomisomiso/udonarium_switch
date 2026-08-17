@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { EventSystem, Network } from '@udonarium/core/system';
 import { PeerContext } from '@udonarium/core/system/network/peer-context';
+import { GameSystemSetting } from '@udonarium/game-system-setting';
 import { PeerCursor } from '@udonarium/peer-cursor';
 
 import { ModalService } from 'service/modal.service';
@@ -19,6 +20,7 @@ export class RoomSettingComponent implements OnInit, OnDestroy {
   roomName: string = 'ふつうの部屋';
   password: string = '';
   isPrivate: boolean = false;
+  gameType: string = GameSystemSetting.instance.gameType;
 
   get peerId(): string { return Network.peerId; }
   get isConnected(): boolean { return 0 < Network.peerIds.length; }
@@ -46,6 +48,9 @@ export class RoomSettingComponent implements OnInit, OnDestroy {
   }
 
   createRoom() {
+    // ルームがネットワーク上に現れる前に確定させる
+    GameSystemSetting.instance.gameType = this.gameType;
+
     let userId = Network.peer.userId;
     Network.open(userId, PeerContext.generateId('***'), this.roomName, this.password);
     PeerCursor.myCursor.peerId = Network.peerId;

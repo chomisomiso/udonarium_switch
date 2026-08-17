@@ -6,6 +6,7 @@ import { ChatTabList } from '@udonarium/chat-tab-list';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { Network } from '@udonarium/core/system';
 import { GameCharacter } from '@udonarium/game-character';
+import { GameSystemSetting } from '@udonarium/game-system-setting';
 import { PeerCursor } from '@udonarium/peer-cursor';
 
 const HOURS = 60 * 60 * 1000;
@@ -20,7 +21,10 @@ export class ChatMessageService {
     'https://worldtimeapi.org/api/ip',
   ];
 
-  gameType: string = '';
+  /** ローカル上書き。未設定ならルーム設定（GameSystemSetting）に従う */
+  private _gameType: string = null;
+  get gameType(): string { return this._gameType || GameSystemSetting.instance.gameType; }
+  set gameType(gameType: string) { this._gameType = gameType; }
 
   constructor() { }
 
@@ -74,18 +78,43 @@ export class ChatMessageService {
     return Math.floor(this.timeOffset + (performance.now() - this.performanceOffset));
   }
 
-  sendMessage(chatTab: ChatTab, text: string, gameType: string, sendFrom: string, sendTo?: string): ChatMessage {
+  /**
+   * @param sendTo ひそひそ話の宛先。宛先を指定しないなら空文字（chat-input が流す既定値と同じ）
+   * @param targets このメッセージが作用するターゲット。
+   *   t: / t& のリソース操作はここに載せた全員へ適用される。現在のターゲット選択に
+   *   効かせたい呼び出し元は GameCharacterTargetingService.getTargets() を渡すこと。
+   */
+  sendMessage(chatTab: ChatTab, text: string, gameType: string, sendFrom: string, sendTo: string, targets: Iterable<GameCharacter>): ChatMessage {
+    let targetIdentifiers = Array.from(targets).map(t => t.identifier).join(' ');
+
     let chatMessage: ChatMessageContext = {
       from: Network.peer.userId,
       to: this.findId(sendTo),
+      characterId: sendFrom,
+      targetIds: targetIdentifiers,
       name: this.makeMessageName(sendFrom, sendTo),
       imageIdentifier: this.findImageIdentifier(sendFrom),
+      imageCrop: this.findImageCrop(sendFrom),
       timestamp: this.calcTimeStamp(chatTab),
       tag: gameType,
       text: text,
     };
 
     return chatTab.addMessage(chatMessage);
+  }
+
+  /** システム発言として、自分にだけ見えるメッセージを送る。 */
+  sendSystemMessageToSelf(chatTab: ChatTab, text: string): ChatMessage {
+    let userId = Network.peer.userId;
+    return chatTab.addMessage({
+      from: 'System-ChatPalette',
+      originFrom: userId,
+      to: userId,
+      name: 'System',
+      timestamp: this.calcTimeStamp(chatTab),
+      tag: 'system',
+      text: text,
+    });
   }
 
   private findId(identifier: string): string {
@@ -124,6 +153,12 @@ export class ChatMessageService {
       return object.imageIdentifier;
     }
     return identifier;
+  }
+
+  /** 発言時点の表示調整を焼き込む。既定値なら空文字を返し、ChatTab.addMessage が属性ごと省く */
+  private findImageCrop(identifier: string): string {
+    let object = ObjectStore.instance.get(identifier);
+    return object instanceof GameCharacter ? object.imageCrop.toString() : '';
   }
 
   private calcTimeStamp(chatTab: ChatTab): number {

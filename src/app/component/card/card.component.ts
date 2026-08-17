@@ -20,6 +20,7 @@ import { PeerCursor } from '@udonarium/peer-cursor';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
 import { ObjectInteractGesture } from 'component/game-table/object-interact-gesture';
+import { TabletopObjectSettingComponent } from 'component/tabletop-object-setting/tabletop-object-setting.component';
 import { MovableOption } from 'directive/movable.directive';
 import { RotableOption } from 'directive/rotable.directive';
 import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
@@ -339,6 +340,8 @@ export class CardComponent implements OnDestroy, OnChanges, AfterViewInit {
         SoundEffect.play(PresetSound.sweep);
       }
     });
+    actions.push(ContextMenuSeparator);
+    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, this.card, this.pointerDeviceService.pointers[0]) });
     return actions;
   }
 

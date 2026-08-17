@@ -48,6 +48,42 @@
 .menu-title {
   display: inline-block;
 }
+/* サムネイル付きの項目。サムネと項目名を縦中央で揃える */
+ul > li.has-thumbnail {
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+/*
+ * img 単体では自分に掛かった transform を切れないので、枠を 1 枚被せる。
+ * 枠を覆う画像のサイズと位置は imageCrop ディレクティブが絶対配置で入れる
+ */
+.menu-thumbnail-box {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  margin-right: 6px;
+  position: relative;
+  overflow: hidden;
+  vertical-align: middle;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+.has-thumbnail .menu-title {
+  vertical-align: middle;
+}
+.slider-item {
+  cursor: default;
+}
+.slider {
+  width: 10em;
+  vertical-align: middle;
+  margin: 0 4px;
+}
+.slider-value {
+  display: inline-block;
+  min-width: 3em;
+  text-align: right;
+  vertical-align: middle;
+}
 hr.separator {
   margin: 0.1em -12px;
   height: 1px;

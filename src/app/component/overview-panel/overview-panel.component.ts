@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { EventSystem } from '@udonarium/core/system';
 import { DataElement } from '@udonarium/data-element';
+import { ImageCrop } from '@udonarium/image-crop';
 import { TabletopObject } from '@udonarium/tabletop-object';
 import { GameObjectInventoryService } from 'service/game-object-inventory.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
@@ -47,6 +48,7 @@ export class OverviewPanelComponent implements OnChanges, AfterViewInit, OnDestr
   @Input() top: number = 0;
 
   get imageUrl(): string { return this.tabletopObject && this.tabletopObject.imageFile ? this.tabletopObject.imageFile.url : ''; }
+  get imageCrop(): ImageCrop { return this.tabletopObject ? this.tabletopObject.imageCrop : ImageCrop.default; }
   get hasImage(): boolean { return 0 < this.imageUrl.length; }
 
   get inventoryDataElms(): DataElement[] { return this.tabletopObject ? this.getInventoryTags(this.tabletopObject) : []; }
@@ -57,6 +59,9 @@ export class OverviewPanelComponent implements OnChanges, AfterViewInit, OnDestr
   get isPointerDragging(): boolean { return this.pointerDeviceService.isDragging || this.pointerDeviceService.isTablePickGesture; }
 
   get pointerEventsStyle(): any { return { 'is-pointer-events-auto': !this.isPointerDragging, 'pointer-events-none': this.isPointerDragging }; }
+
+  get overViewWidth(): number { return this.tabletopObject?.overViewWidth; }
+  get overViewMaxHeight(): number { return this.tabletopObject?.overViewMaxHeight; }
 
   isOpenImageView: boolean = false;
 

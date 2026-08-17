@@ -1,0 +1,41 @@
+<div class="buff-edit">
+  <div class="removed-notice" *ngIf="isRemoved">このバフは既に削除されています</div>
+
+  <div class="field">
+    <label class="field-label" [attr.for]="idPrefix + '-name'">名前</label>
+    <input [attr.id]="idPrefix + '-name'" class="field-input" type="text" placeholder="バフ名"
+      [disabled]="isRemoved" [(ngModel)]="buffName" />
+  </div>
+
+  <div class="field">
+    <label class="field-label" [attr.for]="idPrefix + '-round'">ラウンド</label>
+    <div class="field-input round-cell" (wheel)="adjustRoundOnWheel($event)" title="空欄で無制限 / ホイールで増減">
+      <input [attr.id]="idPrefix + '-round'" class="no-spinner round-input" type="number" placeholder="∞"
+        [disabled]="isRemoved" [(ngModel)]="buffRound" />
+      <span class="suffix-label">R</span>
+      <button class="button round-clear" type="button" [disabled]="isRemoved"
+        (click)="setRoundInfinite()" title="無制限にする">∞</button>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="field-label" [attr.for]="idPrefix + '-effect'">効果</label>
+    <div class="field-input effect-cell">
+      <input #effectInput [attr.id]="idPrefix + '-effect'" class="effect-input" type="text" placeholder="バフの効果"
+        [disabled]="isRemoved" [(ngModel)]="buffEffect" />
+      <!-- mousedown を止めて入力欄からフォーカスを奪わない。選択範囲が見えたまま残る -->
+      <button class="button insert-resource" type="button" [disabled]="isRemoved"
+        (mousedown)="$event.preventDefault()" (click)="openResourceMenu($event)" title="リソース名を挿入">▼</button>
+    </div>
+  </div>
+
+  <div class="validation" *ngIf="!isRemoved && !canSave">{{ validationError }}</div>
+
+  <div class="buttons">
+    <button class="button remove" type="button" [disabled]="isRemoved" (click)="remove()"
+      title="このバフを削除（効果を戻す）">削除</button>
+    <span class="spacer"></span>
+    <button class="button" type="button" (click)="cancel()">キャンセル</button>
+    <button class="button save" type="button" [disabled]="!canSave" (click)="save()">保存</button>
+  </div>
+</div>

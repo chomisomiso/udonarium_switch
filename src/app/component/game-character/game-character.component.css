@@ -109,6 +109,36 @@
   background-color: hsla(60, 100%, 75%, 0.6);
 }
 
+.outer-targeted-animation {
+  backface-visibility: hidden;
+  position: absolute;
+  box-sizing: border-box;
+  border: solid 0.5px hsla(10, 60%, 35%, 0.7);
+  animation: outer-targeted 1s ease-in-out infinite;
+}
+
+.inner-targeted-animation {
+  pointer-events: none;
+  backface-visibility: hidden;
+  position: absolute;
+  height: 100%;
+  width:  100%;
+  box-sizing: border-box;
+  border-radius: 25px;
+  background: none;
+  animation: inner-targeted 1s ease-in-out infinite;
+}
+
+@keyframes outer-targeted {
+  0%   {height: calc(100% + 30px + 15%); width: calc(100% + 30px + 15%); top: calc(-15px - 7.5%); left: calc(-15px - 7.5%); border-radius: calc(36px + 10%);}
+  100% {height: calc(100% +  2px); width: calc(100% +  2px); top: calc(-1px); left: calc(-1px); border-radius: 27px;}
+}
+
+@keyframes inner-targeted {
+  0%   {border: 6px solid hsla(10, 100%, 65%, 0.8); border-radius: calc(35px + 10%);}
+  100% {border: 1px solid hsla(10, 80%, 90%, 0.2); border-radius: 26px}
+}
+
 .upright-transform {
   position: absolute;
   bottom: 0;
@@ -140,13 +170,22 @@
   vertical-align: bottom;
 }
 
+/*
+ * 高さ（px）を基準にスケールするモード.
+ * インラインの transform: translateX(-50%) translateX(コマ幅/2) で水平中央に揃える.
+ * 画像がコマ幅を超えるとき margin: auto は効かないため transform を使用する.
+ */
+.image.is-specified-height {
+  width: auto;
+}
+
 .name-tag {
   box-sizing: border-box;
   font-size: 15px;
   padding: 3px 9px;
-  border-radius: 24px;
+  border-radius: 12px;
   position: absolute;
-  top: -30px;
+  bottom: calc(100% + 6px);
 }
 
 .rotate-frame {
@@ -173,6 +212,19 @@
   color: #CCC;
   background-color: rgba(30, 30, 30, 0.8);
   backface-visibility: hidden;
+}
+
+.pedestal-inner.is-hidden-in-inventory {
+  border-color: #A0E0FF;
+}
+
+/*
+ * 「発言をしない」キャラの名前タグ先頭に付けるアイコン. Google Fonts の .material-icons（既定 24px）を上書きするため詳細度を上げている.
+ */
+.name-tag .voice-over-off-icon {
+  font-size: 15px;
+  vertical-align: -3px;
+  margin-right: 2px;
 }
 
 .has-length-limit {
@@ -247,10 +299,53 @@
   opacity: 1;
 }
 
-.material-icons {
+.rotate-grab .material-icons {
   display: none;
 }
 
-.component:hover .material-icons, .component:active .material-icons {
+.component:hover .rotate-grab .material-icons, .component:active .rotate-grab .material-icons {
   display: inline;
+}
+
+.buff-indicator {
+  font-size: 11px;
+  cursor: pointer;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: 2px;
+  padding-top: 2px;
+}
+
+.buff-collapsed {
+  white-space: nowrap;
+  color: #adf;
+}
+
+.buff-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.buff-collapse-hint {
+  font-size: 9px;
+  line-height: 1;
+  color: #adf;
+}
+
+.buff-item {
+  white-space: nowrap;
+  color: #ccc;
+  display: block;
+  margin: 0 -9px;
+  padding: 0 9px;
+}
+
+.buff-round {
+  color: #aaa;
+}
+
+.buff-expired {
+  color: #f88;
+  font-weight: bold;
 }

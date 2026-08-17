@@ -16,6 +16,7 @@ import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TextNote } from '@udonarium/text-note';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
+import { TabletopObjectSettingComponent } from 'component/tabletop-object-setting/tabletop-object-setting.component';
 import { MovableOption } from 'directive/movable.directive';
 import { RotableOption } from 'directive/rotable.directive';
 import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
@@ -44,6 +45,12 @@ export class TextNoteComponent implements OnChanges, OnDestroy {
   set rotate(rotate: number) { this.textNote.rotate = rotate; }
   get height(): number { return MathUtil.clampMin(this.textNote.height); }
   get width(): number { return MathUtil.clampMin(this.textNote.width); }
+
+  get isLock(): boolean { return this.textNote.isLock; }
+  set isLock(isLock: boolean) { this.textNote.isLock = isLock; }
+  get isUpright(): boolean { return this.textNote.isUpright; }
+  set isUpright(isUpright: boolean) { this.textNote.isUpright = isUpright; }
+  get limitHeight(): boolean { return this.textNote.limitHeight; }
 
   get isActive(): boolean { return document.activeElement === this.textAreaElementRef.nativeElement; }
 
@@ -114,9 +121,9 @@ export class TextNoteComponent implements OnChanges, OnDestroy {
     this.textNote.toTopmost();
 
     // TODO:もっと良い方法考える
-    if (e.button === 2) {
+    if (e.button === 2 || this.isLock) {
       EventSystem.trigger('DRAG_LOCKED_OBJECT', { srcEvent: e });
-      return;
+      if (e.button === 2) return;
     }
 
     this.addMouseEventListeners();
@@ -135,6 +142,41 @@ export class TextNoteComponent implements OnChanges, OnDestroy {
   onRotateMouseDown(e: any) {
     e.stopPropagation();
     e.preventDefault();
+  }
+
+  /**
+   * 高さ制限中のスクロールバー操作はブラウザ標準の挙動に任せる。
+   * 伝搬を止め、テーブルドラッグを上書きする。
+   */
+  onTextAreaMouseDown(e: MouseEvent) {
+    let textArea: HTMLTextAreaElement = this.textAreaElementRef.nativeElement;
+    let scrollBarWidth = textArea.offsetWidth - textArea.clientWidth;
+    if (scrollBarWidth <= 0 || e.offsetX < textArea.clientWidth) return;
+    e.stopPropagation();
+    textArea.focus();
+    this.changeDetector.markForCheck();
+  }
+
+  /**
+   * 3D変換されたツリーの中にあるためブラウザ標準のホイールスクロールが働かないので、自前でスクロールさせる。
+   */
+  onTextAreaWheel(e: WheelEvent) {
+    let textArea: HTMLTextAreaElement = this.textAreaElementRef.nativeElement;
+    let sensitivity: number = 0.1;
+    if (!this.limitHeight || textArea.scrollHeight <= textArea.clientHeight) return;
+    e.stopPropagation();
+    if (e.cancelable) e.preventDefault();
+
+    let deltaY = e.deltaY;
+    switch (e.deltaMode) {
+      case WheelEvent.DOM_DELTA_LINE:
+        deltaY *= 16;
+        break;
+      case WheelEvent.DOM_DELTA_PAGE:
+        deltaY *= textArea.clientHeight;
+        break;
+    }
+    textArea.scrollTop += deltaY * sensitivity;
   }
 
   @HostListener('contextmenu', ['$event'])
@@ -178,12 +220,43 @@ export class TextNoteComponent implements OnChanges, OnDestroy {
   private makeContextMenu(): ContextMenuAction[] {
     let actions: ContextMenuAction[] = [];
 
+    actions.push((this.isLock
+      ? {
+        name: '固定解除', action: () => {
+          this.isLock = false;
+          SoundEffect.play(PresetSound.unlock);
+        }
+      }
+      : {
+        name: '固定する', action: () => {
+          this.isLock = true;
+          SoundEffect.play(PresetSound.lock);
+        }
+      }
+    ));
+    actions.push(ContextMenuSeparator);
+    actions.push((this.isUpright
+      ? {
+        name: '寝かせる', action: () => {
+          this.isUpright = false;
+          SoundEffect.play(PresetSound.sweep);
+        }
+      }
+      : {
+        name: '直立させる', action: () => {
+          this.isUpright = true;
+          SoundEffect.play(PresetSound.sweep);
+        }
+      }
+    ));
+    actions.push(ContextMenuSeparator);
     actions.push({ name: 'メモを編集', action: () => { this.showDetail(this.textNote); } });
     actions.push({
       name: 'コピーを作る', action: () => {
         let cloneObject = this.textNote.clone();
         cloneObject.location.x += this.gridSize;
         cloneObject.location.y += this.gridSize;
+        cloneObject.isLock = false;
         cloneObject.toTopmost();
         SoundEffect.play(PresetSound.cardPut);
       }
@@ -194,6 +267,8 @@ export class TextNoteComponent implements OnChanges, OnDestroy {
         SoundEffect.play(PresetSound.sweep);
       }
     });
+    actions.push(ContextMenuSeparator);
+    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, this.textNote, this.pointerDeviceService.pointers[0]) });
 
     return actions;
   }
@@ -211,9 +286,15 @@ export class TextNoteComponent implements OnChanges, OnDestroy {
   calcFitHeight() {
     let textArea: HTMLTextAreaElement = this.textAreaElementRef.nativeElement;
     textArea.style.height = '0';
-    if (textArea.scrollHeight > textArea.offsetHeight) {
-      textArea.style.height = textArea.scrollHeight + 'px';
+    if (!this.limitHeight) {
+      if (textArea.scrollHeight > textArea.offsetHeight) {
+        textArea.style.height = textArea.scrollHeight + 'px';
+      }
+      return;
     }
+    // height設定値までに抑える（タイトル行がある場合はその分(30px)を差し引く）
+    let maxHeight = MathUtil.clampMin(this.height * this.gridSize, this.gridSize) - (this.title.length ? 32 : 2);
+    textArea.style.height = MathUtil.clampMax(textArea.scrollHeight, maxHeight) + 'px';
   }
 
   private addMouseEventListeners() {
@@ -233,4 +314,5 @@ export class TextNoteComponent implements OnChanges, OnDestroy {
     let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
     component.tabletopObject = gameObject;
   }
+
 }

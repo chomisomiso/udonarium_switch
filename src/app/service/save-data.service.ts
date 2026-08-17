@@ -9,6 +9,7 @@ import { GameObject } from '@udonarium/core/synchronize-object/game-object';
 import { PromiseQueue } from '@udonarium/core/system/util/promise-queue';
 import { XmlUtil } from '@udonarium/core/system/util/xml-util';
 import { DataSummarySetting } from '@udonarium/data-summary-setting';
+import { GameSystemSetting } from '@udonarium/game-system-setting';
 import { Room } from '@udonarium/room';
 
 import Beautify from 'vkbeautify';
@@ -34,9 +35,11 @@ export class SaveDataService {
     let roomXml = this.convertToXml(new Room());
     let chatXml = this.convertToXml(ChatTabList.instance);
     let summarySetting = this.convertToXml(DataSummarySetting.instance);
+    let gameSystemSetting = this.convertToXml(GameSystemSetting.instance);
     files.push(new File([roomXml], 'data.xml', { type: 'text/plain' }));
     files.push(new File([chatXml], 'chat.xml', { type: 'text/plain' }));
     files.push(new File([summarySetting], 'summary.xml', { type: 'text/plain' }));
+    files.push(new File([gameSystemSetting], 'game-system.xml', { type: 'text/plain' }));
 
     files = files.concat(this.searchImageFiles(roomXml));
     files = files.concat(this.searchImageFiles(chatXml));

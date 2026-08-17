@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core
 
 import { ChatMessage } from '@udonarium/chat-message';
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
+import { StringUtil } from '@udonarium/core/system/util/string-util';
+import { ImageCrop } from '@udonarium/image-crop';
 import { ChatMessageService } from 'service/chat-message.service';
 
 @Component({
@@ -31,7 +33,18 @@ import { ChatMessageService } from 'service/chat-message.service';
 export class ChatMessageComponent implements OnInit {
   @Input() chatMessage: ChatMessage;
   imageFile: ImageFile = ImageFile.Empty;
+  /** 発言時点の表示調整。あとからキャラ側を調整しても、過去ログの見た目は変わらない */
+  imageCrop: ImageCrop = ImageCrop.default;
   animeState: string = 'inactive';
+
+  private _isEditing: boolean = false;
+  get isEditing(): boolean { return this._isEditing; }
+  editingText: string = '';
+
+  /** ルビ記法を <ruby> に変換した表示用HTML。safeパイプは通さず、Angularのサニタイザに検証させる。 */
+  get rubiedText(): string {
+    return StringUtil.rubyToHtml(StringUtil.escapeHtml(this.chatMessage.text));
+  }
 
   constructor(
     private chatMessageService: ChatMessageService
@@ -40,11 +53,31 @@ export class ChatMessageComponent implements OnInit {
   ngOnInit() {
     let file: ImageFile = this.chatMessage.image;
     if (file) this.imageFile = file;
+    this.imageCrop = ImageCrop.parse(this.chatMessage.imageCrop);
     let time = this.chatMessageService.getTime();
     if (time - 10 * 1000 < this.chatMessage.timestamp) this.animeState = 'active';
   }
 
   discloseMessage() {
     this.chatMessage.tag = this.chatMessage.tag.replace('secret', '');
+  }
+
+  startEdit() {
+    this._isEditing = true;
+    this.editingText = this.chatMessage.text;
+  }
+
+  saveEdit() {
+    this._isEditing = false;
+    if (this.chatMessage.text !== this.editingText) {
+      this.chatMessage.isEdited = true;
+      this.chatMessage.text = this.editingText;
+    }
+    this.editingText = '';
+  }
+
+  cancelEdit() {
+    this._isEditing = false;
+    this.editingText = '';
   }
 }

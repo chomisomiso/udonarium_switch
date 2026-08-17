@@ -14,6 +14,8 @@ export class CardStack extends TabletopObject {
   @SyncVar() owner: string = '';
   @SyncVar() isShowTotal: boolean = true;
 
+  get defaultOverViewWidth(): number { return 250; }
+
   get name(): string { return this.getCommonValue('name', ''); }
   get ownerName(): string {
     let object = PeerCursor.findByUserId(this.owner);

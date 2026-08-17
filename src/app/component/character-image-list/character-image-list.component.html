@@ -1,0 +1,36 @@
+<div class="image-list-row" *ngIf="gameCharacter">
+  <div class="image-list" #imageList (wheel)="onWheel($event)">
+    <div class="image-item" *ngFor="let element of imageElements; index as i; trackBy: trackByElement"
+      [class.is-selected]="isSelected(i)">
+      <div class="thumbnail-box" [title]="getName(element) || (i + 1)" (click)="select(i)">
+        <img [src]="imageUrl(element) | safe: 'resourceUrl'" [imageCrop]="crop(element)" imageCropCovers>
+      </div>
+      <input class="name-input" size="1" [ngModel]="getName(element)" (ngModelChange)="setName(element, $event)"
+        placeholder="{{i + 1}}" />
+      <div class="buttons">
+        <button title="画像を変更" (click)="changeImage(i)">
+          <i class="material-icons">image</i>
+        </button>
+        <button title="表示調整" (click)="adjustImage(i)">
+          <i class="material-icons">crop</i>
+        </button>
+        <button title="削除" [disabled]="imageCount < 2" (click)="removeImage(i)">
+          <i class="material-icons">delete</i>
+        </button>
+      </div>
+      <!-- 移動先が無い向きの矢印はサムネの上の飾りにしかならないので、無効化ではなく出さない -->
+      <div class="arrow-buttons">
+        <button *ngIf="0 < i" title="左へ移動" (click)="moveImage(i, -1)">
+          <i class="material-icons">arrow_back</i>
+        </button>
+        <span class="spacer"></span>
+        <button *ngIf="i < imageCount - 1" title="右へ移動" (click)="moveImage(i, 1)">
+          <i class="material-icons">arrow_forward</i>
+        </button>
+      </div>
+    </div>
+  </div>
+  <button class="add-button" title="画像を追加" (click)="addImage()">
+    <i class="material-icons">add_circle</i>
+  </button>
+</div>

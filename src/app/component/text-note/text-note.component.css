@@ -97,12 +97,31 @@
   background-color: rgba(30, 30, 30, 0.8);
 }
 
+.lock-icon {
+  box-sizing: border-box;
+  background-color: #CCCCCC;
+  border-radius: 100%;
+  color: #444;
+  width: 25px;
+  height: 25px;
+  z-index: 1;
+  text-align: center;
+  backface-visibility: hidden;
+}
+
+.is-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: auto;
+}
+
 .textarea {
   width: 100%;
   height: 100%;
   resize: none;
   overflow: hidden;
-  
+
   box-sizing: border-box;
   background: none;
   border: none;

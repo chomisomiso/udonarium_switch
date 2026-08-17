@@ -5,7 +5,9 @@ import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem } from '@udonarium/core/system';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { ChatTabSettingComponent } from 'component/chat-tab-setting/chat-tab-setting.component';
+import { DiceTableSettingComponent } from 'component/dice-table-setting/dice-table-setting.component';
 import { ChatMessageService } from 'service/chat-message.service';
+import { GameCharacterTargetingService } from 'service/game-character-targeting.service';
 import { PanelOption, PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 
@@ -38,7 +40,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     public chatMessageService: ChatMessageService,
     private panelService: PanelService,
-    private pointerDeviceService: PointerDeviceService
+    private pointerDeviceService: PointerDeviceService,
+    private targetingService: GameCharacterTargetingService
   ) { }
 
   ngOnInit() {
@@ -114,9 +117,15 @@ export class ChatWindowComponent implements OnInit, OnDestroy, AfterViewInit {
     component.selectedTab = this.chatTab;
   }
 
+  showDiceTableSetting() {
+    let coordinate = this.pointerDeviceService.pointers[0];
+    let option: PanelOption = { left: coordinate.x - 300, top: coordinate.y - 200, width: 600, height: 450 };
+    this.panelService.open<DiceTableSettingComponent>(DiceTableSettingComponent, option);
+  }
+
   sendChat(value: { text: string, gameType: string, sendFrom: string, sendTo: string }) {
     if (this.chatTab) {
-      this.chatMessageService.sendMessage(this.chatTab, value.text, value.gameType, value.sendFrom, value.sendTo);
+      this.chatMessageService.sendMessage(this.chatTab, value.text, value.gameType, value.sendFrom, value.sendTo, this.targetingService.getTargets());
     }
   }
 

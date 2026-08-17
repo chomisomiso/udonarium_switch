@@ -1,4 +1,5 @@
 import { ComponentRef, Injectable, ViewContainerRef } from '@angular/core';
+import { ImageCrop } from '@udonarium/image-crop';
 
 interface ContextMenuPoint {
   x: number,
@@ -8,6 +9,7 @@ interface ContextMenuPoint {
 export enum ContextMenuType {
   ACTION = 'action',
   SEPARATOR = 'separator',
+  SLIDER = 'slider',
 }
 
 export const ContextMenuSeparator: ContextMenuAction = {
@@ -16,12 +18,25 @@ export const ContextMenuSeparator: ContextMenuAction = {
   type: ContextMenuType.SEPARATOR
 }
 
+export interface ContextMenuSliderOption {
+  min: number,
+  max: number,
+  step?: number,
+  value: number,
+  onInput: (value: number) => void
+}
+
 export interface ContextMenuAction {
   name: string,
   action?: Function,
   enabled?: boolean,
   type?: ContextMenuType,
-  subActions?: ContextMenuAction[]
+  subActions?: ContextMenuAction[],
+  slider?: ContextMenuSliderOption,
+  /** 指定すると項目名の左にサムネイルを表示する */
+  thumbnailUrl?: string,
+  /** サムネイルの表示調整。省略すると既定の切り抜き */
+  thumbnailCrop?: ImageCrop
 }
 
 @Injectable()

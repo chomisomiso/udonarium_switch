@@ -1,6 +1,6 @@
 <div class="component is-3d is-grab is-pointer-events-none" [style.width.px]="size * gridSize"
   [style.height.px]="size * gridSize" appMovable [movable.option]="movableOption" (movable.ondragstart)="onMove()"
-  (movable.ondragend)="onMoved()">
+  (movable.ondragend)="onMoved()" appTargetable [targetable.option]="targetableOption">
   <div class="component-content is-3d" [@bounceInOut]="'in'">
     <div class="component-content is-3d is-pointer-events-auto" appRotable [rotable.option]="rotableOption"
       (rotable.ondragstart)="onMove()" (rotable.ondragend)="onMoved()">
@@ -10,8 +10,11 @@
           <div class="material-icons of-back">autorenew</div>
         </div>
       </div>
-      <div class="pedestal-inner"></div>
+      <div class="pedestal-inner" [class.is-hidden-in-inventory]="gameCharacter.isHiddenInInventory"></div>
       <div *ngIf="isSelected" class="selected-highlight" [ngClass]="{'is-magnetic': isMagnetic}"></div>
+      <div *ngIf="isTargeted" class="outer-targeted-animation">
+        <div class="inner-targeted-animation"></div>
+      </div>
       <div class="pedestal-outer"></div>
       <div class="upright-transform is-fit-width is-3d">
         <div class="rotate-frame is-3d" [style.width.px]="size * gridSize" [style.height.px]="size * gridSize"
@@ -19,18 +22,32 @@
           <div class="rotate-inner is-3d">
             <ng-container *ngIf="0 < name.length">
               <div *ngFor="let rotateY of ['0', '180deg']"
-                class="name-tag is-nowrap is-black-background"
-                [ngStyle]="{'transform': 'translateX(-50%) translateX(' + size * gridSize / 2 +'px) rotateY(' + rotateY + ')'}">
-                <div class="has-length-limit">{{name}}</div>
+                class="name-tag is-black-background"
+                [style.transform]="centeringTransform + ' rotateY(' + rotateY + ')'"
+                (click)="buffs.length > 0 ? toggleBuffExpanded() : null; $event.stopPropagation()">
+                <div class="has-length-limit"><i *ngIf="gameCharacter.isNonTalking"
+                    class="material-icons voice-over-off-icon" title="発言をしない">voice_over_off</i>{{name}}</div>
+                <div class="buff-indicator" *ngIf="buffs.length > 0">
+                  <div *ngIf="!buffExpanded" class="buff-collapsed">▶ バフ×{{buffs.length}}<span *ngIf="hasExpiredBuffs" class="buff-expired"> ！</span></div>
+                  <div *ngIf="buffExpanded" class="buff-detail">
+                    <div class="buff-collapse-hint">▼</div>
+                    <div *ngFor="let buff of buffs" class="buff-item"
+                      [title]="buff.effect ? buff.effect : ''">
+                      {{buff.buffName}} <span class="buff-round" [class.buff-expired]="buff.isExpired">{{buff.roundLabel}}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </ng-container>
-            <img class="image chrome-smooth-image-trick" *ngIf="0 < imageFile.url.length" [src]="imageFile.url | safe: 'resourceUrl'">
-            <div class="rotate-grab rotate-grab-icon of-top"
-              [ngStyle]="{'transform': 'translateX(-50%) translateX(' + size * gridSize / 2 +'px)'}">
+            <img class="image chrome-smooth-image-trick" *ngIf="0 < imageFile.url.length"
+              [class.is-specified-height]="isKomaImageHeightSpecified"
+              [style.height.px]="isKomaImageHeightSpecified ? komaImageHeight : null"
+              [style.transform]="isKomaImageHeightSpecified ? centeringTransform : null"
+              [src]="imageFile.url | safe: 'resourceUrl'">
+            <div class="rotate-grab rotate-grab-icon of-top" [style.transform]="centeringTransform">
               <i class="material-icons">autorenew</i>
             </div>
-            <div class="rotate-grab rotate-grab-icon of-bottom"
-              [ngStyle]="{'transform': 'translateX(-50%) translateX(' + size * gridSize / 2 +'px'}">
+            <div class="rotate-grab rotate-grab-icon of-bottom" [style.transform]="centeringTransform">
               <i class="material-icons">autorenew</i>
             </div>
           </div>

@@ -1,0 +1,97 @@
+:host {
+  display: block;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.buff-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 8px;
+}
+
+/* ========== 入力行 ========== */
+.field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field-label {
+  flex: 0 0 4.5em;
+  color: #555;
+  font-size: 0.8em;
+  text-align: right;
+}
+
+.field-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 2px 6px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+.field-input:focus {
+  border-color: #888;
+  outline: none;
+}
+
+.round-cell,
+.effect-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.round-input {
+  box-sizing: border-box;
+  width: 4em;
+}
+.round-clear {
+  flex: 0 0 auto;
+  padding: 1px 8px;
+  font-size: 0.8em;
+}
+
+.effect-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.insert-resource {
+  font-size: 0.8em;
+}
+
+/* ========== 通知・検証 ========== */
+.removed-notice,
+.validation {
+  padding: 2px 6px;
+  border-radius: 3px;
+  background-color: #ff555522;
+  color: #c44;
+  font-size: 0.75em;
+}
+
+/* ========== ボタン ========== */
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.buttons button {
+  padding: 2px 12px;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.buttons .remove {
+  color: #c44;
+}
+
+.buttons .save {
+  font-weight: bold;
+}

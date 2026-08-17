@@ -5,6 +5,7 @@ import { ObjectNode } from './core/synchronize-object/object-node';
 import { ObjectStore } from './core/synchronize-object/object-store';
 import { MathUtil } from './core/system/util/math-util';
 import { DataElement } from './data-element';
+import { ImageCrop } from './image-crop';
 
 export interface TabletopLocation {
   name: string;
@@ -22,9 +23,45 @@ export class TabletopObject extends ObjectNode {
 
   @SyncVar() posZ: number = 0;
 
+  static readonly minOverViewWidth: number = 250;
+  static readonly maxOverViewWidth: number = 1000;
+  static readonly minOverViewMaxHeight: number = 150;
+  static readonly maxOverViewMaxHeight: number = 1000;
+
+  /** ポップアップ（オーバービュー）のサイズ。0 のときは種別ごとの既定サイズを使う */
+  @SyncVar() overViewWidthSetting: number = 0;
+  @SyncVar() overViewMaxHeightSetting: number = 0;
+
+  /** 種別ごとのポップアップ既定サイズ。サブクラスで上書きする */
+  get defaultOverViewWidth(): number { return 270; }
+  get defaultOverViewMaxHeight(): number { return 250; }
+
+  /** 実際に適用されるポップアップサイズ */
+  get overViewWidth(): number {
+    if (!(0 < this.overViewWidthSetting)) return this.defaultOverViewWidth;
+    return TabletopObject.clampOverViewWidth(this.overViewWidthSetting);
+  }
+  set overViewWidth(width: number) { this.overViewWidthSetting = TabletopObject.clampOverViewWidth(+width); }
+
+  get overViewMaxHeight(): number {
+    if (!(0 < this.overViewMaxHeightSetting)) return this.defaultOverViewMaxHeight;
+    return TabletopObject.clampOverViewMaxHeight(this.overViewMaxHeightSetting);
+  }
+  set overViewMaxHeight(maxHeight: number) { this.overViewMaxHeightSetting = TabletopObject.clampOverViewMaxHeight(+maxHeight); }
+
+  private static clampOverViewWidth(width: number): number {
+    return MathUtil.clamp(width, this.minOverViewWidth, this.maxOverViewWidth);
+  }
+
+  private static clampOverViewMaxHeight(maxHeight: number): number {
+    return MathUtil.clamp(maxHeight, this.minOverViewMaxHeight, this.maxOverViewMaxHeight);
+  }
+
   get isVisibleOnTable(): boolean { return this.location.name === 'table'; }
 
   private _imageFile: ImageFile = ImageFile.Empty;
+  private _imageCrop: ImageCrop = ImageCrop.default;
+  private _imageCropSource: string = null;
   private _dataElements: { [name: string]: string } = {};
 
   // GameDataElement getter/setter
@@ -39,14 +76,29 @@ export class TabletopObject extends ObjectNode {
   get commonDataElement(): DataElement { return this.getElement('common'); }
   get detailDataElement(): DataElement { return this.getElement('detail'); }
 
+  /** imageFile が参照する画像 DataElement。複数の画像を持つサブクラスで上書きする */
+  protected get currentImageElement(): DataElement | null {
+    return this.imageDataElement ? this.imageDataElement.getFirstElementByName('imageIdentifier') : null;
+  }
+
   get imageFile(): ImageFile {
-    if (!this.imageDataElement) return this._imageFile;
-    let imageIdElement: DataElement = this.imageDataElement.getFirstElementByName('imageIdentifier');
+    let imageIdElement: DataElement = this.currentImageElement;
     if (imageIdElement && this._imageFile.identifier !== imageIdElement.value) {
       let file: ImageFile = ImageStorage.instance.get(<string>imageIdElement.value);
       this._imageFile = file ? file : ImageFile.Empty;
     }
     return this._imageFile;
+  }
+
+  /** imageFile を枠に収めるときの切り抜き方。imageFile と同様、属性が変わったときだけ作り直す */
+  get imageCrop(): ImageCrop {
+    let imageIdElement: DataElement = this.currentImageElement;
+    let source: string = ImageCrop.sourceOf(imageIdElement);
+    if (this._imageCropSource !== source) {
+      this._imageCropSource = source;
+      this._imageCrop = ImageCrop.parse(source);
+    }
+    return this._imageCrop;
   }
 
   calcSqrDistance(other: TabletopObject): number {

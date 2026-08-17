@@ -1,0 +1,163 @@
+<div class="component">
+  <!-- モードで並びが変わるのはこの中だけ。chat-textarea は外に出して常に最下部へ置く -->
+  <div class="panes" [ngClass]="'mode-' + dashboardMode">
+    <!-- ========== キャラクター一覧 ========== -->
+    <div class="character-list-container">
+      <div class="character-list-header">
+        <ng-container *ngTemplateOutlet="listModeSetting"></ng-container>
+      </div>
+      <div class="character-list-body">
+        <character-list
+          [ngClass]="'mode-' + listMode"
+          [(selectedIdentifier)]="selectedIdentifier"></character-list>
+      </div>
+    </div>
+    <!-- row モードのペイン境界。column モードでは CSS で消す -->
+    <div class="pane-splitter" #paneSplitter title="ドラッグで調整"></div>
+    <!-- ========== チャット入力のコントローラ ========== -->
+    <div class="chat-input-container" #chatInputContainer>
+      <div class="controller" [ngClass]="'mode-' + dashboardMode">
+        <div class="chat-control">
+          <div class="pill-radios chat-tab">
+            <ng-container *ngTemplateOutlet="chatTabSelector"></ng-container>
+          </div>
+          <!-- title の有無で切り替え可能かを表す。CSS 側もこの属性を見ている -->
+          <div class="chat-character-imagebox"
+            [attr.title]="imageSwitchableCharacter ? 'クリックでコマ画像を切り替え' : null"
+            (click)="selectImage()">
+            <img *ngIf="0 < imageFile.url.length" [src]="imageFile.url | safe: 'resourceUrl'" [imageCrop]="imageCrop"
+            imageCropCovers />
+          </div>
+          <ng-container *ngTemplateOutlet="chatSettings"></ng-container>
+          <button class="help-button" (click)="showDicebotHelp()" [disabled]="diceBotInfos.length < 1">?</button>
+        </div>
+        <div class="editor-slot" [ngClass]="'mode-' + dashboardMode">
+          <ng-container *ngTemplateOutlet="control"></ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ========== 最下部: 入力欄。モードによらず全幅 ========== -->
+  <form class="chat-textarea">
+    <textarea class="chat-input" placeholder="Enterで送信  Shift+Enterで改行 Ctrl+↑↓でチャット履歴" [(ngModel)]="text" [ngModelOptions]="{standalone: true}"
+      (input)="onInput()"
+      (keydown.enter)="sendChat($event)"
+      (keydown.control.arrowup)="moveHistory($event, -1)"
+      (keydown.control.arrowdown)="moveHistory($event, 1)"
+      #textArea></textarea>
+    <button class="send-button" type="submit" (click)="sendChat(null)">SEND</button>
+  </form>
+</div>
+
+<ng-template #listModeSetting>
+  <!-- form の外の同名ラジオはドキュメント全体で1グループになる。
+       パネルを複数開いても干渉しないよう form で括る -->
+  <form class="mode-switcher">
+    <label title="column">
+      <input type="radio" name="dashboardMode" value="column" [(ngModel)]="dashboardMode" />
+      <span class="material-icons">horizontal_split</span>
+    </label>
+    <label title="row">
+      <input type="radio" name="dashboardMode" value="row" [(ngModel)]="dashboardMode" />
+      <span class="material-icons" style="transform: rotate(0.5turn);">vertical_split</span>
+    </label>
+  </form>
+  <div class="spacer"></div>
+  <form class="mode-switcher">
+    <label title="リスト">
+      <input type="radio" name="listMode" value="column" [(ngModel)]="listMode" />
+      <span class="material-icons">table_rows</span>
+    </label>
+    <label title="自動">
+      <input type="radio" name="listMode" value="auto" [(ngModel)]="listMode" />
+      <span class="material-icons">dashboard_2</span>
+    </label>
+    <label title="コンパクト">
+      <input type="radio" name="listMode" value="compact" [(ngModel)]="listMode" />
+      <span class="material-icons">widget_small</span>
+    </label>
+  </form>
+</ng-template>
+
+<ng-template #control>
+  <form *ngIf="dashboardMode === 'column'" class="editor-tabs">
+    <label>
+      <input type="radio" name="editorTab" value="resource" [(ngModel)]="editorTab" />
+      <div>リソース</div>
+    </label>
+    <label>
+      <input type="radio" name="editorTab" value="buff" [(ngModel)]="editorTab" />
+      <div>バフ</div>
+    </label>
+    <label>
+      <input type="radio" name="editorTab" value="palette" [(ngModel)]="editorTab" />
+      <div>パレット</div>
+    </label>
+    <div class="spacer editor-tabs-spacer"></div>
+  </form>
+  <div class="editor-header" [title]="isEditorCollapsed('resource')?'クリックで展開':'クリックで折りたたむ'" *ngIf="dashboardMode === 'row'" (click)="toggleEditor('resource')">
+    {{ isEditorCollapsed('resource') ? '▶' : '▼' }} リソースエディタ
+  </div>
+  <editor-for-resource *ngIf="isEditorVisible('resource')"
+    [selectedIdentifier]="selectedIdentifier"
+    [resourceOptions]="resourceOptions"
+    [chatTab]="chatTab"
+    (commandCopy)="appendToText($event)"
+  ></editor-for-resource>
+  <div class="editor-header" [title]="isEditorCollapsed('buff')?'クリックで展開':'クリックで折りたたむ'" *ngIf="dashboardMode === 'row'" (click)="toggleEditor('buff')">
+    {{ isEditorCollapsed('buff') ? '▶' : '▼' }} バフエディタ
+  </div>
+  <editor-for-buff *ngIf="isEditorVisible('buff')"
+    [selectedIdentifier]="selectedIdentifier"
+    [buffs]="selectedBuffs"
+    [resourceOptions]="resourceOptions"
+    [chatTab]="chatTab"
+    (commandCopy)="appendToText($event)"
+  ></editor-for-buff>
+  <div class="editor-header" [title]="isEditorCollapsed('palette')?'クリックで展開':'クリックで折りたたむ'" *ngIf="dashboardMode === 'row'" (click)="toggleEditor('palette')">
+    {{ isEditorCollapsed('palette') ? '▶' : '▼' }} チャットパレット
+  </div>
+  <editor-for-palette *ngIf="isEditorVisible('palette')"
+    [selectedIdentifier]="selectedIdentifier"
+    (paletteSelect)="text = $event"
+    (paletteSubmit)="sendChat(null)"
+  ></editor-for-palette>
+</ng-template>
+
+<ng-template #chatTabSelector>
+  <form>
+    <label *ngFor="let chatTab of chatMessageService.chatTabs">
+      <input name="chat-tab" type="radio" value="{{chatTab.identifier}}" ng-control="options" [(ngModel)]="chatTabidentifier">
+      <div>{{chatTab.name}}<badge *ngIf="chatTab.hasUnread" class="badge" [count]="chatTab.unreadLength"></badge></div>
+    </label>
+  </form>
+</ng-template>
+<ng-template #chatSettings>
+  <div class="select send-from">
+    <select [(ngModel)]="selectedIdentifier">
+      <option *ngFor="let gameCharacter of gameCharacters" value="{{gameCharacter.identifier}}">{{gameCharacter.name}}
+      </option>
+    </select>
+  </div>
+  <div class="select send-to"><span style="flex: 0 0 auto; font-size: 0.8em;">　＞</span>
+    <select id="send-to" style="flex: 1 1 auto;" [(ngModel)]="sendTo">
+      <option value="">全員</option>
+      <option *ngFor="let peer of otherPeers" value="{{peer.identifier}}">{{peer.name}}
+        <ng-container *ngIf="peer === myPeer">（あなた）</ng-container>
+      </option>
+    </select>
+  </div>
+  <div class="select game-system">
+    <ng-container *ngIf="0 < diceBotInfos.length">
+      <select #select (change)="loadDiceBot(select.value)" [(ngModel)]="gameType"
+        [ngModelOptions]="{standalone: true}" id="game-system">
+        <option *ngFor="let diceBotInfo of diceBotInfos" value="{{diceBotInfo.id}}">{{diceBotInfo.name === "DiceBot" ? "ダイスボット指定なし" : diceBotInfo.name}}</option>
+      </select>
+    </ng-container>
+    <ng-container *ngIf="diceBotInfos.length < 1">
+      <select disabled>
+        <option value="">ダイスボット読込中...</option>
+      </select>
+    </ng-container>
+  </div>
+</ng-template>

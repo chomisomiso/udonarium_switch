@@ -1,0 +1,66 @@
+<div class="flex-container">
+  <div class="table-list flex-item no-grow">
+    <div class="table-list-body">
+      <div class="table-list-scroll">
+        <div class="table-list-item" *ngFor="let diceTable of diceTables"
+          [ngClass]="{'is-selected': diceTable === selectedTable}" (click)="selectDiceTable(diceTable)">
+          <div class="table-list-name">{{diceTable.name}}</div>
+          <div class="table-list-command" [ngClass]="{'is-unset': !diceTable.command}">{{diceTable.command || 'コマンド未設定'}}
+          </div>
+        </div>
+      </div>
+      <div class="table-list-footer">
+        <button title="ダイス表を追加" (click)="create()"><i class="material-icons">add_circle</i></button>
+      </div>
+    </div>
+  </div>
+  <div class="flex-item setting-pane">
+    <ng-container *ngIf="selectedTable; else emptyNote">
+      <div class="setting-row">
+        <span>タイトル :</span>
+        <input [(ngModel)]="tableName" placeholder="ダイス表の名前" />
+      </div>
+      <div class="setting-row">
+        <span>コマンド :</span>
+        <input [(ngModel)]="tableCommand" placeholder="チャットに入力して呼び出すためのコマンド" />
+      </div>
+      <div class="setting-row">
+        <span>ダイス :</span>
+        <input class="dice-input" [(ngModel)]="tableDice" placeholder="数字を決定するダイスコマンド" />
+        <select [(ngModel)]="gameType">
+          <option *ngFor="let diceBotInfo of diceBotInfos" value="{{diceBotInfo.id}}">{{diceBotInfo.name === "DiceBot" ?
+            "ダイスボット指定なし" : diceBotInfo.name}}</option>
+        </select>
+      </div>
+      <div class="table-pane">
+        <textarea class="dice-table" [(ngModel)]="tableText" spellcheck="false"
+          placeholder="2:ここに対応表を記載&#10;3-5:範囲でまとめて指定も可能&#10;先頭が数字と範囲以外なら無視"></textarea>
+      </div>
+      <div class="setting-button">
+        <select [(ngModel)]="chatTabidentifier" title="発言するチャットタブ">
+          <option *ngFor="let chatTab of chatTabs" value="{{chatTab.identifier}}">{{chatTab.name}}</option>
+        </select>
+        <button title="コマンドをチャットタブに送信" [disabled]="!canRoll" (click)="roll()">使う</button>
+        <span class="setting-button-separator"></span>
+        <button title="XMLとして保存" [disabled]="isSaveing" (click)="save()">
+          <div class="progress-anchor">
+            <div [ngClass]="{'is-hidden': isSaveing}">保存</div>
+            <div *ngIf="isSaveing" class="progress">{{progresPercent}}%</div>
+          </div>
+        </button>
+        <button title="このダイス表を削除" class="danger" (click)="delete()">削除</button>
+      </div>
+    </ng-container>
+    <ng-template #emptyNote>
+      <div class="note">※ダイス表が１つも作成されていません。リスト下の<i class="material-icons note-icon">add_circle</i>から新しいダイス表を作成することができます。</div>
+    </ng-template>
+  </div>
+</div>
+<div class="usage">
+  <hr />
+  チャットで「コマンド」を発言すると、ダイスの出目に対応した表の項目を表示します。<br />
+  コマンドに続けて補正値も書けます（例: <code>SAMPLE 2</code>、<code>SAMPLE -1</code>、<code>SAMPLE +1d3</code>）<br />
+  空白を空けない場合は <code>SAMPLE+2</code> のように符号が必要です。<br />
+  表の出目は、数値または範囲で指定できます（例: <code>1</code>、<code>3-5</code>、<code>12~</code>、<code>~2</code>）<br />
+  出目が複数の行に当てはまる場合は、上にある行が優先されます。<br />
+</div>

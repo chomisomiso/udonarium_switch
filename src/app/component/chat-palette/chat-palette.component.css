@@ -17,6 +17,12 @@
   height: 100%;
 }
 
+/* line-height は明示する。palette-scroll.ts が行番号↔px の変換に computed 値を使うため
+   （normal のままだと computed 値も 'normal' で px が取れない） */
+textarea.palette {
+  line-height: 1.2;
+}
+
 .flex-container {
   display: flex;
   flex-direction: column;

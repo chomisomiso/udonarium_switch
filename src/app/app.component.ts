@@ -15,16 +15,23 @@ import { ObjectSynchronizer } from '@udonarium/core/synchronize-object/object-sy
 import { EventSystem, Network } from '@udonarium/core/system';
 import { DataSummarySetting } from '@udonarium/data-summary-setting';
 import { DiceBot } from '@udonarium/dice-bot';
+import { GameSystemSetting } from '@udonarium/game-system-setting';
 import { Jukebox } from '@udonarium/Jukebox';
 import { PeerCursor } from '@udonarium/peer-cursor';
+import { DiceRollHandler } from '@udonarium/dice-roll-handler';
+import { DiceTableHandler } from '@udonarium/dice-table-handler';
+import { ResourceCommandHandler } from '@udonarium/resource-command-handler';
+import { BuffCommandHandler } from '@udonarium/buff-command-handler';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TableSelecter } from '@udonarium/table-selecter';
 
 import { ChatWindowComponent } from 'component/chat-window/chat-window.component';
 import { ContextMenuComponent } from 'component/context-menu/context-menu.component';
+import { DiceTableSettingComponent } from 'component/dice-table-setting/dice-table-setting.component';
 import { FileStorageComponent } from 'component/file-storage/file-storage.component';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
 import { GameObjectInventoryComponent } from 'component/game-object-inventory/game-object-inventory.component';
+import { GameCharacterDashboardComponent } from 'component/game-character-dashboard/game-character-dashboard.component';
 import { GameTableSettingComponent } from 'component/game-table-setting/game-table-setting.component';
 import { JukeboxComponent } from 'component/jukebox/jukebox.component';
 import { ModalComponent } from 'component/modal/modal.component';
@@ -82,10 +89,26 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     TableSelecter.instance.initialize();
     ChatTabList.instance.initialize();
     DataSummarySetting.instance.initialize();
+    GameSystemSetting.instance.initialize();
 
-    let diceBot: DiceBot = new DiceBot('DiceBot');
+    let diceBot: DiceRollHandler = new DiceRollHandler('DiceBot');
     diceBot.initialize();
-    DiceBot.getHelpMessage('').then(() => this.lazyNgZoneUpdate(true));
+    ObjectStore.instance.add(diceBot);
+    DiceBot.initialize().then(() => {
+      DiceBot.getHelpMessage('').then(() => this.lazyNgZoneUpdate(true));
+    });
+
+    let resourceEditor: ResourceCommandHandler = new ResourceCommandHandler('ResourceEditor');
+    resourceEditor.initialize();
+    ObjectStore.instance.add(resourceEditor);
+
+    let buffHandler: BuffCommandHandler = new BuffCommandHandler('BuffHandler');
+    buffHandler.initialize();
+    ObjectStore.instance.add(buffHandler);
+
+    let diceTableHandler: DiceTableHandler = new DiceTableHandler('DiceTableHandler');
+    diceTableHandler.initialize();
+    ObjectStore.instance.add(diceTableHandler);
 
     let jukebox: Jukebox = new Jukebox('Jukebox');
     jukebox.initialize();
@@ -214,6 +237,10 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         component = GameTableSettingComponent;
         option = { width: 630, height: 400, left: 100 };
         break;
+      case 'DiceTableSettingComponent':
+        component = DiceTableSettingComponent;
+        option = { width: 600, height: 450, left: 100 };
+        break;
       case 'FileStorageComponent':
         component = FileStorageComponent;
         break;
@@ -225,6 +252,11 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         break;
       case 'GameObjectInventoryComponent':
         component = GameObjectInventoryComponent;
+        break;
+      case 'GameCharacterDashboardComponent':
+        component = GameCharacterDashboardComponent;
+        option.width = 700;
+        option.height = 675;
         break;
     }
     if (component) {

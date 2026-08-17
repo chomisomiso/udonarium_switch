@@ -22,6 +22,7 @@ import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { CardStackListComponent } from 'component/card-stack-list/card-stack-list.component';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
 import { ObjectInteractGesture } from 'component/game-table/object-interact-gesture';
+import { TabletopObjectSettingComponent } from 'component/tabletop-object-setting/tabletop-object-setting.component';
 import { MovableOption } from 'directive/movable.directive';
 import { RotableOption } from 'directive/rotable.directive';
 import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
@@ -452,6 +453,8 @@ export class CardStackComponent implements OnChanges, AfterViewInit, OnDestroy {
         SoundEffect.play(PresetSound.sweep);
       }
     });
+    actions.push(ContextMenuSeparator);
+    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, this.cardStack, this.pointerDeviceService.pointers[0]) });
     return actions;
   }
 

@@ -8,6 +8,13 @@ export class TextNote extends TabletopObject {
   @SyncVar() rotate: number = 0;
   @SyncVar() zindex: number = 0;
   @SyncVar() password: string = '';
+  @SyncVar() isLock: boolean = false;
+  @SyncVar() isUpright: boolean = true;
+
+  @SyncVar() limitHeight: boolean = false;
+
+  get defaultOverViewWidth(): number { return 350; }
+  get defaultOverViewMaxHeight(): number { return 400; }
 
   get width(): number { return this.getCommonValue('width', 1); }
   get height(): number { return this.getCommonValue('height', 1); }

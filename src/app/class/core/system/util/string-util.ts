@@ -5,8 +5,30 @@ export enum CompareOption {
 }
 
 export namespace StringUtil {
+  const HTML_ESCAPE_MAP: Record<string, string> = {
+    '&': '&amp;',
+    '\'': '&#x27;',
+    '`': '&#x60;',
+    '"': '&quot;',
+    '<': '&lt;',
+    '>': '&gt;',
+  };
+
   export function toHalfWidth(str: string): string {
     return str.replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  }
+
+  export function escapeHtml(str: string): string {
+    return str.replace(/[&'`"<>]/g, match => HTML_ESCAPE_MAP[match]);
+  }
+
+  /**
+   * ハーメルン記法のルビ（|ルビ対象《ルビ》）を <ruby> 要素に変換する。
+   * タグを生成するため、必ず escapeHtml() を通した文字列を渡すこと。
+   * escapeHtml() は | ｜ 《 》 を変換しないので、この順序でマッチングは成立する。
+   */
+  export function rubyToHtml(str: string): string {
+    return str.replace(/[\|｜]([^\|｜\s]+?)《(.+?)》/g, '<ruby>$1<rp>(</rp><rt>$2</rt><rp>)</rp></ruby>');
   }
 
   export function equals(str1: string, str2: string, option: CompareOption = CompareOption.None): boolean {

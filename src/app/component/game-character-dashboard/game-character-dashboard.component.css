@@ -1,0 +1,294 @@
+/* ========== 全体レイアウト ========== */
+:host {
+  display: block;
+  height: 100%;
+}
+
+.component {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+}
+
+.panes {
+  flex: 1 1 auto;
+  display: flex;
+  /* chat-textarea を画面外へ押し出すのを止める */
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panes.mode-column {
+  flex-direction: column;
+}
+
+.panes.mode-row {
+  flex-direction: row-reverse;
+}
+
+.character-list-container {
+  flex: 1 1 auto;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.character-list-header {
+  flex: 0 0 auto;
+  display: flex;
+  width: -moz-available;
+  width: -webkit-fill-available;
+  width: stretch;
+  align-self: flex-end;
+}
+
+.character-list-body {
+  flex: 1 1 auto;
+  padding: 8px;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.1);
+  border: solid 1px #555;
+  border-radius: 6px;
+}
+
+.chat-input-container {
+  flex: 0 0 auto;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* row モードのみ、チャット入力ペインの幅をドラッグで可変にする。 */
+.panes.mode-row .chat-input-container {
+  box-sizing: border-box; /* padding 込みで幅を測る */
+  width: var(--chat-pane-width, 340px);
+  min-width: 240px;
+  max-width: calc(100% - 160px);
+  overflow: hidden;
+}
+
+.pane-splitter {
+  display: none;
+}
+.panes.mode-row .pane-splitter {
+  flex: 0 0 2px;
+  display: block;
+  align-self: stretch;
+  border-color: #666;
+  border-width: 0 1px;
+  border-style: groove;
+  background: unset;
+  cursor: col-resize;
+  touch-action: none;
+}
+.panes.mode-row .pane-splitter:hover {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+/* ========== 表示モード切替ボタン ========== */
+.mode-switcher {
+  display: inline-flex;
+  gap: 2px;
+}
+.mode-switcher label {
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: #888;
+  line-height: 1;
+  cursor: pointer;
+}
+.mode-switcher label:hover {
+  background: #e0e0e0;
+  color: #444;
+}
+.mode-switcher input[type="radio"]:checked + .material-icons {
+  background: #ddd;
+  border-radius: 3px;
+  color: #444;
+}
+
+/* ========== チャット入力: レイアウト骨格 ========== */
+
+.controller {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: end;
+}
+.controller.mode-column {
+  /* 全体が縦並びなら、コントローラ内は横 */
+  flex-direction: row;
+}
+.controller.mode-row {
+  flex-direction: column-reverse;
+  align-items: flex-start;
+}
+
+.chat-control {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-areas:
+  "chat-tabs chat-tabs   chat-tabs"
+  "imagebox  send-from   none"
+  "imagebox  send-to     none"
+  "imagebox  game-system help";
+  grid-template-columns: 60px 150px auto;
+  grid-template-rows: auto;
+  grid-auto-rows: auto;
+  gap: 2px;
+  align-items: center;
+  height: fit-content;
+}
+
+/* エディタタブ切り替えとエディタ本体が縦に積まれるスロット */
+.editor-slot {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+.editor-slot.mode-row {
+  width: -moz-available;
+  width: -webkit-fill-available;
+  width: stretch;
+}
+
+/* .component 直下の最後の子。左右の padding は一覧・コントローラ側と揃える */
+.chat-textarea {
+  flex: 0 0 auto;
+  padding: 8px 4px 4px;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+/* ========== チャット入力: チャットタブ ========== */
+.chat-tab {
+  grid-area: chat-tabs;
+}
+.chat-tab input[type="radio"] + div {
+  font-size: 8px;
+}
+.badge {
+  position: absolute;
+  top: -4px;
+  right: 0;
+}
+
+/* ========== チャット入力: 発言者画像 ========== */
+.chat-character-imagebox {
+  position: relative;
+  grid-area: imagebox;
+  width: 60px;
+  height: 75px;
+  overflow: hidden;
+}
+
+/* 複数のコマ画像を持つキャラを選んでいるときだけ title が付く（= 切り替えできる） */
+.chat-character-imagebox[title] {
+  cursor: pointer;
+}
+.chat-character-imagebox[title]:hover {
+  outline: 2px solid #A0E0FF;
+}
+
+/* ========== チャット入力: 送信設定 ========== */
+.select select {
+  width: 100%;
+  height: 20px;
+  font-size: 0.8rem;
+}
+.send-from {
+  grid-area: send-from;
+}
+.send-to {
+  grid-area: send-to;
+  display: flex;
+}
+.game-system {
+  grid-area: game-system;
+}
+.help-button {
+  grid-area: help;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin: 0 5px;
+  padding: 0;
+  background-color: #555;
+  border: solid 1px #555;
+  border-radius: 100%;
+  color: #CCC;
+  font-size: 12px;
+  line-height: 12px;
+  cursor: pointer;
+}
+
+/* ========== チャット入力: 入力欄 ========== */
+.chat-input {
+  flex: 1 1 auto;
+  min-width: 0; /* textarea の既定 intrinsic 幅（約20文字）で SEND を押し出させない */
+  height: calc(1em + 4px);
+  min-height: calc(1em + 7px);
+  max-height: calc(6em + 7px);
+  overflow: auto;
+  resize: none;
+  font-family: inherit;
+  font-size: 13px;
+  vertical-align: bottom;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.send-button {
+  flex: 0 0 auto;
+}
+
+/* ========== エディタタブ切り替え ========== */
+.editor-tabs {
+  display: flex;
+}
+.editor-tabs label {
+  color: #888;
+  font-size: 0.75em;
+  cursor: pointer;
+}
+.editor-tabs input[type="radio"] + div {
+  width: 60px;
+  padding: 3px 8px;
+  border: 1px solid #999;
+  border-bottom-color: #444;
+  border-radius: 6px 6px 0 0;
+}
+.editor-tabs input[type="radio"] + div:hover {
+  background-color: #555;
+  color: #ccc;
+}
+.editor-tabs input[type="radio"]:checked + div {
+  border-color: #444 #444 #fff5 #444;
+  background-color: #fff5;
+  color: #444;
+  text-align: center;
+  font-weight: bold;}
+
+.editor-tabs-spacer {
+  border-bottom: solid 1px #444;
+}
+
+/* row モードのエディタ開閉ヘッダ */
+.editor-header {
+  margin: 2px 0 0;
+  padding: 1px 4px;
+  background-color: #555;
+  color: #DDD;
+  font-size: 0.7em;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+.editor-header:hover {
+  background-color: #666;
+}

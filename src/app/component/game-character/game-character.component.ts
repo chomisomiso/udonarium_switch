@@ -8,19 +8,22 @@ import {
   OnChanges,
   OnDestroy
 } from '@angular/core';
+import { Buff } from '@udonarium/buff';
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
 import { EventSystem, Network } from '@udonarium/core/system';
 import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { GameCharacter } from '@udonarium/game-character';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
-import { ChatPaletteComponent } from 'component/chat-palette/chat-palette.component';
-import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
+import { GameCharacterContextMenu } from 'component/game-character/game-character-context-menu';
 import { MovableOption } from 'directive/movable.directive';
 import { RotableOption } from 'directive/rotable.directive';
 import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
-import { PanelOption, PanelService } from 'service/panel.service';
+import { ImageService } from 'service/image.service';
+import { PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 import { SelectionState, TabletopSelectionService } from 'service/tabletop-selection.service';
+import { GameCharacterTargetingService } from 'service/game-character-targeting.service';
+import { TargetableOption } from 'directive/targetable.directive';
 
 @Component({
   selector: 'game-character',
@@ -50,28 +53,44 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
 
   get name(): string { return this.gameCharacter.name; }
   get size(): number { return MathUtil.clampMin(this.gameCharacter.size); }
-  get imageFile(): ImageFile { return this.gameCharacter.imageFile; }
+  get imageFile(): ImageFile { return this.imageService.getDefaultCharacterOr(this.gameCharacter.imageFile); }
   get rotate(): number { return this.gameCharacter.rotate; }
   set rotate(rotate: number) { this.gameCharacter.rotate = rotate; }
   get roll(): number { return this.gameCharacter.roll; }
   set roll(roll: number) { this.gameCharacter.roll = roll; }
+  get isKomaImageHeightSpecified(): boolean { return this.gameCharacter.isKomaImageHeightSpecified; }
+  set isKomaImageHeightSpecified(isKomaImageHeightSpecified: boolean) { this.gameCharacter.isKomaImageHeightSpecified = isKomaImageHeightSpecified; }
+  get komaImageHeight(): number { return this.gameCharacter.komaImageHeight; }
+  set komaImageHeight(komaImageHeight: number) { this.gameCharacter.komaImageHeight = komaImageHeight; }
+
+  /** コマ幅の中央に水平方向を揃える transform */
+  get centeringTransform(): string { return `translateX(-50%) translateX(${this.size * this.gridSize / 2}px)`; }
 
   get selectionState(): SelectionState { return this.selectionService.state(this.gameCharacter); }
   get isSelected(): boolean { return this.selectionState !== SelectionState.NONE; }
   get isMagnetic(): boolean { return this.selectionState === SelectionState.MAGNETIC; }
+  get isTargeted(): boolean { return this.targetingService.has(this.gameCharacter); }
+
+  get buffs(): Buff[] { return this.gameCharacter.buffs; }
+  get hasExpiredBuffs(): boolean { return this.buffs.some(buff => buff.isExpired); }
+  buffExpanded: boolean = false;
+  toggleBuffExpanded(): void { this.buffExpanded = !this.buffExpanded; }
 
   gridSize: number = 50;
 
   movableOption: MovableOption = {};
   rotableOption: RotableOption = {};
   rollOption: RotableOption = {};
+  targetableOption: TargetableOption = {};
 
   constructor(
+    private imageService: ImageService,
     private contextMenuService: ContextMenuService,
     private panelService: PanelService,
     private changeDetector: ChangeDetectorRef,
     private selectionService: TabletopSelectionService,
-    private pointerDeviceService: PointerDeviceService
+    private pointerDeviceService: PointerDeviceService,
+    private targetingService: GameCharacterTargetingService
   ) { }
 
   ngOnChanges(): void {
@@ -91,6 +110,9 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
       })
       .on(`UPDATE_SELECTION/identifier/${this.gameCharacter?.identifier}`, event => {
         this.changeDetector.markForCheck();
+      })
+      .on(`UPDATE_TARGET/identifier/${this.gameCharacter?.identifier}`, event => {
+        this.changeDetector.markForCheck();
       });
     this.movableOption = {
       tabletopObject: this.gameCharacter,
@@ -103,6 +125,9 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
     this.rollOption = {
       tabletopObject: this.gameCharacter,
       targetPropertyName: 'roll',
+    };
+    this.targetableOption = {
+      gameCharacter: this.gameCharacter,
     };
   }
 
@@ -194,55 +219,10 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
   }
 
   private makeContextMenu(): ContextMenuAction[] {
-    let actions: ContextMenuAction[] = [];
-
-    actions.push({ name: '詳細を表示', action: () => { this.showDetail(this.gameCharacter); } });
-    actions.push({ name: 'チャットパレットを表示', action: () => { this.showChatPalette(this.gameCharacter) } });
-    actions.push(ContextMenuSeparator);
-    actions.push({
-      name: '共有イベントリに移動', action: () => {
-        this.gameCharacter.setLocation('common');
-        SoundEffect.play(PresetSound.piecePut);
-      }
-    });
-    actions.push({
-      name: '個人イベントリに移動', action: () => {
-        this.gameCharacter.setLocation(Network.peerId);
-        SoundEffect.play(PresetSound.piecePut);
-      }
-    });
-    actions.push({
-      name: '墓場に移動', action: () => {
-        this.gameCharacter.setLocation('graveyard');
-        SoundEffect.play(PresetSound.sweep);
-      }
-    });
-    actions.push(ContextMenuSeparator);
-    actions.push({
-      name: 'コピーを作る', action: () => {
-        let cloneObject = this.gameCharacter.clone();
-        cloneObject.location.x += this.gridSize;
-        cloneObject.location.y += this.gridSize;
-        cloneObject.update();
-        SoundEffect.play(PresetSound.piecePut);
-      }
-    });
-    return actions;
-  }
-
-  private showDetail(gameObject: GameCharacter) {
-    let coordinate = this.pointerDeviceService.pointers[0];
-    let title = 'キャラクターシート';
-    if (gameObject.name.length) title += ' - ' + gameObject.name;
-    let option: PanelOption = { title: title, left: coordinate.x - 400, top: coordinate.y - 300, width: 800, height: 600 };
-    let component = this.panelService.open<GameCharacterSheetComponent>(GameCharacterSheetComponent, option);
-    component.tabletopObject = gameObject;
-  }
-
-  private showChatPalette(gameObject: GameCharacter) {
-    let coordinate = this.pointerDeviceService.pointers[0];
-    let option: PanelOption = { left: coordinate.x - 250, top: coordinate.y - 175, width: 615, height: 350 };
-    let component = this.panelService.open<ChatPaletteComponent>(ChatPaletteComponent, option);
-    component.character = gameObject;
+    return GameCharacterContextMenu.make(this.gameCharacter, {
+      panelService: this.panelService,
+      pointerDeviceService: this.pointerDeviceService,
+      imageService: this.imageService
+    }, { gridSize: this.gridSize });
   }
 }

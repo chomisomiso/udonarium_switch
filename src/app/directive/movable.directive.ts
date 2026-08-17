@@ -173,7 +173,7 @@ export class MovableDirective implements AfterViewInit, OnChanges, OnDestroy {
     this.callSelectedEvent();
     if (this.collidableElements.length < 1) this.findCollidableElements(); // 稀にcollidableElementsの取得に失敗している
 
-    if (this.isDisable || (e instanceof MouseEvent && (e.button !== 0 || e.ctrlKey || e.shiftKey))) {
+    if (this.isDisable || (e instanceof MouseEvent && (e.button !== 0 || e.ctrlKey || e.shiftKey || e.altKey))) {
       this.cancel();
       return;
     }

@@ -13,9 +13,15 @@ export interface PaletteVariable {
   value: string;
 }
 
+/** 展開結果と、ターゲット参照（t{}）を踏んだか */
+export interface PaletteExpansion {
+  text: string;
+  usedTarget: boolean;
+}
+
 @SyncObject('chat-palette')
 export class ChatPalette extends ObjectNode {
-  @SyncVar() dicebot: string = '';
+  @SyncVar() dicebot: string = 'SwordWorld2.5';
   //TODO: キャラシ項目のコピー
 
   get paletteLines(): PaletteLine[] {
@@ -43,15 +49,29 @@ export class ChatPalette extends ObjectNode {
     this.isAnalized = false;
   }
 
+  /**
+   * 展開対象の記法。先頭の t の有無で参照先が変わる。
+   *
+   * Result{HP} 等はターゲット参照と誤認されるが仕様として許容する。
+   * g フラグ付きだが replace() は lastIndex を残さないので使い回してよい（test() は不可）。
+   */
+  private static readonly NOTATION = /([tTｔＴ]?)[{｛]\s*([^{}｛｝\^＾]+)([\^＾]*)\s*[}｝]/g;
+
   evaluate(line: PaletteLine, extendVariables?: DataElement): string
-  evaluate(line: string, extendVariables?: DataElement): string
-  evaluate(line: any, extendVariables?: DataElement): string {
-    let evaluate: string = '';
-    if (typeof line === 'string') {
-      evaluate = line;
-    } else {
-      evaluate = line.palette;
-    }
+  evaluate(line: string, extendVariables?: DataElement, targetVariables?: DataElement): string
+  evaluate(line: any, extendVariables?: DataElement, targetVariables?: DataElement): string {
+    return this.expand(typeof line === 'string' ? line : line.palette, extendVariables, targetVariables).text;
+  }
+
+  /**
+   * 展開しつつ、ターゲット参照を踏んだかを併せて返す。
+   *
+   * 事前にテキストを走査して t{} の有無を調べる方式だと、パレット変数の中に隠れた
+   * t{} を取りこぼす（変数は展開して初めて現れる）。展開そのものに報告させる。
+   */
+  expand(line: string, extendVariables?: DataElement, targetVariables?: DataElement): PaletteExpansion {
+    let usedTarget = false;
+    let evaluate: string = line;
 
     console.log(evaluate);
     let limit = 128;
@@ -60,22 +80,29 @@ export class ChatPalette extends ObjectNode {
     while (isContinue) {
       loop++;
       isContinue = false;
-      evaluate = evaluate.replace(/[{｛]\s*([^{}｛｝]+)\s*[}｝]/g, (match, name) => {
+      evaluate = evaluate.replace(ChatPalette.NOTATION, (match, target, name, max) => {
         name = StringUtil.toHalfWidth(name);
         console.log(name);
         isContinue = true;
-        for (let variable of this.paletteVariables) {
-          if (variable.name == name) return variable.value;
+        // t{} はターゲットのデータ要素だけを見る。パレット変数は引かない
+        if (target) {
+          // 解決できたかは問わない。踏んだ時点でターゲットごとの展開が要る
+          usedTarget = true;
+        } else {
+          for (let variable of this.paletteVariables) {
+            if (variable.name == name) return variable.value;
+          }
         }
-        if (extendVariables) {
-          let element = extendVariables.getFirstElementByName(name, CompareOption.IgnoreWidth);
-          if (element) return element.isNumberResource ? element.currentValue + '' : element.value + '';
+        let variables = target ? targetVariables : extendVariables;
+        if (variables) {
+          let element = variables.getFirstElementByName(name, CompareOption.IgnoreWidth);
+          if (element) return element.isNumberResource ? max ? element.value + '' : element.currentValue + '' : element.value + '';
         }
         return '';
       });
       if (limit < loop) isContinue = false;
     }
-    return evaluate;
+    return { text: evaluate, usedTarget: usedTarget };
   }
 
   private parse(paletteSource: string) {

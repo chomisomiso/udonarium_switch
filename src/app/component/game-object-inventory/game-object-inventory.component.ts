@@ -11,6 +11,7 @@ import { TabletopObject } from '@udonarium/tabletop-object';
 
 import { ChatPaletteComponent } from 'component/chat-palette/chat-palette.component';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
+import { TabletopObjectSettingComponent } from 'component/tabletop-object-setting/tabletop-object-setting.component';
 import { ContextMenuAction, ContextMenuSeparator, ContextMenuService } from 'service/context-menu.service';
 import { GameObjectInventoryService } from 'service/game-object-inventory.service';
 import { PanelOption, PanelService } from 'service/panel.service';
@@ -105,6 +106,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
   }
 
   getGameObjects(inventoryType: string): TabletopObject[] {
+    if (inventoryType === 'table') return this.inventoryService.visibleTableCharacters;
     return this.getInventory(inventoryType).tabletopObjects;
   }
 
@@ -129,6 +131,7 @@ export class GameObjectInventoryComponent implements OnInit, OnDestroy {
     if (gameObject.location.name !== 'graveyard') {
       actions.push({ name: 'チャットパレットを表示', action: () => { this.showChatPalette(gameObject) } });
     }
+    actions.push({ name: '設定', action: () => TabletopObjectSettingComponent.open(this.panelService, gameObject, this.pointerDeviceService.pointers[0]) });
     actions.push(ContextMenuSeparator);
     let locations = [
       { name: 'table', alias: 'テーブルに移動' },

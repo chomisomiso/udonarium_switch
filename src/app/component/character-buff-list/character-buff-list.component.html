@@ -1,0 +1,14 @@
+<div class="buff-list-title">バフ</div>
+<div class="buff-list" *ngIf="0 < buffs.length; else noBuff">
+  <div class="buff" *ngFor="let buff of buffs; trackBy: trackByBuff"
+    [class.is-expired]="buff.isExpired"
+    [title]="editTitle(buff)"
+    (click)="openEdit(buff)">
+    <span class="buff-name">{{buff.buffName}}</span>
+    <span class="buff-round">{{buff.roundLabel}}</span>
+    <span class="buff-effect" *ngIf="buff.effect">{{buff.effect}}</span>
+  </div>
+</div>
+<ng-template #noBuff>
+  <div class="no-buff">バフなし</div>
+</ng-template>

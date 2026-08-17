@@ -1,0 +1,97 @@
+/* ========== ルート ========== */
+:host {
+  display: flex;
+  flex-direction: row;
+}
+/* .mode-row は親ダッシュボードの .editor-slot に付く */
+:host-context(.mode-row) {
+  flex-direction: column-reverse;
+}
+/* ========== レイアウト骨格 ========== */
+.palette-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.palette-controls {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  width: auto;
+  height: -moz-available;
+  height: -webkit-fill-available;
+  height: stretch;
+  padding: 4px 4px 4px 0;
+}
+:host-context(.mode-row) .palette-controls {
+  flex-direction: row;
+  width: -moz-available;
+  width: -webkit-fill-available;
+  width: stretch;
+  height: auto;
+  padding: 4px 4px 0 4px;
+}
+
+/* ========== パレット本体 ========== */
+/* 閲覧時は select、編集時は textarea。同じ枠に収まるよう共通クラスで揃える */
+.palette {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  font-family: inherit;
+  font-size: 0.7em;
+}
+.palette option {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* line-height は明示する。palette-scroll.ts が行番号↔px の変換に computed 値を使うため */
+textarea.palette {
+  flex: 1 1 auto;
+  height: auto;
+  resize: none;
+  line-height: 1.65;
+  white-space: nowrap;
+}
+
+/* ========== コントロール ========== */
+.palette-controls button {
+  flex: 0 0 auto;
+  padding: unset;
+  border: 1px solid transparent;
+  background-color: unset;
+  font-size: 0;
+}
+.palette-controls button:hover {
+  background-color: #555;
+  color: #ccc;
+}
+
+.palette-controls button.editing {
+  border-color: #555;
+  background-color: unset;
+  color: #555;
+}
+.palette-controls button.editing:hover {
+  background-color: #555;
+  color: #ccc;
+}
+.edit-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background-color: rgba(30, 30, 30, 0.8);
+  margin: auto 0;
+  color: #ccc;
+}
+.edit-info i {
+  font-size: 1.2em;
+}
+.edit-info span {
+  font-size: 12px;
+}

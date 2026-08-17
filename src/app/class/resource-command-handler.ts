@@ -42,6 +42,8 @@ export class ResourceCommandHandler extends ChatCommandHandler {
 
     if (targetCommands.length > 0) {
       let targetIdentifiers = chatMessage.targetIdentifiersArray;
+      if (targetIdentifiers.length < 1) warnings.push('ターゲットが未選択です');
+
       for (let targetIdentifier of targetIdentifiers) {
         let target = ObjectStore.instance.get<GameCharacter>(targetIdentifier);
         if (!(target instanceof GameCharacter)) continue;

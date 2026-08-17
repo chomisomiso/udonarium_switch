@@ -300,6 +300,44 @@ describe('ResourceCommandHandler', () => {
         + '[ゴブリン]\n(-1D6) ＞ -3[3] ＞ -3\n>HP: 20-3 > 17 \n');
     });
 
+    // t{} を含まない発言はパレットの事前チェックを通らないので、ここで拾うしかない
+    it('ターゲット向けコマンドだけでターゲットがいなければ断る', async () => {
+      stubRoll('(-2D6) ＞ -7[3,4] ＞ -7');
+
+      let posted = await send('t:HP-2d6', []);
+
+      expect(posted.length).toBe(1);
+      expect(posted[0].text).toBe('ターゲットが未選択です');
+      expect(isToSelfOnly(posted[0])).toBe(true);
+    });
+
+    it('自分向けの結果は出したうえでターゲット不在を断る', async () => {
+      stubRoll('(-2D6) ＞ -7[3,4] ＞ -7');
+      let self = makeCharacter('カエデ');
+      let message = makeMessage(':HP-2d6 t:HP-1d6', []);
+      message.characterId = self.identifier;
+
+      await handler.processMessage(message, chatTab.identifier);
+
+      expect(chatTab.chatMessages.length).toBe(2);
+      expect(chatTab.chatMessages[0].text).toContain('>HP: 144-7 > 137');
+      expect(isToSelfOnly(chatTab.chatMessages[0])).toBe(false);
+      expect(chatTab.chatMessages[1].text).toBe('ターゲットが未選択です');
+      expect(isToSelfOnly(chatTab.chatMessages[1])).toBe(true);
+    });
+
+    it('自分向けコマンドだけならターゲット不在を断らない', async () => {
+      stubRoll('(-2D6) ＞ -7[3,4] ＞ -7');
+      let self = makeCharacter('カエデ');
+      let message = makeMessage(':HP-2d6', []);
+      message.characterId = self.identifier;
+
+      await handler.processMessage(message, chatTab.identifier);
+
+      expect(chatTab.chatMessages.length).toBe(1);
+      expect(chatTab.chatMessages[0].text).not.toContain('ターゲット');
+    });
+
     it('結果も警告も無ければ何も投稿しない', async () => {
       stubRoll('(2D6) ＞ 7[3,4] ＞ 7');
 

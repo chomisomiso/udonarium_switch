@@ -9,6 +9,7 @@ export class BuffCommandHandler extends ChatCommandHandler {
   async processMessage(chatMessage: ChatMessage, tabIdentifier: string) {
     const INIT_TEXT = 'バフ操作：\n';
     let text = INIT_TEXT;
+    let warning = '';
 
     let [selfCommand, targetCommand, allCommand] = BuffCommand.parse(chatMessage.text);
 
@@ -17,10 +18,13 @@ export class BuffCommandHandler extends ChatCommandHandler {
     }
 
     if (targetCommand) {
-      for (let targetIdentifier of chatMessage.targetIdentifiersArray) {
+      let targetIdentifiers = chatMessage.targetIdentifiersArray;
+      if (targetIdentifiers.length < 1) warning = 'ターゲットが未選択です';
+
+      for (let targetIdentifier of targetIdentifiers) {
         let target = ObjectStore.instance.get<GameCharacter>(targetIdentifier);
         if (!(target instanceof GameCharacter)) continue;
-        
+
         text += `[${target.name}]\n` + this.executeCommands(targetCommand, target.identifier);
       }
     }
@@ -33,16 +37,22 @@ export class BuffCommandHandler extends ChatCommandHandler {
       }
     }
 
-    if (text === INIT_TEXT) return;
+    if (text !== INIT_TEXT) {
+      this.sendResultMessage({
+        from: 'System-BuffEdit',
+        tag: `system buffEdit`,
+        result: text,
+        name: `BuffEdit : ${chatMessage.name}`
+      }, chatMessage, tabIdentifier);
+    }
 
-    let context: ResultMessageContext = {
+    this.sendResultMessage({
       from: 'System-BuffEdit',
-      tag: `system buffEdit`,
-      result: text,
-      name: `BuffEdit : ${chatMessage.name}`,
-    };
-
-    this.sendResultMessage(context, chatMessage, tabIdentifier);
+      tag: `system`,
+      result: warning,
+      name: 'System',
+      toSelfOnly: true,
+    }, chatMessage, tabIdentifier);
   }
 
   /***

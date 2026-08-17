@@ -1,6 +1,6 @@
 {
-  "name": "udonarium",
-  "version": "1.17.4",
+  "name": "udonarium_switch",
+  "version": "1.0.0",
   "license": "MIT",
   "scripts": {
     "ng": "ng",

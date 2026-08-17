@@ -10,9 +10,16 @@ describe('BuffList', () => {
   let character: GameCharacter;
   let buffList: BuffList;
 
-  /** HP 200 / MP 100 を持つコマに空のバフリストを付ける */
+  /**
+   * HP 200 / MP 100 を持つコマに空のバフリストを付ける。
+   * リソースは新規コマのテンプレの既定値に依存しないよう明示的に立てる
+   */
   beforeEach(() => {
     character = GameCharacter.create('テスト', 1, '');
+    character.setMaxDataValue('HP', 200);
+    character.setCurrentDataValue('HP', 200);
+    character.setMaxDataValue('MP', 100);
+    character.setCurrentDataValue('MP', 100);
     buffList = new BuffList();
     buffList.initialize();
     character.appendChild(buffList);

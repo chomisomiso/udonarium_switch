@@ -24,9 +24,17 @@ describe('GameCharacter', () => {
     return character.imageElements.map(element => GameCharacter.getImageName(element));
   }
 
-  /** HP 200 / MP 100 を持つコマ。createTestGameDataElement が既定リソースを組む */
+  /**
+   * HP 200 / MP 100 を持つコマ。
+   * リソースは新規コマのテンプレの既定値に依存しないよう明示的に立てる
+   */
   function makeCharacterWithResources(): GameCharacter {
-    return GameCharacter.create('テスト', 1, '');
+    let character = GameCharacter.create('テスト', 1, '');
+    character.setMaxDataValue('HP', 200);
+    character.setCurrentDataValue('HP', 200);
+    character.setMaxDataValue('MP', 100);
+    character.setCurrentDataValue('MP', 100);
+    return character;
   }
 
   /** 型を持たないプレーンテキストのタグを足す */

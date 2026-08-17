@@ -25,14 +25,30 @@ describe('SampleCharacter', () => {
     }
   });
 
-  // numberResource 属性を書き忘れると、値は見えるのにリソースとして動かなくなる
-  it('HP・MP がリソースとして読める', () => {
+  /**
+   * numberResource 属性を書き忘れると type が undefined になり、値は見えるのに
+   * リソースとして動かなくなる（getMaxDataValue が NaN を返す）。ここで見張るのはそれ。
+   *
+   * 0 や未定義そのものは異常ではない。MP を持たないキャラクターC、リソースを一切
+   * 持たないキャラクターD（データだけ置いておくコマの例）はサンプルとして意図的なもの
+   */
+  it('HP・MP を持つコマはリソースとして読める', () => {
+    let checked = 0;
+
     for (let character of SampleCharacter.createAll()) {
       for (let name of ['HP', 'MP']) {
-        expect(character.getMaxDataValue(name)).toBeGreaterThan(0);
-        expect(character.getCurrentDataValue(name)).toBeGreaterThan(0);
+        let max = character.getMaxDataValue(name);
+        if (max === null) continue;
+
+        expect(max).not.toBeNaN();
+        expect(max).toBeGreaterThanOrEqual(0);
+        expect(character.getCurrentDataValue(name)).not.toBeNaN();
+        expect(character.getCurrentDataValue(name)).toBeGreaterThanOrEqual(0);
+        checked++;
       }
     }
+
+    expect(checked).toBeGreaterThan(0);
   });
 
   it('コマ画像が ImageStorage に登録される', () => {

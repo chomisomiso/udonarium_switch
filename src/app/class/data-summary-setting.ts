@@ -21,7 +21,7 @@ export class DataSummarySetting extends GameObject implements InnerXml {
 
   @SyncVar() sortTag: string = 'name';
   @SyncVar() sortOrder: SortOrder = SortOrder.ASC;
-  @SyncVar() dataTag: string = '紹介 弱点等 HP MP 防護 ⤴ ⤵ ♡ バフ・デバフ 魔法 経験値 戦利品 かけら ピンゾロ';
+  @SyncVar() dataTag: string = '紹介 弱点等 HP MP 防護 ⤴ ⤵ ♡ バフ・デバフ 情報';
 
   private _dataTag: string;
   private _dataTags: string[];

@@ -1,5 +1,8 @@
 import { ImageStorage } from './core/file-storage/image-storage';
-import { ObjectSerializer } from './core/synchronize-object/object-serializer';
+import { ObjectFactory } from './core/synchronize-object/object-factory';
+import { ObjectNode } from './core/synchronize-object/object-node';
+import { ObjectStore } from './core/synchronize-object/object-store';
+import { XmlUtil } from './core/system/util/xml-util';
 import { GameCharacter } from './game-character';
 import { GameSystemSetting } from './game-system-setting';
 
@@ -350,18 +353,28 @@ export class SampleCharacter {
     CHARACTER_D_XML,
   ];
 
-  /** サンプルのコマを一括で作る。XML の書き損じたものは黙って飛ばす */
+  /**
+   * サンプルのコマを一括で作る。XML の書き損じたものと、作成済み・削除済みのものは飛ばす。
+   */
   static createAll(): GameCharacter[] {
     let characters: GameCharacter[] = [];
-    for (let xml of SampleCharacter.sources) {
-      let character = SampleCharacter.create(xml);
+    SampleCharacter.sources.forEach((xml, index) => {
+      let character = SampleCharacter.create(xml, `SampleCharacter_${index}`);
       if (character) characters.push(character);
-    }
+    });
     return characters;
   }
 
-  static create(xml: string): GameCharacter | null {
-    let object = ObjectSerializer.instance.parseXml(xml);
+  /**
+   * 入室時に各ピアのサンプルが同期されても増えないよう、子孫まで全ピア共通の identifier で作る
+   */
+  static create(xml: string, identifier: string): GameCharacter | null {
+    if (ObjectStore.instance.get(identifier) || ObjectStore.instance.isDeleted(identifier)) return null;
+
+    let element = XmlUtil.xml2element(xml);
+    if (!element || element.tagName !== GameCharacter.aliasName) return null;
+
+    let object = SampleCharacter.parseNode(element, identifier);
     if (!(object instanceof GameCharacter)) return null;
 
     for (let element of object.imageElements) {
@@ -372,5 +385,27 @@ export class SampleCharacter {
     if (object.chatPalette) object.chatPalette.dicebot = GameSystemSetting.instance.gameType;
 
     return object;
+  }
+
+  /**
+   * ObjectSerializer.parseXml と ObjectNode.parseInnerXml の手順で、identifier を決め打ちして組み立てる。
+   */
+  private static parseNode(element: Element, identifier: string): ObjectNode | null {
+    let node = ObjectFactory.instance.create(element.tagName, identifier);
+    if (!(node instanceof ObjectNode)) return null;
+
+    node.parseAttributes(element.attributes);
+    node.initialize();
+
+    let children = element.children;
+    if (children.length < 1) {
+      node.value = XmlUtil.decodeEntityReference(element.innerHTML);
+      return node;
+    }
+    for (let i = 0; i < children.length; i++) {
+      let child = SampleCharacter.parseNode(children[i], `${identifier}_${i}`);
+      if (child) node.appendChild(child);
+    }
+    return node;
   }
 }

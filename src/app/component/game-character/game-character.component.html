@@ -41,8 +41,13 @@
             </ng-container>
             <img class="image chrome-smooth-image-trick" *ngIf="0 < imageFile.url.length"
               [class.is-specified-height]="isKomaImageHeightSpecified"
+              [class.firefox-raster-source]="isFirefoxRasterScaled"
               [style.height.px]="isKomaImageHeightSpecified ? komaImageHeight : null"
               [style.transform]="isKomaImageHeightSpecified ? centeringTransform : null"
+              [src]="imageFile.url | safe: 'resourceUrl'">
+            <img class="chrome-smooth-image-trick firefox-raster-image" *ngIf="isFirefoxRasterScaled && 0 < imageFile.url.length"
+              [style.width]="isKomaImageHeightSpecified ? 'auto' : null"
+              [style.height.px]="isKomaImageHeightSpecified ? komaImageHeight * firefoxRasterScale : null"
               [src]="imageFile.url | safe: 'resourceUrl'">
             <div class="rotate-grab rotate-grab-icon of-top" [style.transform]="centeringTransform">
               <i class="material-icons">autorenew</i>

@@ -202,3 +202,22 @@ body {
   width: 0;
   height: 0;
 }
+
+/*
+ * Firefoxでテーブルに立てた画像が荒くなる問題の対策（FirefoxRasterScale）.
+ * 元の画像はレイアウトとクリック判定のために透明で残し、4倍で描いて縮めた画像を下端中央に重ねる.
+ */
+.firefox-raster-source {
+  opacity: 0;
+}
+
+.firefox-raster-image {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 400%;
+  max-width: none;
+  transform-origin: 50% 100%;
+  transform: translateX(-50%) scale(0.25);
+  pointer-events: none;
+}

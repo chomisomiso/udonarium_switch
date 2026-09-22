@@ -1,4 +1,6 @@
 import { ImageStorage } from '@udonarium/core/file-storage/image-storage';
+import { ObjectNode } from '@udonarium/core/synchronize-object/object-node';
+import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { GameCharacter } from '@udonarium/game-character';
 import { GameSystemSetting } from '@udonarium/game-system-setting';
 import { SampleCharacter } from '@udonarium/sample-character';
@@ -80,4 +82,28 @@ describe('SampleCharacter', () => {
       expect(character.chatPalette.dicebot).toBe('Cthulhu7th');
     }
   });
+
+  /**
+   * 入室すると各ピアが作ったサンプルが同期される。identifier が乱数だと別のコマとして
+   * 入室者の数だけ増えるので、子孫まで全ピアで同じ identifier になっている必要がある
+   */
+  it('コマと子孫の identifier が毎回同じになる', () => {
+    let first = SampleCharacter.createAll().map(collectIdentifiers);
+    resetGameObjects();
+    let second = SampleCharacter.createAll().map(collectIdentifiers);
+
+    expect(second).toEqual(first);
+    expect(new Set(first.flat()).size).toBe(first.flat().length);
+  });
+
+  it('2 回呼んでもコマは増えない', () => {
+    SampleCharacter.createAll();
+    SampleCharacter.createAll();
+
+    expect(ObjectStore.instance.getObjects(GameCharacter).length).toBe(SampleCharacter.sources.length);
+  });
 });
+
+function collectIdentifiers(node: ObjectNode): string[] {
+  return [node.identifier].concat(...node.children.map(collectIdentifiers));
+}

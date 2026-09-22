@@ -14,6 +14,7 @@ import { EventSystem, Network } from '@udonarium/core/system';
 import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { GameCharacter } from '@udonarium/game-character';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
+import { FirefoxRasterScale } from '@udonarium/transform/firefox-raster-scale';
 import { GameCharacterContextMenu } from 'component/game-character/game-character-context-menu';
 import { MovableOption } from 'directive/movable.directive';
 import { RotableOption } from 'directive/rotable.directive';
@@ -65,6 +66,9 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
 
   /** コマ幅の中央に水平方向を揃える transform */
   get centeringTransform(): string { return `translateX(-50%) translateX(${this.size * this.gridSize / 2}px)`; }
+
+  readonly isFirefoxRasterScaled: boolean = FirefoxRasterScale.isEnabled;
+  readonly firefoxRasterScale: number = FirefoxRasterScale.SCALE;
 
   get selectionState(): SelectionState { return this.selectionService.state(this.gameCharacter); }
   get isSelected(): boolean { return this.selectionState !== SelectionState.NONE; }

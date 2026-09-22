@@ -18,6 +18,7 @@ import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { DiceSymbol } from '@udonarium/dice-symbol';
 import { PeerCursor } from '@udonarium/peer-cursor';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
+import { FirefoxRasterScale } from '@udonarium/transform/firefox-raster-scale';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
 import { ObjectInteractGesture } from 'component/game-table/object-interact-gesture';
 import { TabletopObjectSettingComponent } from 'component/tabletop-object-setting/tabletop-object-setting.component';
@@ -90,6 +91,8 @@ export class DiceSymbolComponent implements OnChanges, AfterViewInit, OnDestroy 
   get selectionState(): SelectionState { return this.selectionService.state(this.diceSymbol); }
   get isSelected(): boolean { return this.selectionState !== SelectionState.NONE; }
   get isMagnetic(): boolean { return this.selectionState === SelectionState.MAGNETIC; }
+
+  readonly isFirefoxRasterScaled: boolean = FirefoxRasterScale.isEnabled;
 
   animeState: string = 'inactive';
 

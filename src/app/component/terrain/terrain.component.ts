@@ -15,6 +15,7 @@ import { EventSystem } from '@udonarium/core/system';
 import { MathUtil } from '@udonarium/core/system/util/math-util';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { SlopeDirection, Terrain, TerrainViewState } from '@udonarium/terrain';
+import { FirefoxRasterScale } from '@udonarium/transform/firefox-raster-scale';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
 import { InputHandler } from 'directive/input-handler';
 import { MovableOption } from 'directive/movable.directive';
@@ -60,6 +61,8 @@ export class TerrainComponent implements OnChanges, OnDestroy, AfterViewInit {
   get selectionState(): SelectionState { return this.selectionService.state(this.terrain); }
   get isSelected(): boolean { return this.selectionState !== SelectionState.NONE; }
   get isMagnetic(): boolean { return this.selectionState === SelectionState.MAGNETIC; }
+
+  readonly isFirefoxRasterScaled: boolean = FirefoxRasterScale.isEnabled;
 
   get isSurfaceShading(): boolean { return this.terrain.isSurfaceShading; }
   set isSurfaceShading(isSurfaceShading: boolean) { this.terrain.isSurfaceShading = isSurfaceShading; }

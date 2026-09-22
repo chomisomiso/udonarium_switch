@@ -107,6 +107,57 @@
   filter: brightness(1.0);
 }
 
+/*
+ * Firefox 向け: 壁を 4 倍で描いて縮める（FirefoxRasterScale）.
+ * filter / opacity / clip-path は壁を平面に焼き込むので、壁本体から外して ::before に移す.
+ * 壁本体はクリック判定と選択表示のために残し、背景は描かない（::before が background-image を継承する）.
+ */
+.is-firefox-raster-scaled .texture.of-wall-top,
+.is-firefox-raster-scaled .texture.of-wall-bottom,
+.is-firefox-raster-scaled .texture.of-wall-left,
+.is-firefox-raster-scaled .texture.of-wall-right {
+  background-size: 0 0;
+  filter: none;
+  animation: none;
+  clip-path: none;
+}
+
+.is-firefox-raster-scaled .texture.of-wall-top::before,
+.is-firefox-raster-scaled .texture.of-wall-bottom::before,
+.is-firefox-raster-scaled .texture.of-wall-left::before,
+.is-firefox-raster-scaled .texture.of-wall-right::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 400%;
+  height: 400%;
+  transform-origin: 0 0;
+  transform: scale(0.25);
+  background-image: inherit;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  backface-visibility: hidden;
+  pointer-events: none;
+}
+
+.is-firefox-raster-scaled .of-wall-top::before { filter: brightness(0.3); }
+.is-firefox-raster-scaled .of-wall-left::before { filter: brightness(0.5); }
+.is-firefox-raster-scaled .of-wall-right::before { filter: brightness(0.8); }
+.is-firefox-raster-scaled .no-shadow::before { filter: brightness(1.0); }
+
+.is-firefox-raster-scaled .is-slope::before {
+  clip-path: polygon(100% 0%, 0% 100%, 100% 100%);
+}
+
+.is-firefox-raster-scaled .is-inverse-slope::before {
+  clip-path: polygon(0% 0%, 100% 100%, 0% 100%);
+}
+
+.is-firefox-raster-scaled .blinking-animation::before {
+  animation: blink 1.0s linear infinite alternate;
+}
+
 .selected-highlight {
   backface-visibility: hidden;
   position: absolute;

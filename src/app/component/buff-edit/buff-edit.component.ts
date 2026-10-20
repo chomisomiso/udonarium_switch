@@ -16,7 +16,7 @@ import { openBuffEffectResourceMenu } from 'component/buff-edit/buff-effect-reso
 /** パネルごとに一意な id を作るための連番 */
 let nextBuffEditId = 0;
 
-/** バフ 1 つぶんの編集ウィンドウ。バフタグのクリックで開く。 */
+/** バフ 1 つぶんの編集ウィンドウ。バフタグのクリックで開く。buffIdentifier が空なら新規追加。 */
 @Component({
   selector: 'buff-edit',
   templateUrl: './buff-edit.component.html',
@@ -50,7 +50,11 @@ export class BuffEditComponent implements OnInit, OnDestroy {
     return object instanceof Buff ? object : null;
   }
 
+  get isNew(): boolean { return !this.buffIdentifier; }
+
+  /** 新規時はバフがまだ無いので、コマが消えたかだけを見る */
   get isRemoved(): boolean {
+    if (this.isNew) return this.character == null;
     let buff = this.buff;
     return buff == null || this.character == null || buff.parent !== this.character.buffList;
   }
@@ -78,7 +82,8 @@ export class BuffEditComponent implements OnInit, OnDestroy {
     this.load();
     Promise.resolve().then(() => {
       let character = this.character;
-      this.panelService.title = character ? `バフ編集 - ${character.name}` : 'バフ編集';
+      let title = this.isNew ? 'バフ追加' : 'バフ編集';
+      this.panelService.title = character ? `${title} - ${character.name}` : title;
     });
     // 他ピアやダッシュボードからの変更で対象が消えることがある。
     // バフの増減・書き換えは配下のノードの変化としてコマまで遡って通知される。
@@ -103,12 +108,16 @@ export class BuffEditComponent implements OnInit, OnDestroy {
 
   save(): void {
     if (!this.canSave) return;
-    this.character?.buffList?.edit(this.buff, this.buffName.trim(), this.buffRound, this.buffEffect.trim());
+    if (this.isNew) {
+      this.character.ensureBuffList().add(this.buffName.trim(), this.buffRound, this.buffEffect.trim());
+    } else {
+      this.character.buffList?.edit(this.buff, this.buffName.trim(), this.buffRound, this.buffEffect.trim());
+    }
     this.panelService.close();
   }
 
   remove(): void {
-    if (this.isRemoved) return;
+    if (this.isNew || this.isRemoved) return;
     this.character.buffList.remove(this.buff);
     this.panelService.close();
   }

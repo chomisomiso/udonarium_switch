@@ -58,3 +58,19 @@
   color: #777;
   font-size: 0.85em;
 }
+
+/* 並びの末尾に置く。既存のバフと見分けが付くよう枠を点線にする */
+.add-buff {
+  padding: 1px 4px;
+  border: 1px dashed rgba(68, 68, 68, 0.4);
+  border-radius: 3px;
+  background: transparent;
+  color: #555;
+  font-size: 0.85em;
+  text-align: center;
+  cursor: pointer;
+}
+
+.add-buff:hover {
+  background-color: rgba(255, 255, 255, 0.35);
+}

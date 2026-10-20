@@ -62,7 +62,7 @@
     </div>
   </ng-container>
 
-  <!-- バフはデータ要素ではないので上の detail のループには乗らない。読み取り専用で並べる -->
+  <!-- バフはデータ要素ではないので上の detail のループには乗らない。編集・追加はバフ編集パネルから -->
   <div class="flex-item" *ngIf="isCharacter">
     <character-buff-list [gameCharacter]="$any(tabletopObject)"></character-buff-list>
   </div>

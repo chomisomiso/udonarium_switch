@@ -8,11 +8,14 @@ export interface OpenBuffEditDeps {
   pointerDeviceService: PointerDeviceService;
 }
 
-/** バフ編集パネルを開く。カード一覧とバフエディタの双方から開くので、位置決めと入力の受け渡しを一箇所に置く。 */
+/**
+ * バフ編集パネルを開く。カード一覧とバフエディタの双方から開くので、位置決めと入力の受け渡しを一箇所に置く。
+ * buff が null なら新規追加として開く。
+ */
 export function openBuffEditPanel(
   deps: OpenBuffEditDeps,
   characterIdentifier: string,
-  buff: Buff
+  buff: Buff | null
 ): void {
   let coordinate = deps.pointerDeviceService.pointers[0];
   let option: PanelOption = {
@@ -20,5 +23,5 @@ export function openBuffEditPanel(
   };
   let component = deps.panelService.open<BuffEditComponent>(BuffEditComponent, option);
   component.characterIdentifier = characterIdentifier;
-  component.buffIdentifier = buff.identifier;
+  component.buffIdentifier = buff ? buff.identifier : '';
 }

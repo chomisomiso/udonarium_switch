@@ -1,5 +1,5 @@
 <div class="buff-edit">
-  <div class="removed-notice" *ngIf="isRemoved">このバフは既に削除されています</div>
+  <div class="removed-notice" *ngIf="isRemoved">{{ isNew ? 'このキャラクターは既に削除されています' : 'このバフは既に削除されています' }}</div>
 
   <div class="field">
     <label class="field-label" [attr.for]="idPrefix + '-name'">名前</label>
@@ -32,10 +32,10 @@
   <div class="validation" *ngIf="!isRemoved && !canSave">{{ validationError }}</div>
 
   <div class="buttons">
-    <button class="button remove" type="button" [disabled]="isRemoved" (click)="remove()"
+    <button class="button remove" type="button" *ngIf="!isNew" [disabled]="isRemoved" (click)="remove()"
       title="このバフを削除（効果を戻す）">削除</button>
     <span class="spacer"></span>
     <button class="button" type="button" (click)="cancel()">キャンセル</button>
-    <button class="button save" type="button" [disabled]="!canSave" (click)="save()">保存</button>
+    <button class="button save" type="button" [disabled]="!canSave" (click)="save()">{{ isNew ? '追加' : '保存' }}</button>
   </div>
 </div>

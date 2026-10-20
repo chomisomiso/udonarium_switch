@@ -7,7 +7,7 @@ import { openBuffEditPanel } from 'component/buff-edit/open-buff-edit';
 import { PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 
-/** キャラクターシートに出すバフの一覧。**読み取り専用**。*/
+/** キャラクターシートに出すバフの一覧。編集・追加はバフ編集パネルに任せる。*/
 @Component({
   selector: 'character-buff-list',
   templateUrl: './character-buff-list.component.html',
@@ -44,7 +44,8 @@ export class CharacterBuffListComponent implements OnChanges, OnDestroy {
     return `クリックで編集: ${buff.buffName} ${buff.roundText}`;
   }
 
-  openEdit(buff: Buff): void {
+  /** buff が null なら新規追加 */
+  openEdit(buff: Buff | null): void {
     if (!this.gameCharacter) return;
 
     let deps = { panelService: this.panelService, pointerDeviceService: this.pointerDeviceService };

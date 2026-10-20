@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { Buff } from '@udonarium/buff';
 import { DataElement } from '@udonarium/data-element';
+import { DoublePressDetector } from '@udonarium/double-press';
 import { EventSystem } from '@udonarium/core/system';
 import { GameCharacter } from '@udonarium/game-character';
 import { GameCharacterContextMenu } from 'component/game-character/game-character-context-menu';
@@ -18,6 +19,9 @@ import { GameObjectInventoryService } from 'service/game-object-inventory.servic
 import { ImageService } from 'service/image.service';
 import { PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
+
+/** カードのダブルクリック判定の間隔。単クリックの選択はこのぶん遅れる */
+const CARD_DOUBLE_CLICK_MS = 300;
 
 /**
  * ダッシュボードのキャラクターカード一覧。
@@ -69,11 +73,36 @@ export class CharacterListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     EventSystem.unregister(this);
+    this.doublePress.cancel();
   }
 
   selectCharacter(character: GameCharacter): void {
     this.selectedIdentifier = character.identifier;
     this.selectedIdentifierChange.emit(this.selectedIdentifier);
+  }
+
+  // ===== カードのクリック =====
+  // 選択はそのまま発言者になるので、ダブルクリック（ターゲット切替）で選択が動いてはならない。
+  // click は dblclick より先に飛ぶため、単クリックの選択は2回目が来ないと確定するまで遅らせる
+  private doublePress = new DoublePressDetector(CARD_DOUBLE_CLICK_MS);
+
+  onCardClick(e: MouseEvent, character: GameCharacter): void {
+    // タッチは double-tap が不安定なので遅らせず即選択する（ターゲットはバッジで切り替える）
+    if ((e as PointerEvent).pointerType === 'touch') {
+      this.doublePress.cancel();
+      this.selectCharacter(character);
+      return;
+    }
+    let isDouble = this.doublePress.press(character.identifier, () => {
+      this.selectCharacter(character);
+      this.changeDetector.markForCheck();
+    });
+    if (isDouble) this.toggleTarget(character);
+  }
+
+  /** ダブルクリックでキャラ名などの文字が選択されるのを防ぐ（入力欄の単語選択は残す） */
+  onCardMouseDown(e: MouseEvent): void {
+    if (1 < e.detail && !(e.target as HTMLElement).closest('input, textarea')) e.preventDefault();
   }
 
   getCharacterResourceTags(identifier: string): DataElement[] {

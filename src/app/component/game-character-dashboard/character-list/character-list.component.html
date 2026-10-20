@@ -1,7 +1,8 @@
 <h3 *ngIf="gameCharacters.length === 0">テーブルインベントリは空です</h3>
 <div
   *ngFor="let gameCharacter of gameCharacters; trackBy: trackByIdentifier"
-  (click)="selectCharacter(gameCharacter)"
+  (click)="onCardClick($event, gameCharacter)"
+  (mousedown)="onCardMouseDown($event)"
   (contextmenu)="onContextMenu($event, gameCharacter)"
   [class.main-selected]="gameCharacter.identifier === selectedIdentifier"
   [class.targeting]="isTargeting(gameCharacter)"

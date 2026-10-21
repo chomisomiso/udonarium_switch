@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy } from '@angular/core';
 import { Buff } from '@udonarium/buff';
+import { CharacterUnit } from '@udonarium/character-part/character-unit';
 import { EventSystem } from '@udonarium/core/system';
-import { GameCharacter } from '@udonarium/game-character';
 
 import { openBuffEditPanel } from 'component/buff-edit/open-buff-edit';
 import { PanelService } from 'service/panel.service';
@@ -15,9 +15,10 @@ import { PointerDeviceService } from 'service/pointer-device.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CharacterBuffListComponent implements OnChanges, OnDestroy {
-  @Input() gameCharacter: GameCharacter = null;
+  /** バフの持ち主。単部位コマか、多部位コマの部位 */
+  @Input() unit: CharacterUnit = null;
 
-  get buffs(): Buff[] { return this.gameCharacter ? this.gameCharacter.buffs : []; }
+  get buffs(): Buff[] { return this.unit ? this.unit.buffs : []; }
 
   constructor(
     private changeDetector: ChangeDetectorRef,
@@ -25,11 +26,11 @@ export class CharacterBuffListComponent implements OnChanges, OnDestroy {
     private pointerDeviceService: PointerDeviceService,
   ) { }
 
-  /** バフの変化はこのコマまで遡って通知される。character-image-list と同じ形 */
+  /** バフの変化はこのコマ（部位）まで遡って通知される。character-image-list と同じ形 */
   ngOnChanges(): void {
     EventSystem.unregister(this);
     EventSystem.register(this)
-      .on(`UPDATE_OBJECT_CHILDREN/identifier/${this.gameCharacter?.identifier}`, event => {
+      .on(`UPDATE_OBJECT_CHILDREN/identifier/${this.unit?.identifier}`, event => {
         this.changeDetector.markForCheck();
       });
   }
@@ -46,9 +47,9 @@ export class CharacterBuffListComponent implements OnChanges, OnDestroy {
 
   /** buff が null なら新規追加 */
   openEdit(buff: Buff | null): void {
-    if (!this.gameCharacter) return;
+    if (!this.unit) return;
 
     let deps = { panelService: this.panelService, pointerDeviceService: this.pointerDeviceService };
-    openBuffEditPanel(deps, this.gameCharacter.identifier, buff);
+    openBuffEditPanel(deps, this.unit.identifier, buff);
   }
 }

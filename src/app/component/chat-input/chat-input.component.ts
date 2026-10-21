@@ -1,4 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { CharacterPart } from '@udonarium/character-part/character-part';
+import { CharacterUnit } from '@udonarium/character-part/character-unit';
 import { ChatInputHistory, WritingNotifier } from '@udonarium/chat-input';
 import { ChatMessage } from '@udonarium/chat-message';
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
@@ -83,6 +85,21 @@ export class ChatInputComponent implements OnInit, OnDestroy {
       CharacterImageListComponent.makeContextMenuActions(gameCharacter, this.imageService),
       gameCharacter.name);
   }
+
+  /** 多部位コマは、どの部位として発言するかを選ぶ */
+  private _sendFromPart: string = '';
+  get sendFromParts(): CharacterPart[] {
+    let object = ObjectStore.instance.get(this.sendFrom);
+    return object instanceof GameCharacter ? object.parts : [];
+  }
+  get sendFromPart(): string {
+    let object = ObjectStore.instance.get(this.sendFrom);
+    if (!(object instanceof GameCharacter)) return this.sendFrom;
+    let part = object.parts.find(part => part.identifier === this._sendFromPart);
+    if (part) return part.identifier;
+    return this.onlyCharacters ? CharacterUnit.primaryOf(object).identifier : object.identifier;
+  }
+  set sendFromPart(identifier: string) { this._sendFromPart = identifier; }
 
   private shouldUpdateCharacterList: boolean = true;
   private _gameCharacters: GameCharacter[] = [];
@@ -193,7 +210,7 @@ export class ChatInputComponent implements OnInit, OnDestroy {
     if (event && event.keyCode !== 13) return;
 
     if (!this.sendFrom.length) this.sendFrom = this.myPeer.identifier;
-    this.chat.emit({ text: this.text, gameType: this.gameType, sendFrom: this.sendFrom, sendTo: this.sendTo });
+    this.chat.emit({ text: this.text, gameType: this.gameType, sendFrom: this.sendFromPart, sendTo: this.sendTo });
 
     this.history.push(this.text);
     this.text = '';

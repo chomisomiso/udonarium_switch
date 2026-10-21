@@ -1,7 +1,9 @@
+import { CharacterPart } from '@udonarium/character-part/character-part';
 import { EventSystem } from '@udonarium/core/system';
 import { GameCharacter } from '@udonarium/game-character';
 import { GameCharacterTargetingService } from 'service/game-character-targeting.service';
-import { resetGameObjects } from 'testing/game-object-testing';
+import { flushMicrotasks, resetGameObjects } from 'testing/game-object-testing';
+import { makeMultiPartCharacter } from 'testing/multi-part-testing';
 
 /**
  * コンストラクタ引数を持たないので TestBed を通さず直接組み立てる。
@@ -121,6 +123,108 @@ describe('GameCharacterTargetingService', () => {
       deleted(other.identifier);
 
       expect(targeting.has(target)).toBe(true);
+    });
+  });
+
+  describe('多部位コマ', () => {
+    let character: GameCharacter;
+    let upper: CharacterPart;
+    let lower: CharacterPart;
+
+    beforeEach(() => {
+      character = makeMultiPartCharacter();
+      [upper, lower] = character.parts;
+    });
+
+    describe('stateOf', () => {
+      it('部位がひとつもターゲットでなければ none', () => {
+        expect(targeting.stateOf(character)).toBe('none');
+      });
+
+      it('一部の部位だけなら partial', () => {
+        targeting.add(upper);
+
+        expect(targeting.stateOf(character)).toBe('partial');
+      });
+
+      it('全部位なら all', () => {
+        targeting.add(upper);
+        targeting.add(lower);
+
+        expect(targeting.stateOf(character)).toBe('all');
+      });
+
+      it('単部位コマはコマ自身で決まる', () => {
+        let single = makeCharacter();
+        targeting.add(single);
+
+        expect(targeting.stateOf(single)).toBe('all');
+      });
+    });
+
+    describe('toggleCharacter', () => {
+      it('none から全部位を入れる', () => {
+        targeting.toggleCharacter(character);
+
+        expect(Array.from(targeting.getTargets())).toEqual([upper, lower]);
+      });
+
+      it('all から全部位を外す', () => {
+        targeting.setCharacterTargeted(character, true);
+        targeting.toggleCharacter(character);
+
+        expect(targeting.getTargets().size).toBe(0);
+      });
+
+      it('partial からは全部位を外す', () => {
+        targeting.add(lower);
+        targeting.toggleCharacter(character);
+
+        expect(targeting.getTargets().size).toBe(0);
+      });
+
+      it('コマ本体はターゲットに入らない', () => {
+        targeting.toggleCharacter(character);
+
+        expect(targeting.has(character)).toBe(false);
+      });
+    });
+
+    it('テーブルを降りると全部位が外れる', () => {
+      targeting.setCharacterTargeted(character, true);
+
+      character.location.name = 'graveyard';
+      updated(character);
+
+      expect(targeting.getTargets().size).toBe(0);
+    });
+
+    it('部位が削除されるとその部位だけ外れる', () => {
+      targeting.setCharacterTargeted(character, true);
+
+      deleted(lower.identifier);
+
+      expect(Array.from(targeting.getTargets())).toEqual([upper]);
+    });
+
+    it('部位の変化は持ち主のコマの identifier でも知らせる', async () => {
+      let notified = jasmine.createSpy('notified');
+      EventSystem.register(notified).on(`UPDATE_TARGET/identifier/${character.identifier}`, () => notified());
+
+      targeting.add(upper);
+      await flushMicrotasks();
+
+      expect(notified).toHaveBeenCalledTimes(1);
+    });
+
+    it('単部位コマに部位が足されたら、コマ本体のターゲットは外れる', () => {
+      let single = makeCharacter();
+      targeting.add(single);
+      let part = single.appendChild(CharacterPart.create('胴体'));
+
+      EventSystem.trigger(`UPDATE_GAME_OBJECT/aliasName/${CharacterPart.aliasName}`, part.toContext());
+
+      expect(targeting.has(single)).toBe(false);
     });
   });
 });

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { CharacterPart } from '@udonarium/character-part/character-part';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { EventSystem, Network } from '@udonarium/core/system';
 import { StringUtil } from '@udonarium/core/system/util/string-util';
@@ -88,6 +89,9 @@ export class GameObjectInventoryService {
             this.refreshDataElements();
             this.refreshSort();
           }
+          this.callInventoryUpdate();
+        } else if (object instanceof CharacterPart) {
+          // 部位の追加・改名。部位のタグは一覧側が部位から直接取得するので、再描画の合図だけ出す
           this.callInventoryUpdate();
         } else if (object instanceof DataSummarySetting) {
           this.refreshDataElements();

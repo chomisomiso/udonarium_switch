@@ -315,4 +315,33 @@ describe('BuffList', () => {
       expect(orphan.buffs.length).toBe(1);
     });
   });
+
+  describe('findIn', () => {
+    it('バフコンテナを持っていなければ null', () => {
+      let other = GameCharacter.create('別のコマ', 1, '');
+
+      expect(BuffList.findIn(other)).toBeNull();
+    });
+
+    it('直下のバフコンテナを返す', () => {
+      expect(BuffList.findIn(character)).toBe(buffList);
+    });
+  });
+
+  describe('ensureIn', () => {
+    it('持っていればそれを返し、増やさない', () => {
+      expect(BuffList.ensureIn(character)).toBe(buffList);
+      expect(character.children.filter(child => child instanceof BuffList).length).toBe(1);
+    });
+
+    // 2つのピアが同時に作っても、同じ識別子なら同期で1つへ収束する
+    it('持っていなければ、持ち主から決まる識別子で作る', () => {
+      let other = GameCharacter.create('別のコマ', 1, '');
+
+      let created = BuffList.ensureIn(other);
+
+      expect(created.identifier).toBe('BuffList_' + other.identifier);
+      expect(created.parent).toBe(other);
+    });
+  });
 });

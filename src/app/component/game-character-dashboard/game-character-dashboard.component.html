@@ -134,9 +134,15 @@
 </ng-template>
 <ng-template #chatSettings>
   <div class="select send-from">
-    <select [(ngModel)]="selectedIdentifier">
+    <select [(ngModel)]="selectedCharacterIdentifier">
       <option *ngFor="let gameCharacter of gameCharacters" value="{{gameCharacter.identifier}}">{{gameCharacter.name}}
       </option>
+    </select>
+  </div>
+  <!-- 多部位コマは、どの部位として発言するかを選ぶ。一覧で部位の行を選ぶのと同じ -->
+  <div class="select send-part" *ngIf="0 < selectedParts.length">
+    <select title="発言する部位" [(ngModel)]="selectedIdentifier">
+      <option *ngFor="let part of selectedParts" value="{{part.identifier}}">{{part.partName}}</option>
     </select>
   </div>
   <div class="select send-to"><span style="flex: 0 0 auto; font-size: 0.8em;">　＞</span>

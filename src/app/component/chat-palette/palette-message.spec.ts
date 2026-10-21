@@ -4,6 +4,7 @@ import { GameCharacter } from '@udonarium/game-character';
 import { ResourceCommand } from '@udonarium/resource-command';
 import { planPaletteMessages } from 'component/chat-palette/palette-message';
 import { resetGameObjects } from 'testing/game-object-testing';
+import { makeMultiPartCharacter } from 'testing/multi-part-testing';
 
 describe('planPaletteMessages', () => {
   afterEach(resetGameObjects);
@@ -136,6 +137,32 @@ describe('planPaletteMessages', () => {
 
       expect(texts(plan)).toEqual(['2d6']);
       expect(plan.messages[0].targets).toEqual([]);
+    });
+  });
+
+  describe('多部位コマ', () => {
+    it('部位の発言は持ち主のパレットを、部位の値で展開する', () => {
+      let [upper, lower] = makeMultiPartCharacter().parts;
+      lower.setCurrentDataValue('回避修正', 1);
+
+      expect(texts(planPaletteMessages(upper, '2d+9+{回避修正} {防護}', []))).toEqual(['2d+9+0 8']);
+      expect(texts(planPaletteMessages(lower, '2d+10+{回避修正} {防護}', []))).toEqual(['2d+10+1 6']);
+    });
+
+    it('部位に無い名前は共有の値で展開する', () => {
+      let upper = makeMultiPartCharacter().parts[0];
+
+      expect(texts(planPaletteMessages(upper, '{name} {弱点}', []))).toEqual(['ヒブレイザン 雷属性ダメージ+3点']);
+    });
+
+    it('部位のターゲットは部位の値で展開し、部位名を添える', () => {
+      let sender = makeCharacter('術者', '');
+      let lower = makeMultiPartCharacter().parts[1];
+
+      let plan = planPaletteMessages(sender, 't:HP-t{防護}', [lower]);
+
+      expect(texts(plan)).toEqual(['t:HP-6 [ヒブレイザン(下半身)]']);
+      expect(plan.messages[0].targets).toEqual([lower]);
     });
   });
 });

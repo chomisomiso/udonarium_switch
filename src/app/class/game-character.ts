@@ -1,14 +1,15 @@
 import { Buff } from './buff';
 import { BuffList, BuffResourceOwner } from './buff-list';
+import { CharacterPart, PartOwner } from './character-part/character-part';
 import { ChatPalette } from './chat-palette';
 import { SyncObject, SyncVar } from './core/synchronize-object/decorator';
 import { MathUtil } from './core/system/util/math-util';
-import { DataElement } from './data-element';
+import { DataElement, DataElementAccessor } from './data-element';
 import { GameSystemSetting } from './game-system-setting';
 import { TabletopObject } from './tabletop-object';
 
 @SyncObject('character')
-export class GameCharacter extends TabletopObject implements BuffResourceOwner {
+export class GameCharacter extends TabletopObject implements BuffResourceOwner, PartOwner {
   @SyncVar() rotate: number = 0;
   @SyncVar() roll: number = 0;
 
@@ -178,131 +179,28 @@ export class GameCharacter extends TabletopObject implements BuffResourceOwner {
     this.appendChild(palette);
   }
 
-  getDataString(dataName: string): string {
-    const data = this.detailDataElement.getFirstElementByName(dataName);
-    if (!data) return null;
-    switch (data.type) {
-      case 'numberResource':
-        return data.currentValue as string;
-      case undefined:
-        return data.value as string;
-      case 'note':
-        return data.currentValue as string;
-    }
-    return null;
+  findDataElement(dataName: string): DataElement | null {
+    return this.detailDataElement ? this.detailDataElement.getFirstElementByName(dataName) : null;
   }
 
-  getCurrentDataValue(dataName: string): number {
-    const data = this.detailDataElement.getFirstElementByName(dataName);
-    if (!data) return null;
-    switch (data.type) {
-      case 'numberResource':
-        return parseInt(data.currentValue as string);
-      case undefined:
-        return parseInt(data.value as string);
-      case 'note':
-        return NaN;
-    }
-    return NaN;
+  getDataString(dataName: string): string { return DataElementAccessor.getString(this.findDataElement(dataName)); }
+  getCurrentDataValue(dataName: string): number { return DataElementAccessor.getCurrent(this.findDataElement(dataName)); }
+  getMaxDataValue(dataName: string): number { return DataElementAccessor.getMax(this.findDataElement(dataName)); }
+  setDataString(dataName: string, setString: string): boolean { return DataElementAccessor.setString(this.findDataElement(dataName), setString); }
+  /** NaN は書き込まない（理由は DataElementAccessor.setCurrent） */
+  setCurrentDataValue(dataName: string, setValue: number): boolean { return DataElementAccessor.setCurrent(this.findDataElement(dataName), setValue); }
+  setMaxDataValue(dataName: string, setValue: number): boolean { return DataElementAccessor.setMax(this.findDataElement(dataName), setValue); }
+
+  /** 多部位コマの部位。単部位コマなら空 */
+  get parts(): CharacterPart[] {
+    return this.children.filter((child): child is CharacterPart => child instanceof CharacterPart);
   }
 
-  getMaxDataValue(dataName: string): number {
-    const data = this.detailDataElement.getFirstElementByName(dataName);
-    if (!data) return null;
-    switch (data.type) {
-      case 'numberResource':
-        return parseInt(data.value as string);
-      case undefined:
-        return NaN;
-      case 'note':
-        return NaN;
-    }
-    return NaN;
-  }
+  get isMultiPart(): boolean { return this.children.some(child => child instanceof CharacterPart); }
 
-  setDataString(dataName: string, setString: string): boolean {
-    const data = this.detailDataElement.getFirstElementByName(dataName);
-    if (!data) return null;
-    switch (data.type) {
-      case 'numberResource':
-        return false;
-      case undefined:
-        data.value = setString;
-        return true;
-      case 'note':
-        data.currentValue = setString;
-        return true;
-    }
-    return false;
-  }
-
-  /**
-   * NaN は書き込まない。一度書くと表示も以後の計算も壊れたまま同期され、
-   * 補正コマンドを撃っても NaN のままで元の値には戻せない。
-   * 非数値タグを対象にしたリソースコマンドやバフ効果は、ここで書き込みごと落ちる
-   */
-  setCurrentDataValue(dataName: string, setValue: number): boolean {
-    if (Number.isNaN(setValue)) return false;
-    const data = this.detailDataElement.getFirstElementByName(dataName);
-    if (!data) return null;
-    switch (data.type) {
-      case 'numberResource':
-        data.currentValue = setValue;
-        return true;
-      case undefined:
-        data.value = setValue;
-        return true;
-      case 'note':
-        return false;
-    }
-    return false;
-  }
-
-  setMaxDataValue(dataName: string, setValue: number): boolean {
-    if (Number.isNaN(setValue)) return false;
-    const data = this.detailDataElement.getFirstElementByName(dataName);
-    if (!data) return null;
-    switch (data.type) {
-      case 'numberResource':
-        data.value = setValue;
-        return true;
-      case undefined:
-        return false;
-      case 'note':
-        return false;
-    }
-    return false;
-  }
-
-  // --- バフ ---
-
-  /**
-   * バフの入れ物。持っていなければ null（chatPalette と同じ形）。
-   * 追加・削除・編集は必ずここを通す。バフの効果はリソースの現在値を直接動かすので、
-   * 別ルートから書き換えると打ち消しの辻褄が合わなくなる
-   */
-  get buffList(): BuffList {
-    for (let child of this.children) {
-      if (child instanceof BuffList) return child;
-    }
-    return null;
-  }
-
+  /** バフコンテナ。持っていなければ null。追加・削除・編集は必ずここを通す（理由は BuffList） */
+  get buffList(): BuffList { return BuffList.findIn(this); }
   get buffs(): Buff[] { return this.buffList ? this.buffList.buffs : []; }
-
-  /**
-   * バフを足すときに入れ物を遅延生成する。空になっても消さない
-   * （削除と再生成が P2P で競ると、片方のバフが行方不明になる）。
-   *
-   * 識別子はコマから決まる形にする。2つのピアが同じコマへ同時にバフを足しても、
-   * 同じ識別子なら同期で1つへ収束する
-   */
-  ensureBuffList(): BuffList {
-    let buffList = this.buffList;
-    if (buffList) return buffList;
-
-    buffList = new BuffList('BuffList_' + this.identifier);
-    buffList.initialize();
-    return this.appendChild(buffList);
-  }
+  /** 遅延生成。作り方の決まりは BuffList.ensureIn */
+  ensureBuffList(): BuffList { return BuffList.ensureIn(this); }
 }

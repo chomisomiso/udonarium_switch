@@ -1,4 +1,5 @@
 import { BuffCommand } from './buff-command';
+import { CharacterUnit } from './character-part/character-unit';
 import { ChatMessage } from './chat-message';
 import { ChatCommandHandler, ResultMessageContext } from './chat-command-handler';
 import { ObjectStore } from './core/synchronize-object/object-store';
@@ -9,31 +10,34 @@ export class BuffCommandHandler extends ChatCommandHandler {
   async processMessage(chatMessage: ChatMessage, tabIdentifier: string) {
     const INIT_TEXT = 'バフ操作：\n';
     let text = INIT_TEXT;
-    let warning = '';
+    let warnings: string[] = [];
 
     let [selfCommand, targetCommand, allCommand] = BuffCommand.parse(chatMessage.text);
 
-    if (selfCommand) {
+    if (selfCommand && CharacterUnit.isMultiPartCharacter(CharacterUnit.resolve(chatMessage.characterId))) {
+      warnings.push(CharacterUnit.PART_NOT_SELECTED_WARNING);
+    } else if (selfCommand) {
       text += this.executeCommands(selfCommand, chatMessage.characterId);
     }
 
     if (targetCommand) {
       let targetIdentifiers = chatMessage.targetIdentifiersArray;
-      if (targetIdentifiers.length < 1) warning = 'ターゲットが未選択です';
+      if (targetIdentifiers.length < 1) warnings.push('ターゲットが未選択です');
 
       for (let targetIdentifier of targetIdentifiers) {
-        let target = ObjectStore.instance.get<GameCharacter>(targetIdentifier);
-        if (!(target instanceof GameCharacter)) continue;
+        let target = CharacterUnit.resolve(targetIdentifier);
+        if (!target) continue;
 
-        text += `[${target.name}]\n` + this.executeCommands(targetCommand, target.identifier);
+        text += `[${CharacterUnit.labelOf(target)}]\n` + this.executeCommands(targetCommand, target.identifier);
       }
     }
 
     if (allCommand) {
       let allCharacters = ObjectStore.instance.getObjects(GameCharacter)
         .filter((obj: GameCharacter) => obj.isVisibleInInventory);
-      for (let character of allCharacters) {
-        text += `[${character.name}]\n` + this.executeCommands(allCommand, character.identifier);
+      // 多部位コマは部位ごとにバフを持つ
+      for (let unit of allCharacters.flatMap(character => CharacterUnit.unitsOf(character))) {
+        text += `[${CharacterUnit.labelOf(unit)}]\n` + this.executeCommands(allCommand, unit.identifier);
       }
     }
 
@@ -49,7 +53,7 @@ export class BuffCommandHandler extends ChatCommandHandler {
     this.sendResultMessage({
       from: 'System-BuffEdit',
       tag: `system`,
-      result: warning,
+      result: warnings.join('\n'),
       name: 'System',
       toSelfOnly: true,
     }, chatMessage, tabIdentifier);
@@ -61,8 +65,8 @@ export class BuffCommandHandler extends ChatCommandHandler {
   private executeCommands(command: BuffCommand, characterId: string): string {
     let result: string = '';
 
-    let character = ObjectStore.instance.get<GameCharacter>(characterId);
-    if (!(character instanceof GameCharacter)) { console.log('キャラクターが存在しません'); return ''; }
+    let character = CharacterUnit.resolve(characterId);
+    if (!character) { console.log('キャラクターが存在しません'); return ''; }
 
     if (command.changeAllRounds !== 0) {
       character.buffList?.changeAllRounds(command.changeAllRounds);

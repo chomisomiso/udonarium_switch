@@ -16,6 +16,7 @@ import { TableSelecter } from '@udonarium/table-selecter';
 import { TabletopObject } from '@udonarium/tabletop-object';
 import { Terrain } from '@udonarium/terrain';
 import { TextNote } from '@udonarium/text-note';
+import { ImportConverter } from '@udonarium/xml-import/import-converter';
 
 import { CoordinateService } from './coordinate.service';
 
@@ -94,6 +95,8 @@ export class TabletopService {
         let xmlElement: Element = event.data.xmlElement;
         // todo:立体地形の上にドロップした時の挙動
         let gameObject = ObjectSerializer.instance.parseXml(xmlElement);
+        // 取り込み時の変換処理
+        ImportConverter.convert(gameObject);
         if (gameObject instanceof TabletopObject) {
           let pointer = this.coordinateService.calcTabletopLocalCoordinate();
           gameObject.location.x = pointer.x - 25;

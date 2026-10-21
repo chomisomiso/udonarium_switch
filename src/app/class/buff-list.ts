@@ -9,11 +9,35 @@ export interface BuffResourceOwner {
 }
 
 /**
- * コマが持つバフの入れ物。`GameCharacter` の直下に 1 つだけぶら下がる。
+ * コマが持つバフコンテナ。`GameCharacter`（多部位コマなら各部位の `CharacterPart`）の直下に 1 つだけぶら下がる。
  * バフの増減はリソースの現在値を直接動かすので、追加・削除・編集は必ずこのクラスを通すこと
  */
 @SyncObject('buff-list')
 export class BuffList extends ObjectNode {
+  /** holder 直下のバフコンテナ。持っていなければ null */
+  static findIn(holder: ObjectNode): BuffList | null {
+    for (let child of holder.children) {
+      if (child instanceof BuffList) return child;
+    }
+    return null;
+  }
+
+  /**
+   * バフを足すときに入れ物を遅延生成する。空になっても消さない
+   * （削除と再生成が P2P で競ると、片方のバフが行方不明になる）。
+   *
+   * 識別子は持ち主から決まる形にする。2つのピアが同じ持ち主へ同時にバフを足しても、
+   * 同じ識別子なら同期で1つへ収束する
+   */
+  static ensureIn(holder: ObjectNode & BuffResourceOwner): BuffList {
+    let buffList = BuffList.findIn(holder);
+    if (buffList) return buffList;
+
+    buffList = new BuffList('BuffList_' + holder.identifier);
+    buffList.initialize();
+    return holder.appendChild(buffList);
+  }
+
   get buffs(): Buff[] {
     return this.children.filter((child): child is Buff => child instanceof Buff);
   }

@@ -12,6 +12,11 @@
         <option *ngIf="!onlyCharacters" value="{{myPeer?.identifier}}">{{myPeer?.name}}（あなた）</option>
         <option *ngFor="let gameCharacter of gameCharacters" value="{{gameCharacter.identifier}}">{{gameCharacter.name}}
         </option>
+      </select>
+      <!-- 多部位コマは、どの部位として発言するかを選ぶ -->
+      <select *ngIf="0 < sendFromParts.length" style="width: 6em;" title="発言する部位" [(ngModel)]="sendFromPart">
+        <option *ngIf="!onlyCharacters" value="{{sendFrom}}">部位未選択</option>
+        <option *ngFor="let part of sendFromParts" value="{{part.identifier}}">{{part.partName}}</option>
       </select> ＞
       <select style="width: 10em;" [(ngModel)]="sendTo">
         <option value="">全員</option>

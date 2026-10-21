@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Buff } from '@udonarium/buff';
 import { BuffCommand } from '@udonarium/buff-command';
+import { CharacterUnit } from '@udonarium/character-part/character-unit';
 import { DataElement } from '@udonarium/data-element';
-import { GameCharacter } from '@udonarium/game-character';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { ResourceCommand } from '@udonarium/resource-command';
-import { getCharacter, getCharacterDataTags } from 'component/game-character-dashboard/character-tags';
+import { getUnitDataTags } from 'component/game-character-dashboard/character-tags';
 import { EventSystem } from '@udonarium/core/system';
 import { ContextMenuService } from 'service/context-menu.service';
 import { GameObjectInventoryService } from 'service/game-object-inventory.service';
@@ -38,11 +38,12 @@ export class BuffEditComponent implements OnInit, OnDestroy {
   buffRound: number | null = null;
   buffEffect: string = '';
 
-  get character(): GameCharacter | null { return getCharacter(this.characterIdentifier); }
+  /** バフの持ち主。単部位コマか、多部位コマの部位 */
+  get character(): CharacterUnit | null { return CharacterUnit.resolve(this.characterIdentifier); }
 
   /** 効果欄へ挿入できるリソースの候補。親よりライフサイクルが長いので都度導出する */
   get resourceOptions(): DataElement[] {
-    return ResourceCommand.expandTargets(getCharacterDataTags(this.inventoryService, this.characterIdentifier));
+    return ResourceCommand.expandTargets(getUnitDataTags(this.inventoryService, this.characterIdentifier));
   }
 
   get buff(): Buff | null {
@@ -83,7 +84,7 @@ export class BuffEditComponent implements OnInit, OnDestroy {
     Promise.resolve().then(() => {
       let character = this.character;
       let title = this.isNew ? 'バフ追加' : 'バフ編集';
-      this.panelService.title = character ? `${title} - ${character.name}` : title;
+      this.panelService.title = character ? `${title} - ${CharacterUnit.labelOf(character)}` : title;
     });
     // 他ピアやダッシュボードからの変更で対象が消えることがある。
     // バフの増減・書き換えは配下のノードの変化としてコマまで遡って通知される。

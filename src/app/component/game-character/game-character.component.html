@@ -12,7 +12,7 @@
       </div>
       <div class="pedestal-inner" [class.is-hidden-in-inventory]="gameCharacter.isHiddenInInventory"></div>
       <div *ngIf="isSelected" class="selected-highlight" [ngClass]="{'is-magnetic': isMagnetic}"></div>
-      <div *ngIf="isTargeted" class="outer-targeted-animation">
+      <div *ngIf="isTargeted" class="outer-targeted-animation" [class.is-partial]="isPartiallyTargeted">
         <div class="inner-targeted-animation"></div>
       </div>
       <div class="pedestal-outer"></div>
@@ -33,7 +33,7 @@
                     <div class="buff-collapse-hint">▼</div>
                     <div *ngFor="let buff of buffs" class="buff-item"
                       [title]="buff.effect ? buff.effect : ''">
-                      {{buff.buffName}} <span class="buff-round" [class.buff-expired]="buff.isExpired">{{buff.roundLabel}}</span>
+                      {{buffLabel(buff)}} <span class="buff-round" [class.buff-expired]="buff.isExpired">{{buff.roundLabel}}</span>
                     </div>
                   </div>
                 </div>

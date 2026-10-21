@@ -13,6 +13,11 @@ export interface PaletteVariable {
   value: string;
 }
 
+/** {名前} の引き先。DataElement はそのまま満たす。多部位コマの部位は部位→キャラ名の合成 */
+export interface VariableSource {
+  getFirstElementByName(name: string, option?: CompareOption): DataElement | null;
+}
+
 /** 展開結果と、ターゲット参照（t{}）を踏んだか */
 export interface PaletteExpansion {
   text: string;
@@ -57,9 +62,9 @@ export class ChatPalette extends ObjectNode {
    */
   private static readonly NOTATION = /([tTｔＴ]?)[{｛]\s*([^{}｛｝\^＾]+)([\^＾]*)\s*[}｝]/g;
 
-  evaluate(line: PaletteLine, extendVariables?: DataElement): string
-  evaluate(line: string, extendVariables?: DataElement, targetVariables?: DataElement): string
-  evaluate(line: any, extendVariables?: DataElement, targetVariables?: DataElement): string {
+  evaluate(line: PaletteLine, extendVariables?: VariableSource): string
+  evaluate(line: string, extendVariables?: VariableSource, targetVariables?: VariableSource): string
+  evaluate(line: any, extendVariables?: VariableSource, targetVariables?: VariableSource): string {
     return this.expand(typeof line === 'string' ? line : line.palette, extendVariables, targetVariables).text;
   }
 
@@ -69,7 +74,7 @@ export class ChatPalette extends ObjectNode {
    * 事前にテキストを走査して t{} の有無を調べる方式だと、パレット変数の中に隠れた
    * t{} を取りこぼす（変数は展開して初めて現れる）。展開そのものに報告させる。
    */
-  expand(line: string, extendVariables?: DataElement, targetVariables?: DataElement): PaletteExpansion {
+  expand(line: string, extendVariables?: VariableSource, targetVariables?: VariableSource): PaletteExpansion {
     let usedTarget = false;
     let evaluate: string = line;
 

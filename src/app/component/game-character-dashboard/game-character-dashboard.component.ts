@@ -1,5 +1,7 @@
 import { Component, ElementRef, NgZone, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { Buff } from '@udonarium/buff';
+import { CharacterPart } from '@udonarium/character-part/character-part';
+import { CharacterUnit } from '@udonarium/character-part/character-unit';
 import { ChatInputHistory, WritingNotifier } from '@udonarium/chat-input';
 import { ChatTab } from '@udonarium/chat-tab';
 import { DataElement } from '@udonarium/data-element';
@@ -15,7 +17,7 @@ import { ResourceCommand } from '@udonarium/resource-command';
 import { CharacterImageListComponent } from 'component/character-image-list/character-image-list.component';
 import { openDicebotHelp } from 'component/chat-input/dicebot-help';
 import { sendPaletteMessages } from 'component/chat-palette/palette-message';
-import { getCharacter, getCharacterBuffs, getCharacterDataTags } from 'component/game-character-dashboard/character-tags';
+import { getCharacter, getUnitBuffs, getUnitDataTags, resolveSelection } from 'component/game-character-dashboard/character-tags';
 import { InputHandler } from 'directive/input-handler';
 import { ChatMessageService } from 'service/chat-message.service';
 import { ContextMenuService } from 'service/context-menu.service';
@@ -53,12 +55,16 @@ export class GameCharacterDashboardComponent implements OnInit, AfterViewInit, O
 
   get gameCharacters(): GameCharacter[] { return this.inventoryService.visibleTableCharacters; }
 
+  /** 選択中の操作単位の identifier。単部位コマならコマ、多部位コマなら部位 */
   _selectedIdentifier: string = '';
   get selectedIdentifier(): string { return this._selectedIdentifier; }
   set selectedIdentifier(identifier: string) {
     this._selectedIdentifier = identifier;
+    this.lastCharacterIdentifier = getCharacter(identifier)?.identifier ?? '';
     this.updateSelection();
   }
+  /** 直近の選択のコマ（部位なら持ち主）。選んでいた部位が消えた後も、同じコマへ寄せられるように覚えておく */
+  private lastCharacterIdentifier: string = '';
 
   // 選択中コマのぶんだけ導出してエディタへ渡す。
   private _resourceOptions: DataElement[] = [];
@@ -76,13 +82,23 @@ export class GameCharacterDashboardComponent implements OnInit, AfterViewInit, O
   get chatTab(): ChatTab { return ObjectStore.instance.get<ChatTab>(this.chatTabidentifier); }
 
   // ===== チャット入力 =====
-  // 発言者は selectedIdentifier（＝一覧で選択中のコマ）がそのまま務める
+  // 発言者は selectedIdentifier（＝一覧で選択中のコマ・部位）がそのまま務める
   sendTo: string = '';
   private writing = new WritingNotifier();
   private history = new ChatInputHistory();
 
-  /** 一覧で選択中のコマ。選択が外れている・コマ以外を指しているなら null */
+  /** 一覧で選択中のコマ（部位なら持ち主）。選択が外れている・コマ以外を指しているなら null */
   get selectedCharacter(): GameCharacter | null { return getCharacter(this.selectedIdentifier); }
+  get selectedUnit(): CharacterUnit | null { return CharacterUnit.resolve(this.selectedIdentifier); }
+
+  /** チャット設定の発言者のプルダウンはコマ本体を並べる。選ぶと、そのコマの代表（多部位なら先頭の部位）を選ぶ */
+  get selectedCharacterIdentifier(): string { return this.selectedCharacter?.identifier ?? ''; }
+  set selectedCharacterIdentifier(identifier: string) {
+    let character = getCharacter(identifier);
+    this.selectedIdentifier = character ? CharacterUnit.primaryOf(character).identifier : '';
+  }
+  /** 選択中のコマの部位。単部位コマなら空 */
+  get selectedParts(): CharacterPart[] { return this.selectedCharacter?.parts ?? []; }
 
   get imageFile(): ImageFile {
     let character = this.selectedCharacter;
@@ -200,11 +216,14 @@ export class GameCharacterDashboardComponent implements OnInit, AfterViewInit, O
     this.elementRef.nativeElement.style.setProperty('--chat-pane-width', clamped + 'px');
   }
 
-  /** 選択中のコマがテーブルインベントリから外れていたら先頭に選び直す */
+  /**
+   * 選択中のコマ・部位がテーブルインベントリから外れていたら選び直す。
+   * 消えた部位や、多部位になったコマを指していたら、同じコマの先頭の部位へ寄せる
+   */
   private validateSelectedIdentifier() {
-    let characters = this.gameCharacters;
-    if (characters.some(character => character.identifier === this.selectedIdentifier)) return;
-    this.selectedIdentifier = 0 < characters.length ? characters[0].identifier : '';
+    let next = resolveSelection(this.gameCharacters, this.selectedIdentifier, this.lastCharacterIdentifier);
+    let identifier = next ? next.identifier : '';
+    if (identifier !== this.selectedIdentifier) this.selectedIdentifier = identifier;
   }
 
   ngOnDestroy() {
@@ -214,13 +233,13 @@ export class GameCharacterDashboardComponent implements OnInit, AfterViewInit, O
 
   /** エディタへ渡す選択中コマのデータを組み直す */
   private updateSelection() {
-    this._resourceOptions = ResourceCommand.expandTargets(getCharacterDataTags(this.inventoryService, this.selectedIdentifier));
+    this._resourceOptions = ResourceCommand.expandTargets(getUnitDataTags(this.inventoryService, this.selectedIdentifier));
     this.updateSelectedBuffs();
   }
 
   /** バフだけを組み直す。 */
   private updateSelectedBuffs() {
-    this._selectedBuffs = getCharacterBuffs(this.selectedIdentifier);
+    this._selectedBuffs = getUnitBuffs(this.selectedIdentifier);
   }
 
   isEditorVisible(name: EditorName): boolean {
@@ -258,7 +277,7 @@ export class GameCharacterDashboardComponent implements OnInit, AfterViewInit, O
     // ターゲット参照を含む発言は1体1通に分かれる
     let deps = { chatMessageService: this.chatMessageService, chatTab: this.chatTab };
     let envelope = { text: this.text, gameType: this.gameType, sendFrom: sendFrom, sendTo: this.sendTo };
-    sendPaletteMessages(deps, this.selectedCharacter, envelope, this.targetingService.getTargets());
+    sendPaletteMessages(deps, this.selectedUnit, envelope, this.targetingService.getTargets());
 
     this.history.push(this.text);
     this.text = '';

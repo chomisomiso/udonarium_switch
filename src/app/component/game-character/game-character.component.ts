@@ -9,6 +9,8 @@ import {
   OnDestroy
 } from '@angular/core';
 import { Buff } from '@udonarium/buff';
+import { CharacterPart } from '@udonarium/character-part/character-part';
+import { CharacterUnit } from '@udonarium/character-part/character-unit';
 import { ImageFile } from '@udonarium/core/file-storage/image-file';
 import { EventSystem, Network } from '@udonarium/core/system';
 import { MathUtil } from '@udonarium/core/system/util/math-util';
@@ -73,9 +75,16 @@ export class GameCharacterComponent implements OnChanges, OnDestroy {
   get selectionState(): SelectionState { return this.selectionService.state(this.gameCharacter); }
   get isSelected(): boolean { return this.selectionState !== SelectionState.NONE; }
   get isMagnetic(): boolean { return this.selectionState === SelectionState.MAGNETIC; }
-  get isTargeted(): boolean { return this.targetingService.has(this.gameCharacter); }
+  get isTargeted(): boolean { return this.targetingService.stateOf(this.gameCharacter) !== 'none'; }
+  get isPartiallyTargeted(): boolean { return this.targetingService.stateOf(this.gameCharacter) === 'partial'; }
 
-  get buffs(): Buff[] { return this.gameCharacter.buffs; }
+  /** 多部位コマは全部位のバフをまとめて出す */
+  get buffs(): Buff[] { return CharacterUnit.unitsOf(this.gameCharacter).flatMap(unit => unit.buffs); }
+  /** 部位のバフは部位名を添える */
+  buffLabel(buff: Buff): string {
+    let unit = buff.parent?.parent;
+    return unit instanceof CharacterPart ? `${unit.partName}:${buff.buffName}` : buff.buffName;
+  }
   get hasExpiredBuffs(): boolean { return this.buffs.some(buff => buff.isExpired); }
   buffExpanded: boolean = false;
   toggleBuffExpanded(): void { this.buffExpanded = !this.buffExpanded; }

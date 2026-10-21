@@ -1,8 +1,7 @@
+import { CharacterUnit } from './character-part/character-unit';
 import { ChatMessage } from './chat-message';
 import { ChatCommandHandler } from './chat-command-handler';
-import { ObjectStore } from './core/synchronize-object/object-store';
 import { DataElement } from './data-element';
-import { GameCharacter } from './game-character';
 import { ResourceCommand } from './resource-command';
 import { DiceBot } from '@udonarium/dice-bot';
 
@@ -33,6 +32,11 @@ export class ResourceCommandHandler extends ChatCommandHandler {
 
     let [selfCommands, targetCommands] = ResourceCommand.parse(chatMessage.text);
 
+    if (0 < selfCommands.length && CharacterUnit.isMultiPartCharacter(CharacterUnit.resolve(chatMessage.characterId))) {
+      warnings.push(CharacterUnit.PART_NOT_SELECTED_WARNING);
+      selfCommands = [];
+    }
+
     let result  = await this.executeCommands(selfCommands, chatMessage.tag, chatMessage.characterId);
     if (result) {
       text += result.text;
@@ -45,13 +49,13 @@ export class ResourceCommandHandler extends ChatCommandHandler {
       if (targetIdentifiers.length < 1) warnings.push('ターゲットが未選択です');
 
       for (let targetIdentifier of targetIdentifiers) {
-        let target = ObjectStore.instance.get<GameCharacter>(targetIdentifier);
-        if (!(target instanceof GameCharacter)) continue;
+        let target = CharacterUnit.resolve(targetIdentifier);
+        if (!target) continue;
 
         result = await this.executeCommands(targetCommands, chatMessage.tag, target.identifier);
         if (result) {
           // 警告はコマンド自体の不備なのでまとめて落とす
-          if (result.text !== '') text += `[${target.name}]\n` + result.text;
+          if (result.text !== '') text += `[${CharacterUnit.labelOf(target)}]\n` + result.text;
           Array.prototype.push.apply(warnings, result.warnings);
           if (id === '') id = result.id.split(':')[0];
         }
@@ -88,16 +92,16 @@ export class ResourceCommandHandler extends ChatCommandHandler {
    * 指定されたコマンド群を実行する
    * @param commands コマンド配列
    * @param gameType ダイスボット名
-   * @param characterId 操作対象キャラクターのIdentifier
-   * @returns キャラクターが存在しなければ null
+   * @param characterId 操作対象のIdentifier。キャラクターか、多部位コマの部位
+   * @returns 操作対象が存在しなければ null
    */
   async executeCommands(commands: ResourceCommand[], gameType: string, characterId: string): Promise<ResultList | null> {
     let resultMessage: string = '';
     let warnings: string[] = [];
     let id: string = '';
 
-    let character = ObjectStore.instance.get<GameCharacter>(characterId);
-    if (!(character instanceof GameCharacter)) { console.log('キャラクターが存在しません'); return null; }
+    let character = CharacterUnit.resolve(characterId);
+    if (!character) { console.log('キャラクターが存在しません'); return null; }
 
     for (let command of commands) {
       let res = command.resource;
@@ -106,8 +110,8 @@ export class ResourceCommandHandler extends ChatCommandHandler {
       let optZ = command.enableOptionZ;
       let optMax = command.enableOptionMax;
 
-      let resourceElement: DataElement = character.detailDataElement.getFirstElementByName(res);
-      if (!resourceElement) { console.log('該当リソースを持っていません： ' + character.name + ' - ' + command.resource); continue; }
+      let resourceElement: DataElement = character.findDataElement(res);
+      if (!resourceElement) { console.log('該当リソースを持っていません： ' + CharacterUnit.labelOf(character) + ' - ' + command.resource); continue; }
       
       if (ope == '>') {
         if (character.setDataString(res, command.command)) resultMessage += `>${res}: >${command.command}\n`;

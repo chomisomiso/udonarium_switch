@@ -8,7 +8,6 @@ import { BuffEditComponent } from 'component/buff-edit/buff-edit.component';
 import { CardStackListComponent } from 'component/card-stack-list/card-stack-list.component';
 import { CardStackComponent } from 'component/card-stack/card-stack.component';
 import { CardComponent } from 'component/card/card.component';
-import { CharacterBuffListComponent } from 'component/character-buff-list/character-buff-list.component';
 import { CharacterImageListComponent } from 'component/character-image-list/character-image-list.component';
 import { ChatInputComponent } from 'component/chat-input/chat-input.component';
 import { ChatMessageComponent } from 'component/chat-message/chat-message.component';
@@ -23,6 +22,8 @@ import { DiceBotSelectComponent } from 'component/dicebot-select/dicebot-select.
 import { FileSelecterComponent } from 'component/file-selecter/file-selecter.component';
 import { FileStorageComponent } from 'component/file-storage/file-storage.component';
 import { GameCharacterSheetComponent } from 'component/game-character-sheet/game-character-sheet.component';
+import { CharacterBuffListComponent } from 'component/game-character-sheet/character-buff-list/character-buff-list.component';
+import { CharacterPartSheetComponent } from 'component/game-character-sheet/character-part-sheet/character-part-sheet.component';
 import { GameCharacterComponent } from 'component/game-character/game-character.component';
 import { GameDataElementComponent } from 'component/game-data-element/game-data-element.component';
 import { GameObjectInventoryComponent } from 'component/game-object-inventory/game-object-inventory.component';
@@ -79,6 +80,7 @@ import { AppComponent } from './app.component';
     CardStackListComponent,
     CharacterBuffListComponent,
     CharacterImageListComponent,
+    CharacterPartSheetComponent,
     ChatMessageComponent,
     ChatPaletteComponent,
     ChatTabComponent,

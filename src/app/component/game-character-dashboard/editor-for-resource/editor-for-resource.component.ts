@@ -1,8 +1,8 @@
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { CharacterUnit } from '@udonarium/character-part/character-unit';
 import { ChatTab } from '@udonarium/chat-tab';
 import { EventSystem } from '@udonarium/core/system';
 import { DataElement } from '@udonarium/data-element';
-import { GameCharacter } from '@udonarium/game-character';
 import { ResourceCommand } from '@udonarium/resource-command';
 import { getCharacter } from 'component/game-character-dashboard/character-tags';
 import { sendPaletteMessages } from 'component/chat-palette/palette-message';
@@ -75,7 +75,7 @@ export class EditorForResourceComponent implements OnInit, OnDestroy {
 
   get command(): string { return this.makeResourceCommand() ?? ''; }
 
-  get targetCharacters(): ReadonlySet<GameCharacter> {
+  get targetCharacters(): ReadonlySet<CharacterUnit> {
     return this.targetingService.getTargets();
   }
 
@@ -134,7 +134,7 @@ export class EditorForResourceComponent implements OnInit, OnDestroy {
     // ターゲット参照を含む発言をターゲットごとに分けるのも、この経路が持つ
     sendPaletteMessages(
       { chatMessageService: this.chatMessageService, chatTab: this.chatTab },
-      getCharacter(this.selectedIdentifier),
+      CharacterUnit.resolve(this.selectedIdentifier),
       { text: command, gameType: this.gameType, sendFrom: this.selectedIdentifier, sendTo: '' },
       this.targetCharacters);
   }

@@ -81,10 +81,15 @@
 .character-card:hover .target-badge {
   display: inherit;
 }
-.target-badge.on {
+.target-badge.on,
+.target-badge.partial {
   display: inherit;
   border-color: #ff2a00;
   color: #ff2a00;
+}
+/* 多部位コマで一部の部位だけがターゲット中 */
+.target-badge.partial {
+  border-style: dashed;
 }
 .target-badge:hover {
   background-color: #666;
@@ -126,6 +131,52 @@
 /* 下に other-data-row が回り込んだときの行間 */
 .resources-row {
   margin-bottom: 5px;
+}
+
+/* ========== カード: 部位の行（多部位コマ） ========== */
+/* 選択中の部位を持つカード。選択の目印は部位の行に付ける */
+.character-card.has-selected-part {
+  border-left-width: 4px;
+  padding-left: 5px;
+}
+.part-row {
+  margin: 3px 0 0 6px;
+  padding: 1px 4px 3px 4px;
+  border: 1px solid rgba(85, 85, 85, 0.4);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.part-row:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+.part-row.main-selected {
+  border-left: 4px solid #555;
+  background: rgba(255, 244, 232, 0.9);
+}
+.part-row.main-selected .part-name::before {
+  content: "▶";
+}
+.part-row.targeting {
+  border-color: #ff6a4d;
+  box-shadow: inset 0 0 0 1px #ff6a4d;
+}
+.part-header {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  height: 16px;
+  margin-bottom: 2px;
+}
+.part-name {
+  align-self: center;
+  font-size: 11px;
+  font-weight: bold;
+}
+/* 部位の行の中は、カード左端からの字下げを持たない */
+.part-row .resources-row,
+.part-row .other-data-row,
+.part-row .buff-row {
+  margin-left: 0;
 }
 
 /* ========== カード: タグ ========== */

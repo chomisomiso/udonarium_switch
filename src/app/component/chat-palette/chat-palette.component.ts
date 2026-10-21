@@ -1,4 +1,5 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { CharacterUnit } from '@udonarium/character-part/character-unit';
 import { ChatPalette } from '@udonarium/chat-palette';
 import { ChatTab } from '@udonarium/chat-tab';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
@@ -132,7 +133,8 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
     if (!this.chatTab) return;
 
     let deps = { chatMessageService: this.chatMessageService, chatTab: this.chatTab };
-    sendPaletteMessages(deps, this.character, value, this.targetingService.getTargets());
+    // 多部位コマなら chat-input が選んだ部位の identifier が来る
+    sendPaletteMessages(deps, CharacterUnit.resolve(value.sendFrom) ?? this.character, value, this.targetingService.getTargets());
   }
 
   resetPletteSelect() {

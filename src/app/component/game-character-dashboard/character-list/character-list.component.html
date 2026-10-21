@@ -5,14 +5,17 @@
   (mousedown)="onCardMouseDown($event)"
   (contextmenu)="onContextMenu($event, gameCharacter)"
   [class.main-selected]="gameCharacter.identifier === selectedIdentifier"
-  [class.targeting]="isTargeting(gameCharacter)"
+  [class.has-selected-part]="hasSelectedPart(gameCharacter)"
+  [class.targeting]="targetState(gameCharacter) !== 'none'"
   class="character-card">
   <div class="header-row">
     <span class="character-name">{{ gameCharacter.name }}</span>
+    <!-- 多部位コマのヘッダは全部位の一括切り替え。部位で割れていれば全部外す -->
     <span class="target-badge"
-      [class.on]="isTargeting(gameCharacter)"
-      [title]="isTargeting(gameCharacter) ? 'ターゲットから外す' : 'ターゲットにする'"
-      (click)="toggleTarget(gameCharacter); $event.stopPropagation()">{{ isTargeting(gameCharacter) ? '☑ Target' : '☐ Target' }}</span>
+      [class.on]="targetState(gameCharacter) === 'all'"
+      [class.partial]="targetState(gameCharacter) === 'partial'"
+      [title]="targetState(gameCharacter) === 'none' ? 'ターゲットにする' : 'ターゲットから外す'"
+      (click)="toggleCharacterTarget(gameCharacter); $event.stopPropagation()">{{ targetBadgeLabel(gameCharacter) }}</span>
   </div>
   <div class="card-body">
     <div class="character-imagebox">
@@ -20,56 +23,86 @@
         [imageCrop]="gameCharacter.imageCrop" imageCropCovers />
     </div>
     <div class="card-data">
-      <div class="data-rows">
-        <div class="resources-row">
-          <div
-            *ngFor="let tag of getCharacterResourceTags(gameCharacter.identifier)"
-            class="tag number-resource">
-            <span class="tag-name">{{ tag.name }}</span>
-            <span class="tag-resource-box">
-              <span style="display: flex; flex-direction: row;">
-                <!-- 素の text だと `あ` や `1 2` がそのまま同期され、以後の計算が NaN になる（インベントリ側と揃える） -->
-                <input class="tag-resource input no-spinner" type="number" [(ngModel)]="tag.currentValue" (click)="$event.stopPropagation()" />
-                <span>/{{ tag.value }}</span>
-              </span>
-              <meter class="resource-bar" [value]="tag.currentValue" [max]="tag.value" [style.--meter-width]="getResourceBarWidth(tag)"></meter>
-            </span>
-          </div>
+      <!-- コマ自身のタグ。多部位コマでは部位を名乗らない共有のタグで、一度だけ出す -->
+      <ng-container *ngTemplateOutlet="dataRows; context: {
+        $implicit: gameCharacter,
+        resources: getCharacterResourceTags(gameCharacter.identifier),
+        others: getCharacterOtherDataTags(gameCharacter.identifier)
+      }"></ng-container>
+      <!-- 多部位コマは部位ごとに行を分ける。選択・ターゲットは行単位 -->
+      <div
+        *ngFor="let part of gameCharacter.parts; trackBy: trackByIdentifier"
+        (click)="onPartClick($event, part)"
+        [class.main-selected]="part.identifier === selectedIdentifier"
+        [class.targeting]="isTargeting(part)"
+        class="part-row">
+        <div class="part-header">
+          <span class="part-name">{{ part.partName }}</span>
+          <span class="target-badge"
+            [class.on]="isTargeting(part)"
+            [title]="isTargeting(part) ? 'ターゲットから外す' : 'ターゲットにする'"
+            (click)="toggleTarget(part); $event.stopPropagation()">{{ isTargeting(part) ? '☑ Target' : '☐ Target' }}</span>
         </div>
-        <div class="other-data-row">
-          <div
-            *ngFor="let tag of getCharacterOtherDataTags(gameCharacter.identifier)"
-            class="tag other-data">
-            <span class="tag-name">{{ tag.name }}</span>
-            <span class="hidden-spacer" style="font-weight: bold;">{{tag.value}}</span>
-            <input class="tag-value input" size="1" [(ngModel)]="tag.value" (click)="$event.stopPropagation()" />
-          </div>
-        </div>
+        <ng-container *ngTemplateOutlet="dataRows; context: {
+          $implicit: part,
+          resources: getPartResourceTags(part),
+          others: getPartOtherDataTags(part)
+        }"></ng-container>
       </div>
-    <!-- buffs は毎回配列を作り直すので、1カードにつき1回だけ評価する -->
-    <ng-container *ngIf="getCharacterBuffs(gameCharacter.identifier) as buffs">
-      <div class="buff-row" *ngIf="0 < buffs.length">
-        <div class="buff-expanded">
-          <span class="buff-badge"
-            *ngIf="!isBuffExpanded(gameCharacter.identifier)"
-            [title]="getBuffSummaryTitle(buffs)"
-            (click)="toggleBuffExpanded(gameCharacter.identifier); $event.stopPropagation()">
-            {{'▽バフx' + buffs.length + '...' }}
-          </span>
-          <span class="buff-badge expanded" title="折りたたむ"
-            *ngIf="isBuffExpanded(gameCharacter.identifier)"
-            (click)="toggleBuffExpanded(gameCharacter.identifier); $event.stopPropagation()">
-            ▶
-          </span>
-          <ng-container *ngIf="isBuffExpanded(gameCharacter.identifier)">
-            <div *ngFor="let buff of buffs; trackBy: trackByBuff" class="buff-tag" [title]="buff.effect" (click)="openBuffEdit(gameCharacter, buff, $event)">
-              <span class="buff-name">{{ buff.buffName }}</span>
-              <span class="buff-round">{{ buff.roundLabel }}</span>
-            </div>
-          </ng-container>
-        </div>
-      </div>
-    </ng-container>
     </div>
   </div>
 </div>
+
+<!-- タグとバフの行。単部位コマ・共有タグ・部位で使い回す -->
+<ng-template #dataRows let-unit let-resources="resources" let-others="others">
+  <div class="data-rows" *ngIf="0 < resources.length || 0 < others.length">
+    <div class="resources-row">
+      <div
+        *ngFor="let tag of resources"
+        class="tag number-resource">
+        <span class="tag-name">{{ tag.name }}</span>
+        <span class="tag-resource-box">
+          <span style="display: flex; flex-direction: row;">
+            <!-- 素の text だと `あ` や `1 2` がそのまま同期され、以後の計算が NaN になる（インベントリ側と揃える） -->
+            <input class="tag-resource input no-spinner" type="number" [(ngModel)]="tag.currentValue" (click)="$event.stopPropagation()" />
+            <span>/{{ tag.value }}</span>
+          </span>
+          <meter class="resource-bar" [value]="tag.currentValue" [max]="tag.value" [style.--meter-width]="getResourceBarWidth(tag)"></meter>
+        </span>
+      </div>
+    </div>
+    <div class="other-data-row">
+      <div
+        *ngFor="let tag of others"
+        class="tag other-data">
+        <span class="tag-name">{{ tag.name }}</span>
+        <span class="hidden-spacer" style="font-weight: bold;">{{tag.value}}</span>
+        <input class="tag-value input" size="1" [(ngModel)]="tag.value" (click)="$event.stopPropagation()" />
+      </div>
+    </div>
+  </div>
+  <!-- buffs は毎回配列を作り直すので、1行につき1回だけ評価する -->
+  <ng-container *ngIf="getUnitBuffs(unit.identifier) as buffs">
+    <div class="buff-row" *ngIf="0 < buffs.length">
+      <div class="buff-expanded">
+        <span class="buff-badge"
+          *ngIf="!isBuffExpanded(unit.identifier)"
+          [title]="getBuffSummaryTitle(buffs)"
+          (click)="toggleBuffExpanded(unit.identifier); $event.stopPropagation()">
+          {{'▽バフx' + buffs.length + '...' }}
+        </span>
+        <span class="buff-badge expanded" title="折りたたむ"
+          *ngIf="isBuffExpanded(unit.identifier)"
+          (click)="toggleBuffExpanded(unit.identifier); $event.stopPropagation()">
+          ▶
+        </span>
+        <ng-container *ngIf="isBuffExpanded(unit.identifier)">
+          <div *ngFor="let buff of buffs; trackBy: trackByBuff" class="buff-tag" [title]="buff.effect" (click)="openBuffEdit(unit, buff, $event)">
+            <span class="buff-name">{{ buff.buffName }}</span>
+            <span class="buff-round">{{ buff.roundLabel }}</span>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>

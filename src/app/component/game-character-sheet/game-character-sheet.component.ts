@@ -2,6 +2,7 @@ import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 
 import { EventSystem, Network } from '@udonarium/core/system';
 import { DataElement } from '@udonarium/data-element';
+import { GameCharacter } from '@udonarium/game-character';
 import { PresetSound, SoundEffect } from '@udonarium/sound-effect';
 import { TabletopObject } from '@udonarium/tabletop-object';
 
@@ -21,8 +22,8 @@ export class GameCharacterSheetComponent implements OnInit, OnDestroy {
   @Input() tabletopObject: TabletopObject = null;
   isEdit: boolean = false;
 
-  /** キャラクターだけは複数画像を持てるため、画像まわりの UI を出し分ける */
-  get isCharacter(): boolean { return this.tabletopObject?.aliasName === 'character'; }
+  /** キャラクター専用の UI（画像一覧・バフ・部位）の出し分けに使う。キャラ以外なら null */
+  get character(): GameCharacter | null { return this.tabletopObject instanceof GameCharacter ? this.tabletopObject : null; }
 
   networkService = Network;
 

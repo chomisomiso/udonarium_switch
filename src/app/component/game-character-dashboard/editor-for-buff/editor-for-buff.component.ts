@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, ElementRef, ViewChild, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Buff } from '@udonarium/buff';
 import { BuffCommand, BuffCommandTarget } from '@udonarium/buff-command';
-import { GameCharacter } from '@udonarium/game-character';
+import { CharacterUnit } from '@udonarium/character-part/character-unit';
 import { DataElement } from '@udonarium/data-element';
 import { ChatTab } from '@udonarium/chat-tab';
 import { ChatMessageService } from 'service/chat-message.service';
@@ -35,7 +35,7 @@ export class EditorForBuffComponent {
   buffRound: number | null = null;
   buffEffect: string = '';
 
-  get targetCharacters(): ReadonlySet<GameCharacter> {
+  get targetCharacters(): ReadonlySet<CharacterUnit> {
     return this.targetingService.getTargets();
   }
 

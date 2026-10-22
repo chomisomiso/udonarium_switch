@@ -1,15 +1,21 @@
+import { CharacterPart } from '@udonarium/character-part/character-part';
 import { DataElement } from '@udonarium/data-element';
 import { GameCharacter } from '@udonarium/game-character';
 import {
   calcResourceBarWidth,
   calcResourceMaxValues,
   CharacterTagsSource,
-  getCharacterBuffs,
+  getCharacter,
   getCharacterDataTags,
   getCharacterOtherDataTags,
   getCharacterResourceTags,
+  getPartDataTags,
+  getUnitBuffs,
+  getUnitDataTags,
+  resolveSelection,
 } from 'component/game-character-dashboard/character-tags';
 import { resetGameObjects } from 'testing/game-object-testing';
+import { makeMultiPartCharacter } from 'testing/multi-part-testing';
 
 describe('character-tags', () => {
   afterEach(resetGameObjects);
@@ -94,12 +100,12 @@ describe('character-tags', () => {
     });
   });
 
-  describe('getCharacterBuffs', () => {
+  describe('getUnitBuffs', () => {
     it('コマの持つバフを返す', () => {
       let character = GameCharacter.create('ゴブリン', 1, '');
       character.ensureBuffList().add('加護', 3, 'HP+2');
 
-      let buffs = getCharacterBuffs(character.identifier);
+      let buffs = getUnitBuffs(character.identifier);
 
       expect(buffs.length).toBe(1);
       expect(buffs[0].buffName).toBe('加護');
@@ -108,18 +114,18 @@ describe('character-tags', () => {
     it('バフを持たないコマは空配列', () => {
       let character = GameCharacter.create('ゴブリン', 1, '');
 
-      expect(getCharacterBuffs(character.identifier)).toEqual([]);
+      expect(getUnitBuffs(character.identifier)).toEqual([]);
     });
 
     it('コマが見つからなければ空配列', () => {
-      expect(getCharacterBuffs('unknown')).toEqual([]);
+      expect(getUnitBuffs('unknown')).toEqual([]);
     });
   });
 
   describe('calcResourceMaxValues', () => {
-    /** identifier だけ見られるので、テーブル上のコマは作らずに済ませる */
+    /** identifier と部位だけ見られるので、テーブル上のコマは作らずに済ませる。部位は下の「多部位コマ」で見る */
     function character(identifier: string): GameCharacter {
-      return { identifier } as GameCharacter;
+      return { identifier, parts: [] } as unknown as GameCharacter;
     }
 
     it('同名リソースは全コマ中の最大値を採る', () => {
@@ -185,6 +191,96 @@ describe('character-tags', () => {
 
     it('スケールが 0 なら 100%（0 除算を避ける）', () => {
       expect(calcResourceBarWidth(resource('HP', 20), { 'HP': 0 })).toBe('100%');
+    });
+  });
+
+  describe('多部位コマ', () => {
+    const DATA_TAGS = ['HP', '/', '防護', '弱点'];
+
+    it('getPartDataTags はタグ設定の順に、改行マーカーを飛ばして引く', () => {
+      let upper = makeMultiPartCharacter().parts[0];
+
+      expect(getPartDataTags(DATA_TAGS, upper, false).map(tag => tag.name)).toEqual(['HP', '防護', '弱点']);
+    });
+
+    it('getPartDataTags の ownOnly は共有の要素を含めない', () => {
+      let upper = makeMultiPartCharacter().parts[0];
+
+      expect(getPartDataTags(DATA_TAGS, upper, true).map(tag => tag.name)).toEqual(['HP', '防護']);
+    });
+
+    it('getUnitDataTags は部位なら部位→共有の順に引く', () => {
+      let upper = makeMultiPartCharacter().parts[0];
+      let source = { ...makeSource({}), dataTags: DATA_TAGS };
+
+      expect(getUnitDataTags(source, upper.identifier)).toEqual(getPartDataTags(DATA_TAGS, upper, false));
+    });
+
+    it('getCharacter は部位から持ち主を返す', () => {
+      let character = makeMultiPartCharacter();
+
+      expect(getCharacter(character.parts[1].identifier)).toBe(character);
+    });
+
+    it('getUnitBuffs は部位のバフを返す', () => {
+      let upper = makeMultiPartCharacter().parts[0];
+      upper.ensureBuffList().add('かばう', 1, '');
+
+      expect(getUnitBuffs(upper.identifier).map(buff => buff.buffName)).toEqual(['かばう']);
+    });
+
+    it('calcResourceMaxValues は部位のリソースも集める', () => {
+      let character = makeMultiPartCharacter();
+      let source = { ...makeSource({ [character.identifier]: [] }), dataTags: DATA_TAGS };
+
+      expect(calcResourceMaxValues(source, [character])).toEqual({ 'HP': 55 });
+    });
+  });
+
+  describe('resolveSelection', () => {
+    let multi: GameCharacter;
+    let goblin: GameCharacter;
+
+    beforeEach(() => {
+      multi = makeMultiPartCharacter();
+      goblin = GameCharacter.create('ゴブリン', 1, '');
+    });
+
+    it('一覧にある選択はそのまま', () => {
+      let lower = multi.parts[1];
+
+      expect(resolveSelection([goblin, multi], lower.identifier, multi.identifier)).toBe(lower);
+      expect(resolveSelection([goblin, multi], goblin.identifier, goblin.identifier)).toBe(goblin);
+    });
+
+    // 削除の通知が届く時点で部位は ObjectStore から消えていて、identifier から持ち主を引けない
+    it('選んでいた部位が消えたら、覚えておいた持ち主の先頭の部位', () => {
+      let [upper, lower] = multi.parts;
+      lower.destroy();
+
+      expect(resolveSelection([goblin, multi], lower.identifier, multi.identifier)).toBe(upper);
+    });
+
+    it('部位を全部消して単部位に戻ったら、コマ本体', () => {
+      let lower = multi.parts[1];
+      multi.parts.forEach(part => part.destroy());
+
+      expect(resolveSelection([goblin, multi], lower.identifier, multi.identifier)).toBe(multi);
+    });
+
+    it('本体を選んでいたコマに部位が足されたら、先頭の部位', () => {
+      let part = goblin.appendChild(CharacterPart.create('胴体'));
+
+      expect(resolveSelection([goblin, multi], goblin.identifier, goblin.identifier)).toBe(part);
+    });
+
+    it('持ち主が一覧に無ければ、一覧の先頭', () => {
+      expect(resolveSelection([multi, goblin], '', '')).toBe(multi.parts[0]);
+      expect(resolveSelection([multi], goblin.identifier, goblin.identifier)).toBe(multi.parts[0]);
+    });
+
+    it('一覧が空なら null', () => {
+      expect(resolveSelection([], goblin.identifier, goblin.identifier)).toBeNull();
     });
   });
 });

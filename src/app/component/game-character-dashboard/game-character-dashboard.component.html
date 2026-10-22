@@ -23,13 +23,13 @@
           </div>
           <!-- title の有無で切り替え可能かを表す。CSS 側もこの属性を見ている -->
           <div class="chat-character-imagebox"
-            [attr.title]="imageSwitchableCharacter ? 'クリックでコマ画像を切り替え' : null"
+            [attr.title]="imageSwitchTitle"
             (click)="selectImage()">
             <img *ngIf="0 < imageFile.url.length" [src]="imageFile.url | safe: 'resourceUrl'" [imageCrop]="imageCrop"
             imageCropCovers />
           </div>
           <ng-container *ngTemplateOutlet="chatSettings"></ng-container>
-          <button class="help-button" (click)="showDicebotHelp()" [disabled]="diceBotInfos.length < 1">?</button>
+          <button class="help-button" (click)="showDicebotHelp()" [disabled]="diceBotInfos.length < 1" title="ダイスボットの説明">?</button>
         </div>
         <div class="editor-slot" [ngClass]="'mode-' + dashboardMode">
           <ng-container *ngTemplateOutlet="control"></ng-container>
@@ -53,11 +53,11 @@
   <!-- form の外の同名ラジオはドキュメント全体で1グループになる。
        パネルを複数開いても干渉しないよう form で括る -->
   <form class="mode-switcher">
-    <label title="column">
+    <label title="エディタを下へ">
       <input type="radio" name="dashboardMode" value="column" [(ngModel)]="dashboardMode" />
       <span class="material-icons">horizontal_split</span>
     </label>
-    <label title="row">
+    <label title="エディタを左へ">
       <input type="radio" name="dashboardMode" value="row" [(ngModel)]="dashboardMode" />
       <span class="material-icons" style="transform: rotate(0.5turn);">vertical_split</span>
     </label>
@@ -95,7 +95,7 @@
     </label>
     <div class="spacer editor-tabs-spacer"></div>
   </form>
-  <div class="editor-header" [title]="isEditorCollapsed('resource')?'クリックで展開':'クリックで折りたたむ'" *ngIf="dashboardMode === 'row'" (click)="toggleEditor('resource')">
+  <div class="editor-header" [title]="editorHeaderTitle('resource')" *ngIf="dashboardMode === 'row'" (click)="toggleEditor('resource')">
     {{ isEditorCollapsed('resource') ? '▶' : '▼' }} リソースエディタ
   </div>
   <editor-for-resource *ngIf="isEditorVisible('resource')"
@@ -104,7 +104,7 @@
     [chatTab]="chatTab"
     (commandCopy)="appendToText($event)"
   ></editor-for-resource>
-  <div class="editor-header" [title]="isEditorCollapsed('buff')?'クリックで展開':'クリックで折りたたむ'" *ngIf="dashboardMode === 'row'" (click)="toggleEditor('buff')">
+  <div class="editor-header" [title]="editorHeaderTitle('buff')" *ngIf="dashboardMode === 'row'" (click)="toggleEditor('buff')">
     {{ isEditorCollapsed('buff') ? '▶' : '▼' }} バフエディタ
   </div>
   <editor-for-buff *ngIf="isEditorVisible('buff')"
@@ -114,7 +114,7 @@
     [chatTab]="chatTab"
     (commandCopy)="appendToText($event)"
   ></editor-for-buff>
-  <div class="editor-header" [title]="isEditorCollapsed('palette')?'クリックで展開':'クリックで折りたたむ'" *ngIf="dashboardMode === 'row'" (click)="toggleEditor('palette')">
+  <div class="editor-header" [title]="editorHeaderTitle('palette')" *ngIf="dashboardMode === 'row'" (click)="toggleEditor('palette')">
     {{ isEditorCollapsed('palette') ? '▶' : '▼' }} チャットパレット
   </div>
   <editor-for-palette *ngIf="isEditorVisible('palette')"
@@ -134,9 +134,15 @@
 </ng-template>
 <ng-template #chatSettings>
   <div class="select send-from">
-    <select [(ngModel)]="selectedIdentifier">
+    <select [(ngModel)]="selectedCharacterIdentifier">
       <option *ngFor="let gameCharacter of gameCharacters" value="{{gameCharacter.identifier}}">{{gameCharacter.name}}
       </option>
+    </select>
+  </div>
+  <!-- 多部位コマは、どの部位として発言するかを選ぶ。一覧で部位の行を選ぶのと同じ -->
+  <div class="select send-part" *ngIf="0 < selectedParts.length">
+    <select title="発言する部位" [(ngModel)]="selectedIdentifier">
+      <option *ngFor="let part of selectedParts" value="{{part.identifier}}">{{part.partName}}</option>
     </select>
   </div>
   <div class="select send-to"><span style="flex: 0 0 auto; font-size: 0.8em;">　＞</span>

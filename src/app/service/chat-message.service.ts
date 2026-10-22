@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 
+import { CharacterUnit } from '@udonarium/character-part/character-unit';
 import { ChatMessage, ChatMessageContext } from '@udonarium/chat-message';
 import { ChatTab } from '@udonarium/chat-tab';
 import { ChatTabList } from '@udonarium/chat-tab-list';
+import { GameObject } from '@udonarium/core/synchronize-object/game-object';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
 import { Network } from '@udonarium/core/system';
 import { GameCharacter } from '@udonarium/game-character';
@@ -80,11 +82,12 @@ export class ChatMessageService {
 
   /**
    * @param sendTo ひそひそ話の宛先。宛先を指定しないなら空文字（chat-input が流す既定値と同じ）
+   * @param sendFrom 発言者。多部位コマの部位も来る（characterId にそのまま載り、自分向けコマンドの対象になる）
    * @param targets このメッセージが作用するターゲット。
    *   t: / t& のリソース操作はここに載せた全員へ適用される。現在のターゲット選択に
    *   効かせたい呼び出し元は GameCharacterTargetingService.getTargets() を渡すこと。
    */
-  sendMessage(chatTab: ChatTab, text: string, gameType: string, sendFrom: string, sendTo: string, targets: Iterable<GameCharacter>): ChatMessage {
+  sendMessage(chatTab: ChatTab, text: string, gameType: string, sendFrom: string, sendTo: string, targets: Iterable<CharacterUnit>): ChatMessage {
     let targetIdentifiers = Array.from(targets).map(t => t.identifier).join(' ');
 
     let chatMessage: ChatMessageContext = {
@@ -128,10 +131,10 @@ export class ChatMessageService {
   }
 
   private findObjectName(identifier: string): string {
+    let unit = CharacterUnit.resolve(identifier);
+    if (unit) return CharacterUnit.labelOf(unit);
     let object = ObjectStore.instance.get(identifier);
-    if (object instanceof GameCharacter) {
-      return object.name;
-    } else if (object instanceof PeerCursor) {
+    if (object instanceof PeerCursor) {
       return object.name;
     }
     return identifier;
@@ -145,8 +148,9 @@ export class ChatMessageService {
     return sendFromName + ' > ' + sendToName;
   }
 
+  /** 部位の発言は持ち主のコマの画像で出す */
   private findImageIdentifier(identifier: string): string {
-    let object = ObjectStore.instance.get(identifier);
+    let object: GameObject = CharacterUnit.resolveCharacter(identifier) ?? ObjectStore.instance.get(identifier);
     if (object instanceof GameCharacter) {
       return object.imageFile ? object.imageFile.identifier : '';
     } else if (object instanceof PeerCursor) {
@@ -157,8 +161,8 @@ export class ChatMessageService {
 
   /** 発言時点の表示調整を焼き込む。既定値なら空文字を返し、ChatTab.addMessage が属性ごと省く */
   private findImageCrop(identifier: string): string {
-    let object = ObjectStore.instance.get(identifier);
-    return object instanceof GameCharacter ? object.imageCrop.toString() : '';
+    let object = CharacterUnit.resolveCharacter(identifier);
+    return object ? object.imageCrop.toString() : '';
   }
 
   private calcTimeStamp(chatTab: ChatTab): number {

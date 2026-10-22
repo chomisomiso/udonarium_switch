@@ -1,4 +1,5 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { CharacterUnit } from '@udonarium/character-part/character-unit';
 import { ChatPalette } from '@udonarium/chat-palette';
 import { ChatTab } from '@udonarium/chat-tab';
 import { ObjectStore } from '@udonarium/core/synchronize-object/object-store';
@@ -8,8 +9,8 @@ import { PeerCursor } from '@udonarium/peer-cursor';
 import { ChatInputComponent } from 'component/chat-input/chat-input.component';
 import { ChatMessageService } from 'service/chat-message.service';
 import { DiceBot } from '@udonarium/dice-bot';
+import { DoublePressDetector } from '@udonarium/double-press';
 import { PanelService } from 'service/panel.service';
-import { DoublePressDetector } from 'component/chat-palette/double-press';
 import { openPaletteIndexMenu } from 'component/chat-palette/palette-index';
 import { sendPaletteMessages } from 'component/chat-palette/palette-message';
 import { getPaletteTopLine, scrollPaletteToLine } from 'component/chat-palette/palette-scroll';
@@ -132,7 +133,8 @@ export class ChatPaletteComponent implements OnInit, OnDestroy {
     if (!this.chatTab) return;
 
     let deps = { chatMessageService: this.chatMessageService, chatTab: this.chatTab };
-    sendPaletteMessages(deps, this.character, value, this.targetingService.getTargets());
+    // 多部位コマなら chat-input が選んだ部位の identifier が来る
+    sendPaletteMessages(deps, CharacterUnit.resolve(value.sendFrom) ?? this.character, value, this.targetingService.getTargets());
   }
 
   resetPletteSelect() {

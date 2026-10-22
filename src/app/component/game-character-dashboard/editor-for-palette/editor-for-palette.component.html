@@ -16,7 +16,7 @@
   </button>
   <div class="spacer"> </div>
   <button class="edit-button" [class.disable]="!palette" [class.editing]="isEdit" (click)="toggleEditMode()"
-    [title]="isEdit ? 'パレットの編集を確定' : 'チャットパレットを編集'">
+    [title]="editButtonTitle">
     <span class="material-icons">edit_note</span>
   </button>
 </div>

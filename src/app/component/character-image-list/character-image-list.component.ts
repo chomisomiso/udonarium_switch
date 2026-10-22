@@ -128,6 +128,10 @@ export class CharacterImageListComponent implements OnChanges, OnDestroy {
     return cached != null ? cached : GameCharacter.getImageName(element);
   }
 
+  thumbnailTitle(element: DataElement, index: number): string {
+    return this.getName(element) || String(index + 1);
+  }
+
   setName(element: DataElement, name: string) {
     if (!element) return;
     this.nameCache.set(element.identifier, name);

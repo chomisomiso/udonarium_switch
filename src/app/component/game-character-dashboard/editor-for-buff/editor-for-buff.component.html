@@ -62,6 +62,6 @@
 <div class="command-preview">
   <span class="command-label">コマンド</span>
   <span class="command-content" *ngIf="addCommand !== ''"
-    (click)="addBuffCommandToText()" [title]="'クリックで入力欄へコピー\n' + addCommand">{{addCommand}}</span>
+    (click)="addBuffCommandToText()" [title]="addCommandTitle">{{addCommand}}</span>
   <span class="command-placeholder" *ngIf="addCommand === ''">フォーマット≫ &amp;バフ名/R数/効果</span>
 </div>

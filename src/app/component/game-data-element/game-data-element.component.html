@@ -62,9 +62,9 @@
   </ng-container>
 </ng-container>
 <ng-template #editButtons>
-  <button (click)="addElement()"><i class="material-icons">add_circle</i></button>
-  <button (click)="upElement()"><i class="material-icons">arrow_upward</i></button>
+  <button (click)="addElement()" title="子項目を追加"><i class="material-icons">add_circle</i></button>
+  <button (click)="upElement()" title="上へ移動"><i class="material-icons">arrow_upward</i></button>
   <br>
-  <button (click)="deleteElement()"><i class="material-icons">remove_circle_outline</i></button>
-  <button (click)="downElement()"><i class="material-icons">arrow_downward</i></button>
+  <button (click)="deleteElement()" title="この項目を削除"><i class="material-icons">remove_circle_outline</i></button>
+  <button (click)="downElement()" title="下へ移動"><i class="material-icons">arrow_downward</i></button>
 </ng-template>

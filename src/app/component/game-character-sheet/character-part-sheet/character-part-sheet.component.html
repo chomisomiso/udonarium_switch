@@ -1,0 +1,28 @@
+<div class="flex-item" *ngIf="isEdit">
+  <button style="width:100%; color: #555;" (click)="addPart()"
+    [title]="addPartTitle">部位を追加</button>
+</div>
+
+<!-- パレットや情報はシート上側の共有データを全部位で使う -->
+<div class="part-section" *ngFor="let part of parts; trackBy: trackByIdentifier">
+  <div class="part-header">
+    <span class="part-label">部位</span>
+    <span *ngIf="!isEdit" class="part-name">{{part.partName}}</span>
+    <ng-container *ngIf="isEdit">
+      <input class="part-name-input" [(ngModel)]="part.partName" placeholder="部位名" />
+      <button (click)="addPartDataElement(part)">項目を追加</button>
+      <button (click)="removePart(part)"
+        [title]="removePartTitle">部位を削除</button>
+    </ng-container>
+  </div>
+  <div class="flex-container">
+    <div class="flex-item" *ngFor="let childElement of part.dataElement?.children">
+      <div class="table">
+        <div class="table-row" game-data-element [gameDataElement]="$any(childElement)" [isEdit]="isEdit"></div>
+      </div>
+    </div>
+    <div class="flex-item">
+      <character-buff-list [unit]="part"></character-buff-list>
+    </div>
+  </div>
+</div>

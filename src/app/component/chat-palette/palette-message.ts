@@ -1,6 +1,6 @@
 import { BuffCommand } from '@udonarium/buff-command';
+import { CharacterUnit } from '@udonarium/character-part/character-unit';
 import { ChatTab } from '@udonarium/chat-tab';
-import { GameCharacter } from '@udonarium/game-character';
 import { ResourceCommand } from '@udonarium/resource-command';
 import { ChatMessageService } from 'service/chat-message.service';
 
@@ -8,7 +8,7 @@ import { ChatMessageService } from 'service/chat-message.service';
 export interface PaletteMessage {
   text: string;
   /** この発言が作用するターゲット。ChatMessageService.sendMessage の targets へ渡す */
-  targets: GameCharacter[];
+  targets: CharacterUnit[];
 }
 
 export interface PaletteMessagePlan {
@@ -28,13 +28,14 @@ export interface PaletteMessageEnvelope {
 /**
  * パレットを展開して発言する。
  *
- * @param sender 発言者。パレットを持たない／キャラでないなら null（展開せず素通しする）
+ * @param sender 発言者。パレットを持たない／キャラでないなら null（展開せず素通しする）。
+ *   多部位コマの部位なら、パレットは持ち主のもので {名前} は部位→共有の順に探す
  */
 export function sendPaletteMessages(
   deps: { chatMessageService: ChatMessageService, chatTab: ChatTab },
-  sender: GameCharacter | null,
+  sender: CharacterUnit | null,
   envelope: PaletteMessageEnvelope,
-  targets: Iterable<GameCharacter>
+  targets: Iterable<CharacterUnit>
 ): void {
   let plan = planPaletteMessages(sender, envelope.text, targets);
   if (plan.warning) {
@@ -54,12 +55,13 @@ export function sendPaletteMessages(
  * ハンドラ側が「抽出コマンド×targetIds」のループで適用するため、
  * 1通に複数ターゲットを載せると t{} の展開結果と掛け算になって多重適用になる。
  */
-export function planPaletteMessages(sender: GameCharacter | null, text: string, targets: Iterable<GameCharacter>): PaletteMessagePlan {
+export function planPaletteMessages(sender: CharacterUnit | null, text: string, targets: Iterable<CharacterUnit>): PaletteMessagePlan {
   let targetList = Array.from(targets);
-  let palette = sender ? sender.chatPalette : null;
+  let character = CharacterUnit.characterOf(sender);
+  let palette = character ? character.chatPalette : null;
   if (!palette) return { messages: [{ text: text, targets: targetList }] };
 
-  let senderVariables = sender.rootDataElement;
+  let senderVariables = CharacterUnit.variablesOf(sender);
   // ターゲット参照の有無は展開してみないと分からない（パレット変数の中に隠れうる）
   let expansion = palette.expand(text, senderVariables);
   if (!expansion.usedTarget) return { messages: [{ text: expansion.text, targets: targetList }] };
@@ -68,10 +70,10 @@ export function planPaletteMessages(sender: GameCharacter | null, text: string, 
 
   return {
     messages: targetList.map((target, index) => {
-      let line = palette.evaluate(text, senderVariables, target.rootDataElement);
+      let line = palette.evaluate(text, senderVariables, CharacterUnit.variablesOf(target));
       // 自分向けリソース／バフ操作と a&（全体バフ）は1通目にだけ残す
       if (0 < index) line = BuffCommand.stripNonTargetCommands(ResourceCommand.stripNonTargetCommands(line));
-      return { text: `${line} [${target.name}]`, targets: [target] };
+      return { text: `${line} [${CharacterUnit.labelOf(target)}]`, targets: [target] };
     })
   };
 }

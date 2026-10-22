@@ -1,3 +1,4 @@
+import { CharacterUnit } from '@udonarium/character-part/character-unit';
 import { ChatMessage } from '@udonarium/chat-message';
 import { ChatTab } from '@udonarium/chat-tab';
 import { DiceBot } from '@udonarium/dice-bot';
@@ -5,6 +6,7 @@ import { GameCharacter } from '@udonarium/game-character';
 import { ResourceCommand } from '@udonarium/resource-command';
 import { ResourceCommandHandler } from '@udonarium/resource-command-handler';
 import { resetGameObjects } from 'testing/game-object-testing';
+import { makeMultiPartCharacter } from 'testing/multi-part-testing';
 
 /**
  * コマンドの文法は resource-command.spec.ts が担当する。
@@ -215,7 +217,7 @@ describe('ResourceCommandHandler', () => {
 
     const SENDER = 'bob';
 
-    function makeMessage(text: string, targets: GameCharacter[] = []): ChatMessage {
+    function makeMessage(text: string, targets: CharacterUnit[] = []): ChatMessage {
       let message = new ChatMessage();
       message.text = text;
       message.name = 'カエデ';
@@ -227,7 +229,7 @@ describe('ResourceCommandHandler', () => {
       return message;
     }
 
-    async function send(text: string, targets: GameCharacter[] = []): Promise<ChatMessage[]> {
+    async function send(text: string, targets: CharacterUnit[] = []): Promise<ChatMessage[]> {
       await handler.processMessage(makeMessage(text, targets), chatTab.identifier);
       return chatTab.chatMessages;
     }
@@ -342,6 +344,67 @@ describe('ResourceCommandHandler', () => {
       stubRoll('(2D6) ＞ 7[3,4] ＞ 7');
 
       expect(await send('ふつうの発言')).toEqual([]);
+    });
+
+    describe('多部位コマ', () => {
+      it('部位のターゲットはその部位の HP だけを動かし、部位名を添えて出す', async () => {
+        stubRoll('(-2D6) ＞ -7[3,4] ＞ -7');
+        let [upper, lower] = makeMultiPartCharacter().parts;
+
+        let posted = await send('t:HP-2d6', [lower]);
+
+        expect(posted[0].text).toBe('[ヒブレイザン(下半身)]\n(-2D6) ＞ -7[3,4] ＞ -7\n>HP: 45-7 > 38 \n');
+        expect(lower.getCurrentDataValue('HP')).toBe(38);
+        expect(upper.getCurrentDataValue('HP')).toBe(50);
+      });
+
+      it('自分向けは発言者の部位へ効く', async () => {
+        let upper = makeMultiPartCharacter().parts[0];
+        let message = makeMessage(':HP-5', []);
+        message.characterId = upper.identifier;
+        stubRoll('(-5+(1D1-1)) ＞ -5+(1[1]-1) ＞ -5');
+
+        await handler.processMessage(message, chatTab.identifier);
+
+        expect(upper.getCurrentDataValue('HP')).toBe(45);
+      });
+
+      // 部位を名乗らない要素は部位から持ち主の値として引ける
+      it('部位から共有の要素も書き換えられる', async () => {
+        let character = makeMultiPartCharacter();
+        let message = makeMessage(':弱点>なし', []);
+        message.characterId = character.parts[0].identifier;
+
+        await handler.processMessage(message, chatTab.identifier);
+
+        expect(character.getDataString('弱点')).toBe('なし');
+      });
+
+      // 本体は語り用の発言者。どの部位のことか決まらない
+      it('本体からの自分向けは効かせず、自分にだけ警告する', async () => {
+        let character = makeMultiPartCharacter();
+        let message = makeMessage(':HP-5', []);
+        message.characterId = character.identifier;
+
+        await handler.processMessage(message, chatTab.identifier);
+
+        expect(chatTab.chatMessages.length).toBe(1);
+        expect(chatTab.chatMessages[0].text).toBe(CharacterUnit.PART_NOT_SELECTED_WARNING);
+        expect(isToSelfOnly(chatTab.chatMessages[0])).toBe(true);
+        expect(character.parts.map(part => part.getCurrentDataValue('HP'))).toEqual([50, 45]);
+      });
+
+      it('本体からでもターゲット向けは効く', async () => {
+        stubRoll('(-2D6) ＞ -7[3,4] ＞ -7');
+        let character = makeMultiPartCharacter();
+        let lower = character.parts[1];
+        let message = makeMessage('t:HP-2d6', [lower]);
+        message.characterId = character.identifier;
+
+        await handler.processMessage(message, chatTab.identifier);
+
+        expect(lower.getCurrentDataValue('HP')).toBe(38);
+      });
     });
   });
 });

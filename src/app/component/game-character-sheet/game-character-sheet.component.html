@@ -30,7 +30,7 @@
   </div>
 </button>
 <button (click)="openSettingPanel()">設定</button>
-<ng-container *ngIf="isCharacter">
+<ng-container *ngIf="tabletopObject.aliasName === 'character'">
   <select #select *ngIf="tabletopObject" (change)="setLocation(select.value)" [ngModel]="tabletopObject.location.name">
     <option value="table">テーブル</option>
     <option value="common">共有インベントリ</option>
@@ -45,12 +45,12 @@
   </div>
   <ng-container *ngIf="tabletopObject.commonDataElement">
     <!-- キャラクターは common の下の余白に画像一覧を置き、画像表示と高さを揃える -->
-    <div class="flex-item" [class.has-image-list]="isCharacter">
+    <div class="flex-item" [class.has-image-list]="!!character">
       <div class="table">
         <div class="table-row" game-data-element [gameDataElement]="tabletopObject.commonDataElement" [isTagLocked]="true"></div>
       </div>
-      <character-image-list *ngIf="isCharacter"
-        [gameCharacter]="$any(tabletopObject)"></character-image-list>
+      <character-image-list *ngIf="character"
+        [gameCharacter]="character"></character-image-list>
     </div>
   </ng-container>
 
@@ -62,9 +62,10 @@
     </div>
   </ng-container>
 
-  <!-- バフはデータ要素ではないので上の detail のループには乗らない。読み取り専用で並べる -->
-  <div class="flex-item" *ngIf="isCharacter">
-    <character-buff-list [gameCharacter]="$any(tabletopObject)"></character-buff-list>
+  <!-- バフはデータ要素ではないので上の detail のループには乗らない。編集・追加はバフ編集パネルから。
+       多部位コマのバフは部位ごとに下の枠で出す -->
+  <div class="flex-item" *ngIf="character && (character.parts.length < 1 || 0 < character.buffs.length)">
+    <character-buff-list [unit]="character"></character-buff-list>
   </div>
 
   <ng-container *ngIf="isEdit">
@@ -72,4 +73,6 @@
       <button style="width:100%; color: #555;" (click)="addDataElement()">新しい項目を追加</button>
     </div>
   </ng-container>
+
+  <character-part-sheet *ngIf="character" [character]="character" [isEdit]="isEdit"></character-part-sheet>
 </div>

@@ -3,7 +3,7 @@ import { ChatPalette } from '@udonarium/chat-palette';
 import { getCharacter } from 'component/game-character-dashboard/character-tags';
 import { EventSystem } from '@udonarium/core/system';
 import { GameCharacter } from '@udonarium/game-character';
-import { DoublePressDetector } from 'component/chat-palette/double-press';
+import { DoublePressDetector } from '@udonarium/double-press';
 import { openPaletteIndexMenu } from 'component/chat-palette/palette-index';
 import { getPaletteTopLine, scrollPaletteToLine } from 'component/chat-palette/palette-scroll';
 import { ContextMenuService } from 'service/context-menu.service';
@@ -41,6 +41,10 @@ export class EditorForPaletteComponent implements OnInit, OnChanges, OnDestroy {
   get paletteLines(): string[] {
     let palette = this.palette;
     return palette ? palette.getPalette() : [];
+  }
+
+  get editButtonTitle(): string {
+    return this.isEdit ? 'パレットの編集を確定' : 'チャットパレットを編集';
   }
 
   /** いま表示されているパレット本体。閲覧時は select、編集時は textarea */

@@ -8,6 +8,7 @@
 
 - コメント・ドキュメントは**日本語**（簡潔に）。変数名・関数名は**英語**
 - [Angular Style Guide](https://angular.io/guide/styleguide) に従う
+- マウスオーバーの説明は `title` 属性。リテラルと値をそのまま渡すだけのものはテンプレートに書き、三項・連結など式になるものはコンポーネントの getter／メソッド（`xxxTitle`）に置く
 
 ### Upstream 追従
 
@@ -16,6 +17,8 @@
 - upstream 由来のファイルへの変更は最小限に留め、差分が読める形にする
 - upstream が module スコープ変数を使っている箇所は、static クラスメンバに置き換えない
 - フォーク独自のロジックは、可能なら既存クラスの改変ではなく新規クラス／サービスとして足す（e.g. `class/dice-table.ts`, `class/*-command-handler.ts`）
+- フォーク独自の細かいファイル群は、関心ごとのサブフォルダにまとめる（e.g. `class/character-part/`, `class/xml-import/`）。重要度の違うファイルが直下に横並びになるのを避けるため。ただし upstream のファイル構成（既存ファイルの移動・既存フォルダの組み替え）には手を入れない
+- フォーク独自のコンポーネントは、1つの画面からしか使わない部品ならその画面のフォルダの下に置き（e.g. `component/game-character-sheet/character-part-sheet/`）、複数の画面から使うものは `component/` 直下に置く（e.g. `component/character-image-list/`）
 
 ## Commands
 

@@ -1,0 +1,70 @@
+/* シートの flex-container の中で全幅の 1 行を占め、部位を縦に積む。
+ * column の flex にしておくと、部位どうしの margin が相殺されずシート直下と同じ間隔になる */
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 100%;
+}
+
+/* 以下の .table / .flex-container / .flex-item はシートと同じ見た目。
+ * コンポーネント CSS はカプセル化されるので、シート側の定義はここに効かない */
+.table {
+  display: table;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.table-row {
+  display: table-row;
+  box-sizing: border-box;
+}
+
+.flex-container {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.flex-item {
+  margin: 5px 0px;
+  padding: 10px;
+  flex: 1 0 auto;
+  box-sizing: border-box;
+  min-width: 25px;
+  background-color: rgba(240, 218, 189, 0.8);
+  color: #444;
+}
+
+/* 多部位コマの部位 1 つぶん */
+.part-section {
+  margin: 5px 0;
+  padding: 4px 6px;
+  border-left: 4px solid rgba(140, 90, 40, 0.8);
+  box-sizing: border-box;
+  background-color: rgba(140, 90, 40, 0.12);
+}
+
+.part-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  color: #444;
+}
+
+.part-label {
+  font-size: 0.8em;
+  opacity: 0.8;
+}
+
+.part-name {
+  font-family: Cambria, Georgia;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.part-name-input {
+  width: 10em;
+  color: #333;
+}

@@ -36,10 +36,10 @@ export class TargetableDirective implements AfterViewInit, OnChanges, OnDestroy 
 
   private overlapDetector: RegionOverlapDetector;
 
-  get state(): boolean { return this.targetingService.has(this.gameCharacter); }
+  // 多部位コマはコマからだと全部位を一括で扱う。部位で割れていても true なので、トグルすると全部外れる
+  get state(): boolean { return this.targetingService.stateOf(this.gameCharacter) !== 'none'; }
   set state(state: boolean) {
-    if (state) this.targetingService.add(this.gameCharacter);
-    else this.targetingService.remove(this.gameCharacter);
+    this.targetingService.setCharacterTargeted(this.gameCharacter, state);
   }
 
   private callbackOnTargetRegion = this.onTargetRegion.bind(this);

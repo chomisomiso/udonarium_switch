@@ -132,7 +132,7 @@
   display: grid;
   grid-template-areas:
   "chat-tabs chat-tabs   chat-tabs"
-  "imagebox  send-from   none"
+  "imagebox  send-from   send-part"
   "imagebox  send-to     none"
   "imagebox  game-system help";
   grid-template-columns: 60px 150px auto;
@@ -202,6 +202,14 @@
 }
 .send-from {
   grid-area: send-from;
+}
+.send-part {
+  grid-area: send-part;
+}
+/* 部位名は短いので、残りの幅いっぱいには広げない */
+.send-part select {
+  width: auto;
+  max-width: 8em;
 }
 .send-to {
   grid-area: send-to;

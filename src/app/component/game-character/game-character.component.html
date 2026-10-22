@@ -32,7 +32,7 @@
                   <div *ngIf="buffExpanded" class="buff-detail">
                     <div class="buff-collapse-hint">▼</div>
                     <div *ngFor="let buff of buffs" class="buff-item"
-                      [title]="buff.effect ? buff.effect : ''">
+                      [title]="buff.effect">
                       {{buffLabel(buff)}} <span class="buff-round" [class.buff-expired]="buff.isExpired">{{buff.roundLabel}}</span>
                     </div>
                   </div>

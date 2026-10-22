@@ -1,6 +1,6 @@
 <div class="flex-item" *ngIf="isEdit">
   <button style="width:100%; color: #555;" (click)="addPart()"
-    [title]="parts.length < 1 ? 'コマのリソース・バフ・デバフ・バフを最初の部位へ移して、その複製を2つ目の部位にします' : '先頭の部位を複製します'">部位を追加</button>
+    [title]="addPartTitle">部位を追加</button>
 </div>
 
 <!-- パレットや情報はシート上側の共有データを全部位で使う -->

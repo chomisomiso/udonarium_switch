@@ -77,6 +77,10 @@ export class ChatInputComponent implements OnInit, OnDestroy {
     return object instanceof GameCharacter && 1 < object.imageCount ? object : null;
   }
 
+  get imageSwitchTitle(): string | null {
+    return this.sendFromCharacter ? 'クリックでコマ画像を切り替え' : null;
+  }
+
   selectImage() {
     let gameCharacter = this.sendFromCharacter;
     if (!gameCharacter) return;

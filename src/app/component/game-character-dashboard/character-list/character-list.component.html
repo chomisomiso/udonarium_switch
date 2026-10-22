@@ -14,7 +14,7 @@
     <span class="target-badge"
       [class.on]="targetState(gameCharacter) === 'all'"
       [class.partial]="targetState(gameCharacter) === 'partial'"
-      [title]="targetState(gameCharacter) === 'none' ? 'ターゲットにする' : 'ターゲットから外す'"
+      [title]="characterTargetTitle(gameCharacter)"
       (click)="toggleCharacterTarget(gameCharacter); $event.stopPropagation()">{{ targetBadgeLabel(gameCharacter) }}</span>
   </div>
   <div class="card-body">
@@ -40,7 +40,7 @@
           <span class="part-name">{{ part.partName }}</span>
           <span class="target-badge"
             [class.on]="isTargeting(part)"
-            [title]="isTargeting(part) ? 'ターゲットから外す' : 'ターゲットにする'"
+            [title]="partTargetTitle(part)"
             (click)="toggleTarget(part); $event.stopPropagation()">{{ isTargeting(part) ? '☑ Target' : '☐ Target' }}</span>
         </div>
         <ng-container *ngTemplateOutlet="dataRows; context: {

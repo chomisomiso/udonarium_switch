@@ -20,7 +20,7 @@
     </label>
   </span>
 </form>
-<label class="chip toggle l-option" [title]="lOptionTitle">
+<label class="chip toggle l-option" title="リソースの値を設定された範囲内に制限">
   <input type="checkbox" [(ngModel)]="rangeLimit" /><span>{{ rangeLimit ? '☑' : '☐' }}最大・最小に収める</span>
 </label>
 <label class="chip toggle full-option" [title]="fillOptionTitle">
@@ -43,6 +43,6 @@
 <div class="command-preview">
   <span class="command-label">コマンド</span>
   <span class="command-content" *ngIf="command !== ''"
-    (click)="addResourceCommandToText()" [title]="'クリックで入力欄へコピー\n' + command">{{command}}</span>
+    (click)="addResourceCommandToText()" [title]="commandTitle">{{command}}</span>
   <span class="command-placeholder" *ngIf="command === ''">フォーマット≫ :リソース±値</span>
 </div>

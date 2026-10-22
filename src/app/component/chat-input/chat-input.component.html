@@ -1,6 +1,6 @@
 <div class="table" [ngClass]="{ 'direct-message': isDirect }">
   <!-- title の有無で切り替え可能かを表す。CSS 側もこの属性を見ている -->
-  <div class="table-cell imagebox" [attr.title]="sendFromCharacter ? 'クリックでコマ画像を切り替え' : null"
+  <div class="table-cell imagebox" [attr.title]="imageSwitchTitle"
     (click)="selectImage()">
     <div class="image-frame">
       <img *ngIf="0 < imageFile.url.length" [src]="imageFile.url | safe: 'resourceUrl'" [imageCrop]="imageCrop" imageCropCovers />
@@ -35,7 +35,7 @@
           <option value="">ダイスボット読込中...</option>
         </select>
       </ng-container>
-      <button (click)="showDicebotHelp()" [disabled]="diceBotInfos.length < 1">?</button>
+      <button (click)="showDicebotHelp()" [disabled]="diceBotInfos.length < 1" title="ダイスボットの説明">?</button>
     </div>
     <div>
       <form>

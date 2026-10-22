@@ -2,7 +2,7 @@
   <div class="image-list" #imageList (wheel)="onWheel($event)">
     <div class="image-item" *ngFor="let element of imageElements; index as i; trackBy: trackByElement"
       [class.is-selected]="isSelected(i)">
-      <div class="thumbnail-box" [title]="getName(element) || (i + 1)" (click)="select(i)">
+      <div class="thumbnail-box" [title]="thumbnailTitle(element, i)" (click)="select(i)">
         <img [src]="imageUrl(element) | safe: 'resourceUrl'" [imageCrop]="crop(element)" imageCropCovers>
       </div>
       <input class="name-input" size="1" [ngModel]="getName(element)" (ngModelChange)="setName(element, $event)"

@@ -74,14 +74,12 @@ export class EditorForResourceComponent implements OnInit, OnDestroy {
   get gameType(): string { return !this.chatMessageService.gameType ? 'DiceBot' : this.chatMessageService.gameType; }
 
   get command(): string { return this.makeResourceCommand() ?? ''; }
+  get commandTitle(): string { return 'クリックで入力欄へコピー\n' + this.command; }
 
   get targetCharacters(): ReadonlySet<CharacterUnit> {
     return this.targetingService.getTargets();
   }
 
-  get lOptionTitle(): string {
-    return 'リソースの値を設定された範囲内に制限';
-  }
   get fillOptionTitle(): string {
     if (!this.canFillToMax) return '発言者がチャットパレットを持たないため、最大値を参照できません';
     return '現在値を最大値まで戻す';

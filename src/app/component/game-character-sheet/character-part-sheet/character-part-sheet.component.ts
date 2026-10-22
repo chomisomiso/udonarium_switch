@@ -23,11 +23,17 @@ export class CharacterPartSheetComponent {
     CharacterPartEditor.addPart(this.character);
   }
 
+  get addPartTitle(): string {
+    return this.parts.length < 1
+      ? 'リソースを複製して、2部位のコマにします'
+      : '先頭の部位を複製します';
+  }
+
   /** 消すと単部位コマに戻るときだけ説明を出す */
   get removePartTitle(): string {
     switch (this.parts.length) {
-      case 1: return '部位の持つデータをコマへ戻して、単部位コマにします';
-      case 2: return 'もう一方の部位の持つデータをコマへ戻して、単部位コマにします';
+      case 1: return '単部位コマにします';
+      case 2: return 'もう一方の部位のデータを残して単部位コマにします';
       default: return '';
     }
   }

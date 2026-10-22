@@ -115,6 +115,10 @@ export class GameCharacterDashboardComponent implements OnInit, AfterViewInit, O
     return character && 1 < character.imageCount ? character : null;
   }
 
+  get imageSwitchTitle(): string | null {
+    return this.imageSwitchableCharacter ? 'クリックでコマ画像を切り替え' : null;
+  }
+
   selectImage() {
     let gameCharacter = this.imageSwitchableCharacter;
     if (!gameCharacter) return;
@@ -249,6 +253,10 @@ export class GameCharacterDashboardComponent implements OnInit, AfterViewInit, O
 
   isEditorCollapsed(name: EditorName): boolean {
     return this.collapsedEditors.has(name);
+  }
+
+  editorHeaderTitle(name: EditorName): string {
+    return this.isEditorCollapsed(name) ? 'クリックで展開' : 'クリックで折りたたむ';
   }
 
   toggleEditor(name: EditorName): void {

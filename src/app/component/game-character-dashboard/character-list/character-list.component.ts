@@ -224,6 +224,14 @@ export class CharacterListComponent implements OnInit, OnDestroy {
     return `${targetMark(this.targetState(character))} Target`;
   }
 
+  characterTargetTitle(character: GameCharacter): string {
+    return this.targetState(character) === 'none' ? 'ターゲットにする' : 'ターゲットから外す';
+  }
+
+  partTargetTitle(part: CharacterUnit): string {
+    return this.isTargeting(part) ? 'ターゲットから外す' : 'ターゲットにする';
+  }
+
   // ===== コンテキストメニュー =====
   onContextMenu(e: Event, gameCharacter: GameCharacter) {
     // 入力欄そのものを右クリックしたときはブラウザ標準メニューを優先する

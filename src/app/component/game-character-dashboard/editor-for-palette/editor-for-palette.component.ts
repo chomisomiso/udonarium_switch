@@ -43,6 +43,10 @@ export class EditorForPaletteComponent implements OnInit, OnChanges, OnDestroy {
     return palette ? palette.getPalette() : [];
   }
 
+  get editButtonTitle(): string {
+    return this.isEdit ? 'パレットの編集を確定' : 'チャットパレットを編集';
+  }
+
   /** いま表示されているパレット本体。閲覧時は select、編集時は textarea */
   private get paletteElement(): HTMLSelectElement | HTMLTextAreaElement | null {
     let elementRef = this.isEdit ? this.textAreaElementRef : this.selectElementRef;

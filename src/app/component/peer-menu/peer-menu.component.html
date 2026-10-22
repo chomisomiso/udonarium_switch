@@ -21,7 +21,7 @@
     <span>パスワード：<span
       *ngIf="networkService.peer.hasPassword">
         <span *ngIf="networkService.isOpen" style="font-weight: bold;">{{isPasswordVisible ? networkService.peer.password : '●●●●●●●●'}}</span>
-        <button style="padding: 2px; margin-left: 1.0em; font-size: 1.0em;" (click)="togglePasswordVisibility()">
+        <button style="padding: 2px; margin-left: 1.0em; font-size: 1.0em;" (click)="togglePasswordVisibility()" title="パスワードの表示切り替え">
           <span class="material-icons" style="font-size: 1.0em; vertical-align: text-bottom;">{{isPasswordVisible ? 'visibility' : 'visibility_off'}}</span>
         </button>
       </span>

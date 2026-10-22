@@ -15,8 +15,8 @@
       <hr/>
       <div>
         <ng-container *ngIf="!isDeleted">
-          <button (click)="upTabIndex()">↑</button>
-          <button (click)="downTabIndex()">↓</button>
+          <button (click)="upTabIndex()" title="タブを上へ移動">↑</button>
+          <button (click)="downTabIndex()" title="タブを下へ移動">↓</button>
           <button [disabled]="isSaveing" (click)="save()">
             <div style="position: relative;">
               <div [ngClass]="{'is-hidden': isSaveing}">保存</div>

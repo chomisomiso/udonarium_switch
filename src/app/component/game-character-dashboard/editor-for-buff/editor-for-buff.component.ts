@@ -43,6 +43,7 @@ export class EditorForBuffComponent {
   get gameType(): string { return !this.chatMessageService.gameType ? 'DiceBot' : this.chatMessageService.gameType; }
 
   get addCommand(): string { return this.makeAddCommand() ?? ''; }
+  get addCommandTitle(): string { return 'クリックで入力欄へコピー\n' + this.addCommand; }
 
   constructor(
     private changeDetector: ChangeDetectorRef,
